@@ -1,0 +1,270 @@
+{
+  "footer": {
+    "copyright": "© 2026 JamContest. All rights reserved.",
+    "about": "About",
+    "terms": "Terms",
+    "privacy": "Privacy",
+    "contact": "Contact",
+    "language": "Language",
+    "coc": "Code of Conduct",
+    "governance": "Governance",
+    "transparency": "Transparency Report"
+  },
+
+  "about": {
+    "title": "About JamContest",
+    "subtitle": "A Fair Playing Field for Creators",
+    "intro": [
+      "JamContest is an independent, non-profit global contest platform designed to create a truly fair and transparent environment for creators.",
+      "It exists to support real production, structured evaluation, and meaningful opportunity — not hype, not exploitation, and not hidden monetization.",
+      "Talent deserves equal ground."
+    ],
+    "intro_title": "About",
+    "mission_title": "Our Mission",
+    "mission_points": [
+      "Provide equal opportunity across borders",
+      "Ensure transparent and documented evaluation",
+      "Encourage learning through real-world challenges",
+      "Support creators beyond the competition itself"
+    ],
+    "no_charges": [
+      "We do not charge participation fees.",
+      "We do not take equity.",
+      "We do not sell user data.",
+      "We do not monetize submissions."
+    ],
+    "funding_title": "Funding & Financial Integrity",
+    "funding_paragraphs": [
+      "JamContest may accept donations or sponsorships.",
+      "All funds are used exclusively for:"
+    ],
+    "funding_list": [
+      "Contest prizes",
+      "Scholarships or grants for outstanding participants",
+      "Platform infrastructure and maintenance",
+      "Community development initiatives"
+    ]
+  },
+
+  "privacy": {
+    "title": "Privacy Policy",
+    "last_updated": "Last updated: February 9, 2026",
+    "sec1_heading": "1. Information We Collect",
+    "sec1_acc_heading": "Account Information",
+    "sec1_acc_item_1": "Email address",
+    "sec1_acc_item_2": "Username and display name",
+    "sec1_acc_item_3": "Password (encrypted)",
+    "sec1_subm_heading": "Contest Submissions",
+    "sec1_subm_item_1": "Files you upload (images, videos, code, documents)",
+    "sec1_subm_item_2": "Project descriptions and metadata",
+    "sec1_subm_item_3": "Team member information (if applicable)",
+    "sec1_usage_heading": "Usage Data",
+    "sec1_usage_item_1": "IP address and browser information",
+    "sec1_usage_item_2": "Pages visited and actions taken",
+    "sec1_usage_item_3": "Time and date of access",
+    "sec2_heading": "2. How We Use Your Information",
+    "sec2_item_1": "Account Management: To authenticate you and manage your profile",
+    "sec2_item_2": "Contest Operations: To process submissions and display them to jury members",
+    "sec2_item_3": "Communication: To notify you about contest updates and results",
+    "sec2_item_4": "Platform Improvement: To analyze usage patterns and fix bugs",
+    "sec3_heading": "3. Information Sharing",
+    "sec3_para1": "We do NOT sell, rent, or trade your personal information.",
+    "sec3_para2": "We only share data in these limited cases:",
+    "sec3_item_1": "Public Display: Your username, submissions, and contest rankings are visible to other users",
+    "sec3_item_2": "Jury Members: Assigned juries can view submissions for contests they're evaluating",
+    "sec3_item_3": "Legal Requirements: If required by law or to protect our rights",
+    "sec4_heading": "4. Data Storage & Security",
+    "sec4_para1": "Your data is stored on secure servers with encryption. We implement industry-standard security measures, but no system is 100% secure. Use strong passwords and don't share your account.",
+    "sec4_para2": "File Uploads: All uploaded files are stored locally on our servers (not on third-party cloud services). Access is restricted to authorized users only.",
+    "sec5_heading": "5. Cookies",
+    "sec5_para1": "We use essential cookies to keep you logged in and remember your preferences. We do NOT use tracking or advertising cookies.",
+    "sec6_heading": "6. Your Rights",
+    "sec6_intro": "You have the right to:",
+    "sec6_item_1": "Access your personal data",
+    "sec6_item_2": "Correct inaccurate information",
+    "sec6_item_3": "Request deletion of your account (with some exceptions for contest history)",
+    "sec6_item_4": "Withdraw from contests before submission deadlines",
+    "sec7_heading": "7. Data Retention",
+    "sec7_item_1": "Active Accounts: Data retained as long as your account is active",
+    "sec7_item_2": "Contest Submissions: Kept indefinitely for historical records and portfolio purposes",
+    "sec7_item_3": "Deleted Accounts: Personal data removed within 30 days (submissions may remain anonymized)",
+    "sec8_heading": "8. Third-Party Services",
+    "sec8_para1": "We do not integrate with third-party analytics, advertising, or tracking services. This is a self-contained platform with no external data sharing.",
+    "sec9_heading": "9. Children's Privacy",
+    "sec9_para1": "Users must be 13 years or older. We do not knowingly collect data from children under 13.",
+    "sec10_heading": "10. Changes to This Policy",
+    "sec10_para1": "We may update this policy occasionally. Significant changes will be announced on the platform.",
+    "sec11_heading": "11. Contact",
+    "sec11_para1": "Questions about privacy? Contact us at our contact page."
+  },
+
+  "terms": {
+    "title": "Terms & Conditions",
+    "last_updated": "Last updated: February 9, 2026",
+    "sec1_heading": "1. Acceptance of Terms",
+    "sec1_para1": "By accessing and using JamContest, you agree to be bound by these Terms and Conditions. If you do not agree, please do not use this platform.",
+    "sec2_heading": "2. Platform Purpose",
+    "sec2_para1": "JamContest is a non-profit, volunteer-driven service designed to facilitate creative competitions for developers, designers, and artists. We do not charge fees, take equity, or profit from user submissions.",
+    "sec3_heading": "3. User Accounts",
+    "sec3_item_1": "You must provide accurate information during registration",
+    "sec3_item_2": "You are responsible for maintaining the security of your account",
+    "sec3_item_3": "One person may not create multiple accounts",
+    "sec3_item_4": "We reserve the right to suspend or terminate accounts that violate these terms",
+    "sec4_heading": "4. Contest Participation",
+    "sec4_item_1": "All submissions must be original work created by you or your team",
+    "sec4_item_2": "You retain all intellectual property rights to your submissions",
+    "sec4_item_3": "By submitting, you grant us a non-exclusive license to display your work on the platform",
+    "sec4_item_4": "Plagiarism or copyright infringement will result in immediate disqualification",
+    "sec4_item_5": "Jury decisions are final",
+    "sec5_heading": "5. Prohibited Conduct",
+    "sec5_intro": "You may not:",
+    "sec5_item_1": "Submit offensive, harmful, or illegal content",
+    "sec5_item_2": "Attempt to manipulate contest results",
+    "sec5_item_3": "Harass other users or jury members",
+    "sec5_item_4": "Reverse engineer or compromise platform security",
+    "sec5_item_5": "Use the platform for commercial spam or advertising",
+    "sec6_heading": "6. Disclaimers",
+    "sec6_para1": "The platform is provided \"as is\" without warranties of any kind. We do not guarantee:",
+    "sec6_item_1": "Uninterrupted or error-free service",
+    "sec6_item_2": "That contests will always have prizes",
+    "sec6_item_3": "Employment or business opportunities from participation",
+    "sec7_heading": "7. Limitation of Liability",
+    "sec7_para1": "JamContest and its volunteers shall not be liable for any damages arising from your use of the service, including but not limited to lost profits, data loss, or disputes with other users.",
+    "sec8_heading": "8. Changes to Terms",
+    "sec8_para1": "We may update these terms at any time. Continued use of the platform after changes constitutes acceptance of the new terms.",
+    "sec9_heading": "9. Governing Law",
+    "sec9_para1": "These terms are governed by the laws of [Your Jurisdiction]. Any disputes will be resolved in the courts of [Your Jurisdiction]."
+  },
+
+  "funding_note": "No individual profits from JamContest.",
+  "transparency_title": "Transparent Evaluation",
+  "transparency_list": [
+    "Contest rules are published before launch",
+    "Jury members are publicly listed",
+    "Evaluation criteria are visible",
+    "Results follow the announced scoring framework"
+  ],
+  "governance_title": "Governance",
+  "governance_paragraphs": [
+    "JamContest was initiated by its founder as a structured and accountable initiative.",
+    "The founder ensures platform integrity and adherence to its principles.",
+    "All contests operate under predefined rules; volunteer roles are responsibility-based; structural decisions are recorded; the system stands above individuals."
+  ],
+  "core_title": "Core Principles",
+  "core_list": [
+    "Fairness",
+    "Transparency",
+    "Equal Opportunity",
+    "Accountability",
+    "Community over Profit"
+  ],
+  "closing": "JamContest is not built to create power. It is built to create trust. Independence: No venture capital. No corporate ownership. No external control.",
+
+  "about_extra": {
+    "independent_line": "JamContest operates as an independent, non-profit initiative.",
+    "operational_line": "As the platform evolves, operational structures may formalize to ensure long-term sustainability.",
+    "open_disciplines_title": "Open to All Creative Disciplines",
+    "open_disciplines": [
+      "Game Development",
+      "Software Engineering",
+      "Artificial Intelligence",
+      "UI/UX & Product Design",
+      "Creative Technology",
+      "Hardware & Prototyping"
+    ]
+  },
+
+  "coc": {
+    "title": "Code of Conduct",
+    "last_updated": "Last updated: February 9, 2026",
+    "intro": "JamContest is committed to maintaining a fair, respectful, and safe environment for all participants.",
+    "applies_to": [
+      "Participants",
+      "Jury members",
+      "Organizers",
+      "Volunteers",
+      "Sponsors",
+      "Platform administrators"
+    ],
+    "applies_title": "Applies to",
+    "sections": [
+      {
+        "heading": "1. Respect",
+        "body": "All users must treat others with respect. Harassment, discrimination, hate speech, or personal attacks based on race, gender, nationality, religion, disability, or background will not be tolerated."
+      },
+      {
+        "heading": "2. Fair Competition",
+        "body": "All submissions must be original work. Plagiarism, unauthorized use of third-party content, or intellectual property theft will result in immediate disqualification. Attempting to manipulate voting or jury outcomes is strictly prohibited."
+      },
+      {
+        "heading": "3. Professional Conduct",
+        "body": "Participants and organizers must communicate respectfully, avoid disruptive or hostile behavior, and act in good faith during disputes."
+      },
+      {
+        "heading": "4. Transparency & Integrity",
+        "body": "Jury members must evaluate submissions according to published criteria. Conflicts of interest must be disclosed. Organizers must document structural decisions when applicable."
+      },
+      {
+        "heading": "5. Enforcement",
+        "body": "Violations may result in warning, disqualification, temporary suspension, or permanent ban. Enforcement decisions are made within the defined governance framework."
+      },
+      {
+        "heading": "6. Reporting",
+        "body": "If you experience or witness misconduct, please report it through the contact page. JamContest will review reports confidentially and fairly."
+      }
+    ]
+  },
+
+  "governance": {
+    "title": "Governance Model",
+    "intro": "JamContest was initiated by its founder as an independent, structured initiative. The governance model is designed to ensure fairness, accountability, and long-term sustainability.",
+    "sections": [
+      {
+        "heading": "1. Founder Responsibility",
+        "points": [
+          "Maintaining platform integrity",
+          "Protecting core principles",
+          "Overseeing structural decisions",
+          "Ensuring fairness",
+          "The founder does not override published contest rules."
+        ]
+      },
+      {
+        "heading": "2. Organizers",
+        "body": "Organizers are volunteers selected based on experience, alignment with platform principles, and demonstrated responsibility. Organizer roles are responsibility-based and may be time-limited."
+      },
+      {
+        "heading": "3. Jury",
+        "body": "Jury members are publicly listed. Evaluation criteria are announced before contest launch. Jury decisions operate strictly within the defined framework."
+      },
+      {
+        "heading": "4. System Over Individuals",
+        "body": "JamContest operates under predefined rules. No individual, including the founder, stands above the announced framework."
+      },
+      {
+        "heading": "5. Amendments",
+        "body": "Governance structure may evolve as the platform grows. Significant structural changes may be documented in the Transparency Report."
+      }
+    ],
+    "note": "Governance structures may evolve as the platform grows."
+  },
+
+  "transparency": {
+    "title": "Transparency Report",
+    "year": "2026",
+    "active_contests": "Active contests",
+    "participants": "Participants",
+    "volunteer_organizers": "Volunteer organizers",
+    "infrastructure_status": "Infrastructure status",
+    "financial_inflow": "Financial inflow",
+    "financial_outflow": "Financial outflow",
+    "values": {
+      "active_contests": "X",
+      "participants": "X",
+      "volunteer_organizers": "X",
+      "infrastructure_status": "Self-hosted",
+      "financial_inflow": "$0",
+      "financial_outflow": "$0"
+    }
+  }
+}

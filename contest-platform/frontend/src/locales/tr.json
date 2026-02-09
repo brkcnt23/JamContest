@@ -1,0 +1,179 @@
+{
+  "footer": {
+    "copyright": "© 2026 JamContest. Tüm hakları saklıdır.",
+    "about": "Hakkında",
+    "terms": "Şartlar",
+    "privacy": "Gizlilik",
+    "contact": "İletişim",
+    "language": "Dil"
+    ,"coc": "Davranış Kuralları",
+    "governance": "Yönetim",
+    "transparency": "Şeffaflık Raporu"
+  },
+
+  "about": {
+    "title": "JamContest Hakkında",
+    "subtitle": "Yaratıcılar İçin Adil Bir Oyun Alanı",
+    "intro": [
+      "JamContest, yaratıcılar için adil ve şeffaf bir ortam oluşturmak amacıyla kurulmuş bağımsız ve kâr amacı gütmeyen global bir yarışma platformudur.",
+      "Amacı; gerçek üretimi desteklemek, değerlendirme süreçlerini şeffaflaştırmak ve anlamlı fırsatlar yaratmaktır. Hype, sömürü veya gizli kazanç modeli üzerine kurulu değildir.",
+      "Yetenek eşit zemini hak eder."
+    ],
+    "intro_title": "Hakkımızda",
+    "mission_title": "Misyonumuz",
+    "mission_points": [
+      "Sınır ötesi eşit fırsat sunmayı",
+      "Şeffaf ve belgelenmiş değerlendirme sağlamayı",
+      "Gerçek dünya problemleri üzerinden öğrenmeyi teşvik etmeyi",
+      "Yarışma sonrası da üreticileri desteklemeyi"
+    ],
+    "no_charges": [
+      "Katılım ücreti alınmaz.",
+      "Hisse talep edilmez.",
+      "Kullanıcı verisi satılmaz.",
+      "Gönderimler üzerinden gelir elde edilmez."
+    ],
+    "funding_title": "Finansal Şeffaflık",
+    "funding_paragraphs": [
+      "JamContest bağış veya sponsorluk kabul edebilir.",
+      "Toplanan tüm kaynaklar yalnızca:"
+    ],
+    "funding_list": [
+      "Ödüller",
+      "Burs veya destek programları",
+      "Platform altyapı giderleri",
+      "Topluluk gelişimi"
+    ],
+    "funding_note": "JamContest üzerinden hiçbir bireysel kâr elde edilmez.",
+    "transparency_title": "Değerlendirme Süreci",
+    "transparency_list": [
+      "Kurallar yarışma öncesinde ilan edilir",
+      "Jüri üyeleri açıkça belirtilir",
+      "Puanlama kriterleri yayınlanır",
+      "Sonuçlar ilan edilen çerçeveye göre belirlenir"
+    ],
+    "governance_title": "Yönetim Yapısı",
+    "governance_paragraphs": [
+      "JamContest bir kurucu tarafından başlatılmıştır.",
+      "Kurucu, platform bütünlüğünü ve ilkelere bağlılığı korumaktan sorumludur.",
+      "Tüm yarışmalar önceden belirlenmiş kurallara bağlıdır; gönüllü görevler sorumluluk temellidir; yapısal kararlar kayıt altındadır; sistem kişilerden büyüktür."
+    ],
+    "core_title": "Temel İlkeler",
+    "core_list": [
+      "Adalet",
+      "Şeffaflık",
+      "Eşit Fırsat",
+      "Hesap Verebilirlik",
+      "Kâr Değil Topluluk"
+    ],
+    "closing": "JamContest güç üretmek için değil, güven üretmek için vardır. Bağımsızlık: Sermaye yok. Şirket sahipliği yok. Dış kontrol yok."
+  },
+  "about_extra": {
+    "independent_line": "JamContest bağımsız, kâr amacı gütmeyen bir girişim olarak faaliyet göstermektedir.",
+    "operational_line": "Platform geliştikçe, uzun vadeli sürdürülebilirliği sağlamak için operasyonel yapılar resmileşebilir.",
+    "open_disciplines_title": "Tüm Yaratıcı Disiplinlere Açık",
+    "open_disciplines": [
+      "Oyun Geliştirme",
+      "Yazılım Mühendisliği",
+      "Yapay Zeka",
+      "UI/UX ve Ürün Tasarımı",
+      "Yaratıcı Teknoloji",
+      "Donanım ve Prototipleme"
+    ]
+  },
+
+  "coc": {
+    "title": "Davranış Kuralları",
+    "last_updated": "Son güncelleme: 9 Şubat 2026",
+    "intro": "JamContest, tüm katılımcılar için adil, saygılı ve güvenli bir ortam sağlamayı taahhüt eder.",
+    "applies_to": [
+      "Katılımcılar",
+      "Jüri üyeleri",
+      "Organizatörler",
+      "Gönüllüler",
+      "Sponsorlar",
+      "Platform yöneticileri"
+    ],
+    "applies_title": "Kapsar",
+    "sections": [
+      {
+        "heading": "1. Saygı",
+        "body": "Tüm kullanıcılar birbirlerine saygılı davranmalıdır. Irk, cinsiyet, milliyet, din, engellilik veya geçmiş temelinde taciz, ayrımcılık, nefret söylemi veya kişisel saldırılar kabul edilemez."
+      },
+      {
+        "heading": "2. Adil Rekabet",
+        "body": "Tüm gönderimler özgün olmalıdır. İntihal, üçüncü taraf içeriğinin izinsiz kullanımı veya fikri mülkiyet hırsızlığı derhal diskalifikasyona yol açar. Oylamayı veya jüri sonuçlarını manipüle etmeye çalışmak kesinlikle yasaktır."
+      },
+      {
+        "heading": "3. Profesyonel Davranış",
+        "body": "Katılımcılar ve organizatörler saygılı iletişim kurmalı, yıkıcı veya düşmanca davranışlardan kaçınmalı ve anlaşmazlıklarda iyi niyetle hareket etmelidir."
+      },
+      {
+        "heading": "4. Şeffaflık ve Bütünlük",
+        "body": "Jüri üyeleri gönderimleri yayımlanmış kriterlere göre değerlendirmelidir. Çıkar çatışmaları bildirilmeli ve organizatörler yapısal kararları belgelemelidir."
+      },
+      {
+        "heading": "5. Yaptırım",
+        "body": "İhlaller uyarı, diskalifikasyon, geçici askıya alma veya kalıcı yasakla sonuçlanabilir. Yaptırım kararları tanımlanmış yönetişim çerçevesi içinde alınır."
+      },
+      {
+        "heading": "6. Bildirim",
+        "body": "Taciz yaşarsanız veya tanık olursanız lütfen iletişim sayfası üzerinden bildirin. JamContest raporları gizli ve adil şekilde inceleyecektir."
+      }
+    ]
+  },
+
+  "governance": {
+    "title": "Yönetim Modeli",
+    "intro": "JamContest, bir kurucu tarafından bağımsız ve yapılandırılmış bir girişim olarak başlatıldı. Yönetim modeli adalet, hesap verebilirlik ve uzun vadeli sürdürülebilirlik sağlamak üzere tasarlanmıştır.",
+    "sections": [
+      {
+        "heading": "1. Kurucu Sorumluluğu",
+        "points": [
+          "Platform bütünlüğünü korumak",
+          "Temel ilkeleri korumak",
+          "Yapısal kararları denetlemek",
+          "Adaleti sağlamak",
+          "Kurucu yayımlanmış yarışma kurallarını geçersiz kılamaz."
+        ]
+      },
+      {
+        "heading": "2. Organizatörler",
+        "body": "Organizatörler deneyime, platform ilkelerine uyuma ve sorumluluk gösterme kriterlerine göre seçilen gönüllülerdir. Organizatör rolleri sorumluluk temellidir ve zamanla sınırlı olabilir."
+      },
+      {
+        "heading": "3. Jüri",
+        "body": "Jüri üyeleri açıkça listelenir. Değerlendirme kriterleri yarışma başlamadan önce ilan edilir. Jüri kararları tanımlanmış çerçeve içinde işletilir."
+      },
+      {
+        "heading": "4. Sistemin Bireylerin Üstünde Olması",
+        "body": "JamContest önceden belirlenmiş kurallar altında işler. Kurucu dahil hiçbir birey ilan edilmiş çerçevenin üstünde yer almaz."
+      },
+      {
+        "heading": "5. Değişiklikler",
+        "body": "Yönetim yapısı platform büyüdükçe evrilebilir. Önemli yapısal değişiklikler Şeffaflık Raporu'nda belgelenebilir."
+      }
+    ]
+    ,
+    "note": "Yönetim yapıları platform büyüdükçe evrilebilir."
+  }
+  ,
+  "transparency": {
+    "title": "Şeffaflık Raporu",
+    "year": "2026",
+    "active_contests": "Aktif yarışmalar",
+    "participants": "Katılımcılar",
+    "volunteer_organizers": "Gönüllü organizatörler",
+    "infrastructure_status": "Altyapı durumu",
+    "financial_inflow": "Mali gelir",
+    "financial_outflow": "Mali gider",
+    "values": {
+      "active_contests": "X",
+      "participants": "X",
+      "volunteer_organizers": "X",
+      "infrastructure_status": "Kendi sunucumuzda",
+      "financial_inflow": "$0",
+      "financial_outflow": "$0"
+    }
+  }
+}

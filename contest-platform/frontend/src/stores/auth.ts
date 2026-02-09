@@ -1,6 +1,13 @@
-// stores/auth.ts
 import { defineStore } from 'pinia';
-import { api } from '@/api';
+import axios from 'axios';
+
+interface User {
+  id: string;
+  email: string;
+  username: string;
+  displayName: string;
+  role: string;
+}
 
 export const useAuthStore = defineStore('auth', {
   state: () => ({
@@ -10,27 +17,50 @@ export const useAuthStore = defineStore('auth', {
 
   getters: {
     isAuthenticated: (state) => !!state.token,
-    isJury: (state) => state.user?.role === 'JURY' || state.user?.role === 'ADMIN',
     isAdmin: (state) => state.user?.role === 'ADMIN',
+    isJury: (state) => state.user?.role === 'JURY' || state.user?.role === 'ADMIN',
   },
 
   actions: {
+    async register(email: string, password: string, username: string) {
+      const { data } = await axios.post('/api/auth/register', { email, password, username });
+      this.token = data.token;
+      this.user = data.user;
+      localStorage.setItem('token', data.token);
+      this.setupAxiosInterceptor();
+    },
+
     async login(email: string, password: string) {
-      const { token, user } = await api.post('/auth/login', { email, password });
-      this.token = token;
-      this.user = user;
-      localStorage.setItem('token', token);
+      const { data } = await axios.post('/api/auth/login', { email, password });
+      this.token = data.token;
+      this.user = data.user;
+      localStorage.setItem('token', data.token);
+      this.setupAxiosInterceptor();
     },
 
     async fetchUser() {
       if (!this.token) return;
-      this.user = await api.get('/auth/me');
+      try {
+        const { data } = await axios.get('/api/auth/me');
+        this.user = data;
+      } catch (error) {
+        this.logout();
+      }
     },
 
     logout() {
       this.token = null;
       this.user = null;
       localStorage.removeItem('token');
+    },
+
+    setupAxiosInterceptor() {
+      axios.interceptors.request.use((config) => {
+        if (this.token) {
+          config.headers.Authorization = `Bearer ${this.token}`;
+        }
+        return config;
+      });
     },
   },
 });
