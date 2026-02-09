@@ -3,8 +3,6 @@ import { onMounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
 import axios from 'axios';
 import ArtistHero from '@/components/ui/ArtistHero.vue';
-import GalleryGrid from '@/components/ui/GalleryGrid.vue';
-import ProfileLinks from '@/components/ui/ProfileLinks.vue';
 
 type UserProfile = {
   userId: string;
@@ -13,7 +11,6 @@ type UserProfile = {
   bio: string;
   profileImageUrl: string;
   galleryImageUrls: string[];
-  links: { label: string; url: string; icon?: string }[];
   socialLinks?: { instagram?: string; twitter?: string; email?: string };
 };
 
@@ -36,24 +33,22 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div v-if="loading" class="min-h-screen flex items-center justify-center">
-    <p class="text-gray-500">Loading profile...</p>
+  <div v-if="loading" class="min-h-screen flex items-center justify-center bg-[hsl(var(--background))]">
+    <p class="text-[hsl(var(--muted-foreground))]">Loading profile...</p>
   </div>
 
-  <div v-else-if="error" class="min-h-screen flex items-center justify-center">
+  <div v-else-if="error" class="min-h-screen flex items-center justify-center bg-[hsl(var(--background))]">
     <p class="text-red-500">{{ error }}</p>
   </div>
 
   <div v-else-if="profile">
     <ArtistHero
-      :artistName="profile.displayName"
+      :artist-name="profile.displayName"
       :tagline="profile.tagline"
       :description="profile.bio"
-      :profileImage="profile.profileImageUrl"
-      :galleryImages="profile.galleryImageUrls"
-      :socialLinks="profile.socialLinks || {}"
+      :profile-image="profile.profileImageUrl"
+      :gallery-images="profile.galleryImageUrls"
+      :social-links="profile.socialLinks || {}"
     />
-    <GalleryGrid :images="profile.galleryImageUrls" />
-    <ProfileLinks :links="profile.links" />
   </div>
 </template>
