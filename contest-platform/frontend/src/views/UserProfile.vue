@@ -3,7 +3,7 @@ import { onMounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
 import axios from 'axios';
 import ArtistHero from '@/components/ui/ArtistHero.vue';
-import UserProfileGlow from '@/components/ui/UserProfileGlow.vue';
+import FeaturedWorks from '@/components/ui/FeaturedWorks.vue';
 
 type UserProfile = {
   userId: string;
@@ -12,6 +12,14 @@ type UserProfile = {
   bio: string;
   profileImageUrl: string;
   galleryImageUrls: string[];
+  works?: Array<{
+    id: number;
+    title: string;
+    category: string;
+    year: string;
+    image: string;
+    span?: 'large' | 'wide' | 'tall' | 'default';
+  }>;
   socialLinks?: { instagram?: string; twitter?: string; email?: string };
 };
 
@@ -32,19 +40,17 @@ onMounted(async () => {
   }
 });
 </script>
-
 <template>
-  <div v-if="loading" class="min-h-screen flex items-center justify-center bg-[hsl(var(--background))]">
-    <p class="text-[hsl(var(--muted-foreground))]">Loading profile...</p>
-  </div>
+  <div class="user-profile-blank-layout">
+    <div v-if="loading" class="min-h-screen flex items-center justify-center bg-[hsl(var(--background))]">
+      <p class="text-[hsl(var(--muted-foreground))]">Loading profile...</p>
+    </div>
 
-  <div v-else-if="error" class="min-h-screen flex items-center justify-center bg-[hsl(var(--background))]">
-    <p class="text-red-500">{{ error }}</p>
-  </div>
+    <div v-else-if="error" class="min-h-screen flex items-center justify-center bg-[hsl(var(--background))]">
+      <p class="text-red-500">{{ error }}</p>
+    </div>
 
-  <div v-else-if="profile" class="relative min-h-screen bg-[hsl(var(--background))]">
-    <!-- Header logo artık ArtistHero'da, burada kaldırıldı -->
-    <UserProfileGlow>
+    <div v-else-if="profile" class="bg-[hsl(var(--background))]">
       <ArtistHero
         :artist-name="profile.displayName"
         :tagline="profile.tagline"
@@ -53,6 +59,18 @@ onMounted(async () => {
         :gallery-images="profile.galleryImageUrls"
         :social-links="profile.socialLinks || {}"
       />
-    </UserProfileGlow>
+      <FeaturedWorks :works="profile.works" />
+    </div>
   </div>
 </template>
+<style scoped>
+.user-profile-blank-layout {
+  position: fixed;
+  inset: 0;
+  min-height: 100vh;
+  width: 100vw;
+  z-index: 9999;
+  background: hsl(var(--background));
+  overflow-y: auto;
+}
+</style>

@@ -23,10 +23,19 @@ const segments = computed(() =>
   props.animateBy === 'words' ? props.text.split(' ') : props.text.split('')
 );
 
+const palette = [
+  'var(--palette-purple)',
+  'var(--palette-yellow)',
+  'var(--palette-green)',
+  'var(--palette-blue)',
+  'var(--palette-pink)'
+];
+const randomColor = palette[Math.floor(Math.random() * palette.length)];
 const getSegmentStyle = (index: number) => ({
   display: 'inline-block',
   filter: inView.value ? 'blur(0px)' : 'blur(10px)',
   opacity: inView.value ? 1 : 0,
+  color: `hsl(${randomColor})`,
   transform: inView.value
     ? 'translateY(0)'
     : `translateY(${props.direction === 'top' ? '-20px' : '20px'})`,

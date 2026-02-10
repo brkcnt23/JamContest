@@ -5,6 +5,7 @@ import Badge from './Badge.vue';
 import Button from './Button.vue';
 import BlurText from './BlurText.vue';
 import Glow from './Glow.vue';
+import { Sun, Moon } from 'lucide-vue-next';
 
 interface Props {
   artistName: string;
@@ -19,7 +20,12 @@ interface Props {
   };
   badgeText?: string;
 }
-
+const theme = ref('dark');
+const toggleTheme = () => {
+  theme.value = theme.value === 'dark' ? 'light' : 'dark';
+  document.documentElement.classList.toggle('light', theme.value === 'light');
+  document.documentElement.classList.toggle('dark', theme.value === 'dark');
+};
 const props = withDefaults(defineProps<Props>(), {
   socialLinks: () => ({}),
   badgeText: 'Available for commissions',
@@ -46,71 +52,58 @@ const menuItems = [
 <template>
   <div class="relative min-h-screen bg-[hsl(var(--background))] text-[hsl(var(--foreground))] overflow-hidden">
     <!-- Header -->
-    <header class="fixed top-0 left-0 right-0 z-50 px-6 py-6 bg-[hsl(var(--background))]/80 backdrop-blur-sm">
-      <nav class="flex items-center justify-between max-w-screen-2xl mx-auto">
-        <button
-          type="button"
-          class="p-2 transition-colors duration-300 z-50 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]"
-          @click="isMenuOpen = !isMenuOpen"
-        >
-          <X v-if="isMenuOpen" class="w-6 h-6" />
-          <Menu v-else class="w-6 h-6" />
-        </button>
-
-        <div class="flex justify-center items-center w-full">
-          <a href="/" class="focus:outline-none">
-            <img src="/images/logo-JC.png" alt="JamContest Logo" class="h-48 w-auto mx-auto cursor-pointer transition-transform hover:scale-105 active:scale-95" />
+      <header
+        class="custom-header fixed top-0 left-0 right-0 z-50 px-4 bg-[hsl(var(--background))]/80 backdrop-blur-sm flex items-center justify-center"
+        style="height: 72px; min-height: 0;">
+        <nav class="flex flex-row items-center justify-between w-full max-w-screen-2xl mx-auto h-full">
+        <div class="flex items-center h-[56px]">
+          <button type="button"
+            class="p-2 transition-colors duration-300 z-50 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]"
+            @click="isMenuOpen = !isMenuOpen" aria-label="Menu">
+            <X v-if="isMenuOpen" class="w-6 h-6" />
+            <Menu v-else class="w-6 h-6" />
+          </button>
+        </div>
+        <!-- Center: Logo -->
+        <div class="flex items-center justify-center h-[56px] relative">
+          <a href="/" class="focus:outline-none cursor-pencil flex items-center justify-center">
+            <img src="/images/logo-JC.png" alt="JamContest Logo"
+              class="h-36 w-auto mx-auto transition-transform hover:scale-105 active:scale-95 cursor-pencil"
+              style="max-height: 120px;" />
           </a>
         </div>
-
-        <div class="flex gap-4">
-          <a
-            v-if="socialLinks.instagram"
-            :href="socialLinks.instagram"
-            target="_blank"
-            class="text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] transition-colors"
-          >
+        <!-- Right: Socials + Theme -->
+        <div class="flex items-center justify-end gap-4 h-[56px]">
+          <a v-if="socialLinks.instagram" :href="socialLinks.instagram" target="_blank"
+            class="text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] transition-colors">
             <Instagram class="w-5 h-5" />
           </a>
-          <a
-            v-if="socialLinks.twitter"
-            :href="socialLinks.twitter"
-            target="_blank"
-            class="text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] transition-colors"
-          >
+          <a v-if="socialLinks.twitter" :href="socialLinks.twitter" target="_blank"
+            class="text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] transition-colors">
             <Twitter class="w-5 h-5" />
           </a>
-          <a
-            v-if="socialLinks.email"
-            :href="socialLinks.email"
-            class="text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] transition-colors"
-          >
+          <a v-if="socialLinks.email" :href="socialLinks.email"
+            class="text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] transition-colors">
             <Mail class="w-5 h-5" />
           </a>
+          <!-- Theme toggle -->
+          <button @click="toggleTheme" class="ml-2 p-2 rounded-full hover:bg-[hsl(var(--muted))] transition-colors"
+            aria-label="Toggle theme">
+            <Sun v-if="theme === 'light'" class="w-5 h-5" />
+            <Moon v-else class="w-5 h-5" />
+          </button>
         </div>
       </nav>
 
-      <transition
-        enter-active-class="transition duration-200 ease-out"
-        enter-from-class="opacity-0 -translate-y-5"
-        enter-to-class="opacity-100 translate-y-0"
-        leave-active-class="transition duration-150 ease-in"
-        leave-from-class="opacity-100 translate-y-0"
-        leave-to-class="opacity-0 -translate-y-5"
-      >
-        <div
-          v-if="isMenuOpen"
-          class="absolute top-full left-0 right-0 bg-[hsl(var(--background))]/95 backdrop-blur-md border-t border-[hsl(var(--border))] p-8"
-        >
+      <transition enter-active-class="transition duration-200 ease-out" enter-from-class="opacity-0 -translate-y-5"
+        enter-to-class="opacity-100 translate-y-0" leave-active-class="transition duration-150 ease-in"
+        leave-from-class="opacity-100 translate-y-0" leave-to-class="opacity-0 -translate-y-5">
+        <div v-if="isMenuOpen"
+          class="absolute top-full left-0 right-0 bg-[hsl(var(--background))]/95 backdrop-blur-md border-t border-[hsl(var(--border))] p-8">
           <div class="max-w-screen-2xl mx-auto">
-            <a
-              v-for="(item, index) in menuItems"
-              :key="item.label"
-              :href="item.href"
+            <a v-for="(item, index) in menuItems" :key="item.label" :href="item.href"
               class="block text-2xl font-bold py-3 hover:text-[hsl(var(--brand))] transition-colors"
-              :style="{ transitionDelay: `${index * 100}ms` }"
-              @click="isMenuOpen = false"
-            >
+              :style="{ transitionDelay: `${index * 100}ms` }" @click="isMenuOpen = false">
               {{ item.label }}
             </a>
           </div>
@@ -129,14 +122,8 @@ const menuItems = [
             </Badge>
 
             <div>
-              <BlurText
-                :text="artistName"
-                :delay="80"
-                animate-by="letters"
-                direction="top"
-                class="text-6xl md:text-7xl lg:text-8xl font-bold leading-tight"
-                style="color: hsl(var(--brand))"
-              />
+              <BlurText :text="artistName" :delay="80" animate-by="letters" direction="top"
+                class="text-6xl md:text-7xl lg:text-8xl font-bold leading-tight" style="color: hsl(var(--brand))" />
             </div>
 
             <div class="space-y-4 animate-appear opacity-0 delay-300">
@@ -169,18 +156,14 @@ const menuItems = [
             </div>
 
             <!-- Gallery Images - Floating Around -->
-            <div
-              v-for="(img, index) in galleryImages.slice(0, 5)"
-              :key="index"
-              class="absolute w-40 h-48 rounded-xl overflow-hidden shadow-lg animate-float-up"
-              :style="{
+            <div v-for="(img, index) in galleryImages.slice(0, 5)" :key="index"
+              class="absolute w-40 h-48 rounded-xl overflow-hidden shadow-lg animate-float-up" :style="{
                 left: positions[index].left,
                 right: positions[index].right,
                 top: positions[index].top,
                 bottom: positions[index].bottom,
                 animationDelay: positions[index].delay,
-              }"
-            >
+              }">
               <img :src="img" :alt="`Gallery ${index + 1}`" class="w-full h-full object-cover" />
             </div>
           </div>
@@ -194,9 +177,40 @@ const menuItems = [
     <!-- Scroll Indicator -->
     <div class="absolute bottom-8 left-1/2 -translate-x-1/2 text-center animate-appear opacity-0 delay-1000">
       <p class="text-sm text-[hsl(var(--muted-foreground))] mb-2">Scroll to explore</p>
-      <div class="w-6 h-10 border-2 border-[hsl(var(--muted-foreground))] rounded-full mx-auto flex items-start justify-center p-2">
+      <div
+        class="w-6 h-10 border-2 border-[hsl(var(--muted-foreground))] rounded-full mx-auto flex items-start justify-center p-2">
         <div class="w-1 h-2 bg-[hsl(var(--muted-foreground))] rounded-full animate-bounce" />
       </div>
     </div>
   </div>
 </template>
+<style>
+.custom-header {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  z-index: 50;
+  height: 72px;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: hsla(var(--background), 0.8);
+  backdrop-filter: blur(8px);
+}
+.custom-header::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 0;
+  border-bottom: 1.5px solid hsl(var(--border));
+  top: 72px;
+  z-index: 51;
+}
+
+.cursor-pencil {
+  cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"><path fill="%23222" d="M3 17.25V21h3.75l11.06-11.06-3.75-3.75zm2.92 2.92l-1.17-1.17 9.19-9.19 1.17 1.17zm13.06-13.06a1.003 1.003 0 0 0-1.42 0l-1.34 1.34 3.75 3.75 1.34-1.34a1.003 1.003 0 0 0 0-1.42l-2.33-2.33z"/></svg>') 4 24, pointer !important;
+}
+</style>
