@@ -3,6 +3,7 @@ import { onMounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
 import axios from 'axios';
 import ArtistHero from '@/components/ui/ArtistHero.vue';
+import UserProfileGlow from '@/components/ui/UserProfileGlow.vue';
 
 type UserProfile = {
   userId: string;
@@ -41,14 +42,17 @@ onMounted(async () => {
     <p class="text-red-500">{{ error }}</p>
   </div>
 
-  <div v-else-if="profile">
-    <ArtistHero
-      :artist-name="profile.displayName"
-      :tagline="profile.tagline"
-      :description="profile.bio"
-      :profile-image="profile.profileImageUrl"
-      :gallery-images="profile.galleryImageUrls"
-      :social-links="profile.socialLinks || {}"
-    />
+  <div v-else-if="profile" class="relative min-h-screen bg-[hsl(var(--background))]">
+    <!-- Header logo artık ArtistHero'da, burada kaldırıldı -->
+    <UserProfileGlow>
+      <ArtistHero
+        :artist-name="profile.displayName"
+        :tagline="profile.tagline"
+        :description="profile.bio"
+        :profile-image="profile.profileImageUrl"
+        :gallery-images="profile.galleryImageUrls"
+        :social-links="profile.socialLinks || {}"
+      />
+    </UserProfileGlow>
   </div>
 </template>

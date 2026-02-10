@@ -32,7 +32,7 @@ const router = createRouter({
       const id = authStore.user?.id;
       return id ? { name: 'UserProfile', params: { id } } : { name: 'Login' };
     } },
-    { path: '/user/:id', name: 'UserProfile', component: UserProfile },
+    { path: '/user/:id', name: 'UserProfile', component: UserProfile, meta: { layout: 'blank' } },
   ],
 });
 

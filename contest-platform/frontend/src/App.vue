@@ -55,8 +55,8 @@ onMounted(() => {
   --border: 0 0% 100% / 10%;
   --input: 0 0% 100% / 15%;
   --ring: 0 0% 56%;
-  --brand: 271 91% 65%;
-  --brand-foreground: 271 91% 85%;
+  --brand: var(--foreground);
+  --brand-foreground: var(--muted-foreground);
 }
 
 #app {

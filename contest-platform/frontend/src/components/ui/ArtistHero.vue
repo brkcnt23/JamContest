@@ -57,7 +57,11 @@ const menuItems = [
           <Menu v-else class="w-6 h-6" />
         </button>
 
-        <div class="text-2xl font-bold" style="font-family: 'Brush Script MT', cursive">SM</div>
+        <div class="flex justify-center items-center w-full">
+          <a href="/" class="focus:outline-none">
+            <img src="/images/logo-JC.png" alt="JamContest Logo" class="h-48 w-auto mx-auto cursor-pointer transition-transform hover:scale-105 active:scale-95" />
+          </a>
+        </div>
 
         <div class="flex gap-4">
           <a
