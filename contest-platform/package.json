@@ -1,6 +1,13 @@
 {
+  "name": "jamcontest-monorepo",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+  "dev": "concurrently \"pnpm --filter frontend run dev\" \"pnpm --filter backend run start:dev\"",
+  "build": "pnpm --filter frontend run build && pnpm --filter backend run build"
+},
   "dependencies": {
-    "@vueuse/core": "^14.2.0",
+    "@vueuse/core": "^14.2.1",
     "@vueuse/motion": "^3.0.3",
     "lucide-vue-next": "^0.563.0"
   }

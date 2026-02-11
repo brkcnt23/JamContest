@@ -15,6 +15,7 @@ interface FeaturedWork {
 
 interface Props {
   works?: FeaturedWork[];
+  portfolioLink?: string;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -149,8 +150,8 @@ onMounted(() => {
       </div>
 
       <!-- View All Button -->
-      <div class="mt-16 text-center">
-        <Button size="lg" variant="outline" class="group">
+      <div v-if="props.portfolioLink" class="mt-16 text-center">
+        <Button size="lg" variant="outline" class="group" @click="() => window.open(props.portfolioLink, '_blank')">
           View All Works
           <ArrowRight class="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
         </Button>

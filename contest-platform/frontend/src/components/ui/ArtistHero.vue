@@ -1,11 +1,16 @@
+
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, watch, nextTick, onMounted } from 'vue';
+import { useTheme } from '@/stores/theme';
 import { Menu, X, Instagram, Twitter, Mail, ArrowRight } from 'lucide-vue-next';
 import Badge from './Badge.vue';
 import Button from './Button.vue';
 import BlurText from './BlurText.vue';
 import Glow from './Glow.vue';
 import { Sun, Moon } from 'lucide-vue-next';
+
+import { useAuthStore } from '@/stores/auth';
+import { useRouter, useRoute } from 'vue-router';
 
 interface Props {
   artistName: string;
@@ -19,17 +24,56 @@ interface Props {
     email?: string;
   };
   badgeText?: string;
+  portfolioLink?: string;
+  profileUserId?: string;
 }
-const theme = ref('dark');
-const toggleTheme = () => {
-  theme.value = theme.value === 'dark' ? 'light' : 'dark';
-  document.documentElement.classList.toggle('light', theme.value === 'light');
-  document.documentElement.classList.toggle('dark', theme.value === 'dark');
-};
+const { theme, toggleTheme } = useTheme();
+const overlayActive = ref(false);
+const animationKey = ref(0);
+let overlayTimeout: ReturnType<typeof setTimeout> | null = null;
+let lastTheme = theme.value;
+let firstLoad = true;
+
+function playOverlayOnce() {
+  if (overlayActive.value) return;
+  overlayActive.value = true;
+  if (overlayTimeout) clearTimeout(overlayTimeout);
+  overlayTimeout = setTimeout(() => {
+    overlayActive.value = false;
+    animationKey.value++;
+  }, 600);
+}
+function openPortfolio() {
+  if (props.portfolioLink) {
+    window.open(props.portfolioLink, '_blank');
+  }
+}
+onMounted(() => {
+  playOverlayOnce();
+  firstLoad = false;
+  lastTheme = theme.value;
+});
+
+watch(theme, (newTheme, oldTheme) => {
+  if (firstLoad) return;
+  if (newTheme !== oldTheme) {
+    playOverlayOnce();
+    lastTheme = newTheme;
+  }
+});
+function debugToggleTheme() {
+  toggleTheme();
+}
 const props = withDefaults(defineProps<Props>(), {
   socialLinks: () => ({}),
   badgeText: 'Available for commissions',
+  portfolioLink: '',
+  profileUserId: '',
 });
+
+const authStore = useAuthStore();
+const router = useRouter();
+const route = useRoute();
 
 const isMenuOpen = ref(false);
 
@@ -50,7 +94,11 @@ const menuItems = [
 </script>
 
 <template>
-  <div class="relative min-h-screen bg-[hsl(var(--background))] text-[hsl(var(--foreground))] overflow-hidden">
+  <div class="relative min-h-screen overflow-hidden">
+    <!-- White overlay for theme change -->
+    <transition name="overlay-fade">
+      <div v-if="overlayActive" class="fixed left-0 top-0 w-full h-full z-[9999] pointer-events-none" style="background: white; animation: overlay-slide-down 0.6s cubic-bezier(.7,0,.3,1);"></div>
+    </transition>
     <!-- Header -->
       <header
         class="custom-header fixed top-0 left-0 right-0 z-50 px-4 bg-[hsl(var(--background))]/80 backdrop-blur-sm flex items-center justify-center"
@@ -67,7 +115,7 @@ const menuItems = [
         <!-- Center: Logo -->
         <div class="flex items-center justify-center h-[56px] relative">
           <a href="/" class="focus:outline-none cursor-pencil flex items-center justify-center">
-            <img src="/images/logo-JC.png" alt="JamContest Logo"
+            <img :src="theme === 'dark' ? '/images/jamcontest_logo_white_for_dark.png' : '/images/logo-JC.png'" alt="JamContest Logo"
               class="h-36 w-auto mx-auto transition-transform hover:scale-105 active:scale-95 cursor-pencil"
               style="max-height: 120px;" />
           </a>
@@ -87,7 +135,7 @@ const menuItems = [
             <Mail class="w-5 h-5" />
           </a>
           <!-- Theme toggle -->
-          <button @click="toggleTheme" class="ml-2 p-2 rounded-full hover:bg-[hsl(var(--muted))] transition-colors"
+          <button @click="debugToggleTheme" class="ml-2 p-2 rounded-full hover:bg-[hsl(var(--muted))] transition-colors"
             aria-label="Toggle theme">
             <Sun v-if="theme === 'light'" class="w-5 h-5" />
             <Moon v-else class="w-5 h-5" />
@@ -117,16 +165,27 @@ const menuItems = [
         <div class="grid lg:grid-cols-2 gap-12 items-center">
           <!-- Left: Text Content -->
           <div class="space-y-8">
-            <Badge variant="outline" class="animate-appear opacity-0">
+
+            <div v-if="authStore.user && props.profileUserId && authStore.user.id === props.profileUserId" class="mb-2">
+              <Button
+                size="sm"
+                variant="outline"
+                class="font-semibold"
+                @click="() => router.push(`/user/${props.profileUserId}/edit`)"
+              >
+                Edit Profile
+              </Button>
+            </div>
+            <Badge :key="animationKey + '-badge'" variant="outline" class="animate-appear opacity-0">
               <span class="text-[hsl(var(--muted-foreground))]">{{ badgeText }}</span>
             </Badge>
 
             <div>
-              <BlurText :text="artistName" :delay="80" animate-by="letters" direction="top"
+              <BlurText :key="animationKey + '-blur'" :text="artistName" :delay="80" animate-by="letters" direction="top"
                 class="text-6xl md:text-7xl lg:text-8xl font-bold leading-tight" style="color: hsl(var(--brand))" />
             </div>
 
-            <div class="space-y-4 animate-appear opacity-0 delay-300">
+            <div :key="animationKey + '-desc'" class="space-y-4 animate-appear opacity-0 delay-300">
               <h2 class="text-2xl md:text-3xl font-semibold text-[hsl(var(--foreground))]">
                 {{ tagline }}
               </h2>
@@ -135,19 +194,32 @@ const menuItems = [
               </p>
             </div>
 
-            <div class="flex gap-4 animate-appear opacity-0 delay-500">
-              <Button size="lg" class="group">
+            <div :key="animationKey + '-btns'" class="flex gap-4 animate-appear opacity-0 delay-500">
+              <Button
+                v-if="props.portfolioLink"
+                size="lg"
+                class="group"
+                @click="openPortfolio"
+              >
                 View Portfolio
                 <ArrowRight class="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
               </Button>
               <Button size="lg" variant="outline">
                 Get in Touch
               </Button>
+              <Button
+                v-if="authStore.user && props.profileUserId && authStore.user.id === props.profileUserId"
+                size="lg"
+                variant="outline"
+                @click="() => router.push(`/user/${props.profileUserId}/edit`)"
+              >
+                Edit Profile
+              </Button>
             </div>
           </div>
 
           <!-- Right: Image Gallery -->
-          <div class="relative h-[600px] animate-appear opacity-0 delay-700">
+          <div :key="animationKey + '-gallery'" class="relative h-[600px] animate-appear opacity-0 delay-700">
             <!-- Profile Image - Center -->
             <div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-20">
               <div class="w-64 h-80 rounded-2xl overflow-hidden shadow-2xl border-4 border-[hsl(var(--background))]">
@@ -156,7 +228,7 @@ const menuItems = [
             </div>
 
             <!-- Gallery Images - Floating Around -->
-            <div v-for="(img, index) in galleryImages.slice(0, 5)" :key="index"
+            <div v-for="(img, index) in galleryImages.slice(0, 5)" :key="animationKey + '-img-' + index"
               class="absolute w-40 h-48 rounded-xl overflow-hidden shadow-lg animate-float-up" :style="{
                 left: positions[index].left,
                 right: positions[index].right,
@@ -171,11 +243,11 @@ const menuItems = [
       </div>
 
       <!-- Glow Effect -->
-      <Glow variant="center" class="animate-appear opacity-0 delay-1000" />
+      <Glow :key="animationKey + '-glow'" variant="center" class="animate-appear opacity-0 delay-1000" />
     </main>
 
     <!-- Scroll Indicator -->
-    <div class="absolute bottom-8 left-1/2 -translate-x-1/2 text-center animate-appear opacity-0 delay-1000">
+    <div :key="animationKey + '-scroll'" class="absolute bottom-8 left-1/2 -translate-x-1/2 text-center animate-appear opacity-0 delay-1000">
       <p class="text-sm text-[hsl(var(--muted-foreground))] mb-2">Scroll to explore</p>
       <div
         class="w-6 h-10 border-2 border-[hsl(var(--muted-foreground))] rounded-full mx-auto flex items-start justify-center p-2">
@@ -212,5 +284,28 @@ const menuItems = [
 
 .cursor-pencil {
   cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"><path fill="%23222" d="M3 17.25V21h3.75l11.06-11.06-3.75-3.75zm2.92 2.92l-1.17-1.17 9.19-9.19 1.17 1.17zm13.06-13.06a1.003 1.003 0 0 0-1.42 0l-1.34 1.34 3.75 3.75 1.34-1.34a1.003 1.003 0 0 0 0-1.42l-2.33-2.33z"/></svg>') 4 24, pointer !important;
+}
+@keyframes overlay-slide-down {
+  0% {
+    opacity: 0.9;
+    transform: translateY(-100%);
+  }
+  80% {
+    opacity: 1;
+    transform: translateY(8%);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(0);
+  }
+}
+.overlay-fade-enter-active, .overlay-fade-leave-active {
+  transition: opacity 0.6s cubic-bezier(.7,0,.3,1);
+}
+.overlay-fade-enter-from, .overlay-fade-leave-to {
+  opacity: 0;
+}
+.overlay-fade-enter-to, .overlay-fade-leave-from {
+  opacity: 1;
 }
 </style>

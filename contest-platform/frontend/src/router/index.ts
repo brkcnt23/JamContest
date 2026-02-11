@@ -11,6 +11,7 @@ import CoC from '@/views/CoC.vue';
 import Governance from '@/views/Governance.vue';
 import Transparency from '@/views/Transparency.vue';
 import UserProfile from '@/views/UserProfile.vue';
+import EditProfile from '@/edits/EditProfile.vue';
 import Contests from '@/views/Contests.vue';
 
 const router = createRouter({
@@ -33,6 +34,7 @@ const router = createRouter({
       return id ? { name: 'UserProfile', params: { id } } : { name: 'Login' };
     } },
     { path: '/user/:id', name: 'UserProfile', component: UserProfile, meta: { layout: 'blank' } },
+    { path: '/user/:id/edit', name: 'EditProfile', component: EditProfile, meta: { requiresAuth: true } },
   ],
 });
 

@@ -14,6 +14,13 @@ export class UsersService {
         displayName: true,
         bio: true,
         avatar: true,
+        tagline: true,
+        portfolioLink: true,
+        gallery1: true,
+        gallery2: true,
+        gallery3: true,
+        gallery4: true,
+        gallery5: true,
       },
     });
 
@@ -21,29 +28,56 @@ export class UsersService {
       throw new NotFoundException('User not found');
     }
 
-    // Mock data - sonra DB'den çekersin
     return {
       userId: user.id,
       displayName: user.displayName || user.username,
-      tagline: 'Visual Artist & Creative Director',
-      bio: user.bio || 'Exploring creativity through digital art',
-      profileImageUrl: user.avatar || 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&h=600&fit=crop',
-      galleryImageUrls: [
-        'https://images.unsplash.com/photo-1541961017774-22349e4a1262?w=800&h=1000&fit=crop',
-        'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=800&h=1000&fit=crop',
-        'https://images.unsplash.com/photo-1547891654-e66ed7ebb968?w=800&h=1000&fit=crop',
-        'https://images.unsplash.com/photo-1460661419201-fd4cecdf8a8b?w=800&h=1000&fit=crop',
-        'https://images.unsplash.com/photo-1549887534-1541e9326642?w=800&h=1000&fit=crop',
-      ],
-      links: [
-        { label: 'Portfolio', url: 'https://example.com', icon: 'website' },
-        { label: 'Instagram', url: 'https://instagram.com/', icon: 'instagram' },
-      ],
-      socialLinks: {
-        instagram: 'https://instagram.com/',
-        twitter: 'https://x.com/',
-        email: 'mailto:hello@artist.com',
+      tagline: user.tagline || '',
+      bio: user.bio || '',
+      profileImageUrl: user.avatar || '',
+      portfolioLink: user.portfolioLink || '',
+      galleryImageUrls: [user.gallery1, user.gallery2, user.gallery3, user.gallery4, user.gallery5].filter(Boolean),
+    };
+  }
+
+  async updateUserProfile(userId: string, data: any) {
+    // URL validation (basic)
+    const isValidUrl = (url: string) => {
+      if (!url) return true;
+      try { new URL(url); return true; } catch { return false; }
+    };
+
+    if (data.portfolioLink && !isValidUrl(data.portfolioLink)) {
+      throw new Error('Invalid portfolio link URL');
+    }
+    ['avatar', 'gallery1', 'gallery2', 'gallery3', 'gallery4', 'gallery5'].forEach((key) => {
+      if (data[key] && !isValidUrl(data[key])) {
+        throw new Error(`Invalid URL for ${key}`);
+      }
+    });
+
+    const updated = await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        displayName: data.displayName,
+        tagline: data.tagline,
+        bio: data.bio,
+        portfolioLink: data.portfolioLink,
+        avatar: data.avatar,
+        gallery1: data.gallery1,
+        gallery2: data.gallery2,
+        gallery3: data.gallery3,
+        gallery4: data.gallery4,
+        gallery5: data.gallery5,
       },
+    });
+    return {
+      userId: updated.id,
+      displayName: updated.displayName || updated.username,
+      tagline: updated.tagline || '',
+      bio: updated.bio || '',
+      profileImageUrl: updated.avatar || '',
+      portfolioLink: updated.portfolioLink || '',
+      galleryImageUrls: [updated.gallery1, updated.gallery2, updated.gallery3, updated.gallery4, updated.gallery5].filter(Boolean),
     };
   }
 }

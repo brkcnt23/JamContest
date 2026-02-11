@@ -11,7 +11,9 @@
 
 
 <script setup lang="ts">
-import { onMounted, computed, onUnmounted} from 'vue';
+import { onMounted, computed, onUnmounted } from 'vue';
+import { useTheme } from '@/stores/theme';
+const { theme, setTheme } = useTheme();
 import { useRoute } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import Header from '@/components/layout/Header.vue';
@@ -52,11 +54,18 @@ const moveCursor = (e: MouseEvent) => {
   if (cursorEl) {
     cursorEl.style.left = e.clientX + 'px';
     cursorEl.style.top = e.clientY + 'px';
-    // Animate color by horizontal position
-    const color = getRainbowColor(e.clientX, window.innerWidth);
-    cursorEl.style.background = `radial-gradient(circle, ${color} 0%, rgba(255,255,255,0.25) 60%, transparent 100%)`;
-    cursorEl.style.boxShadow = `0 0 24px 8px ${color}`;
-    cursorEl.style.border = `2.5px solid ${color}`;
+    // Theme-aware cursor color
+    if (theme.value === 'light') {
+      cursorEl.style.background = 'radial-gradient(circle, #222 0%, rgba(0,0,0,0.18) 60%, transparent 100%)';
+      cursorEl.style.boxShadow = '0 0 12px 4px #222, 0 0 0 2px #fff';
+      cursorEl.style.border = '2.5px solid #222';
+    } else {
+      // Animate color by horizontal position (rainbow)
+      const color = getRainbowColor(e.clientX, window.innerWidth);
+      cursorEl.style.background = `radial-gradient(circle, ${color} 0%, rgba(255,255,255,0.25) 60%, transparent 100%)`;
+      cursorEl.style.boxShadow = `0 0 24px 8px ${color}`;
+      cursorEl.style.border = `2.5px solid ${color}`;
+    }
   }
 };
 onMounted(() => {
@@ -87,29 +96,13 @@ onUnmounted(() => {
   box-sizing: border-box;
 }
 
+/*
+  Vars for palette and radius only, theme colors come from index.css for light/dark
+*/
 :root {
   --radius: 0.625rem;
-  --background: 214 10% 9%;
-  --foreground: 0 0% 98%;
-  --card: 214 10% 13%;
-  --card-foreground: 0 0% 98%;
-  --popover: 214 10% 13%;
-  --popover-foreground: 0 0% 98%;
-  --primary: 0 0% 92%;
-  --primary-foreground: 214 10% 13%;
-  --secondary: 214 10% 17%;
-  --secondary-foreground: 0 0% 98%;
-  --muted: 214 10% 17%;
-  --muted-foreground: 0 0% 71%;
-  --accent: 214 10% 17%;
-  --accent-foreground: 0 0% 98%;
-  --destructive: 0 72% 51%;
-  --border: 0 0% 100% / 10%;
-  --input: 0 0% 100% / 15%;
-  --ring: 0 0% 56%;
   --brand: 271 91% 65%;
   --brand-foreground: 271 91% 85%;
-  /* Custom palette */
   --palette-purple: 271 91% 65%;
   --palette-yellow: 48 100% 60%;
   --palette-green: 142 71% 45%;
@@ -130,67 +123,27 @@ onUnmounted(() => {
   color: hsl(var(--foreground));
 }
 
-@keyframes float-up {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-15px); }
-}
-
-.animate-float-up {
-  animation: float-up 6s ease-in-out infinite;
-}
-
-@keyframes appear {
-  0% { opacity: 0; transform: translateY(10px); }
-  100% { opacity: 1; transform: translateY(0); }
-}
-
-.animate-appear {
-  animation: appear 0.5s ease-out forwards;
-}
-
-.delay-100 { animation-delay: 100ms; }
-.delay-300 { animation-delay: 300ms; }
-.delay-500 { animation-delay: 500ms; }
-.delay-700 { animation-delay: 700ms; }
-.delay-1000 { animation-delay: 1000ms; }
-
-#app {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-}
-
-.main-content {
-  flex: 1;
-  background: hsl(var(--background));
-  color: hsl(var(--foreground));
-}
 
 @keyframes float-up {
   0%, 100% { transform: translateY(0px); }
   50% { transform: translateY(-15px); }
 }
-
 .animate-float-up {
   animation: float-up 6s ease-in-out infinite;
 }
-
 @keyframes appear {
   0% { opacity: 0; transform: translateY(10px); }
   100% { opacity: 1; transform: translateY(0); }
 }
-
 .animate-appear {
   animation: appear 0.5s ease-out forwards;
 }
-
 .delay-100 { animation-delay: 100ms; }
 .delay-300 { animation-delay: 300ms; }
 .delay-500 { animation-delay: 500ms; }
 .delay-700 { animation-delay: 700ms; }
 .delay-1000 { animation-delay: 1000ms; }
-/* Custom glowing cursor */
+/* Custom glowing cursor, theme-aware */
 .custom-cursor {
   position: fixed;
   top: 0;
@@ -199,13 +152,9 @@ onUnmounted(() => {
   height: 38px;
   pointer-events: none;
   border-radius: 50%;
-  background: radial-gradient(circle, #fff 0%, rgba(255,255,255,0.18) 60%, transparent 100%);
-  box-shadow: 0 0 24px 8px #fff;
   z-index: 99999;
   transform: translate(-50%, -50%);
-  border: 2.5px solid #fff;
   transition: background 0.18s, box-shadow 0.18s, border 0.18s;
-  mix-blend-mode: lighten;
 }
 
 body, #app {
