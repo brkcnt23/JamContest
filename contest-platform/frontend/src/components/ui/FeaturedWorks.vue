@@ -16,6 +16,7 @@ interface FeaturedWork {
 interface Props {
   works?: FeaturedWork[];
   portfolioLink?: string;
+  galleryImages?: string[];
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -104,6 +105,12 @@ onMounted(() => {
 
   return () => observer.disconnect();
 });
+
+function openPortfolio() {
+  if (props.portfolioLink) {
+    window.open(props.portfolioLink, '_blank');
+  }
+}
 </script>
 
 <template>
@@ -118,12 +125,18 @@ onMounted(() => {
           Selected Projects
         </h2>
         <p class="text-lg text-[hsl(var(--muted-foreground))] max-w-2xl mx-auto">
-          A curated collection of my recent works exploring various mediums and concepts
+          Portfolioya eklediğiniz tüm görseller aşağıda grid olarak gösterilir.
         </p>
       </div>
-
+      <!-- Portfolio Grid -->
+      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        <div v-for="(img, idx) in galleryImages" :key="'gallery-grid-' + idx" class="work-card rounded-xl overflow-hidden shadow-lg border animate-appear opacity-0" :data-index="idx">
+          <img :src="img" alt="Portfolio Image" class="w-full h-64 object-cover" />
+        </div>
+      </div>
+      <!-- Eski works grid aşağıda kalabilir veya kaldırılabilir -->
       <!-- Masonry Grid Layout -->
-      <div class="grid grid-cols-1 md:grid-cols-3 auto-rows-[280px] gap-6">
+      <div class="grid grid-cols-1 md:grid-cols-3 auto-rows-[280px] gap-6 mt-12">
         <div v-for="(work, index) in works" :key="work.id" :data-index="index"
           class="work-card group cursor-pencil cursor-pointer relative overflow-hidden rounded-xl bg-[hsl(var(--muted))] transition-all duration-500"
           :class="[
@@ -151,7 +164,7 @@ onMounted(() => {
 
       <!-- View All Button -->
       <div v-if="props.portfolioLink" class="mt-16 text-center">
-        <Button size="lg" variant="outline" class="group" @click="() => window.open(props.portfolioLink, '_blank')">
+        <Button size="lg" variant="outline" class="group" @click="openPortfolio">
           View All Works
           <ArrowRight class="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
         </Button>

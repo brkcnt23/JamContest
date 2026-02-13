@@ -16,11 +16,7 @@ export class UsersService {
         avatar: true,
         tagline: true,
         portfolioLink: true,
-        gallery1: true,
-        gallery2: true,
-        gallery3: true,
-        gallery4: true,
-        gallery5: true,
+        galleryImages: true,
       },
     });
 
@@ -35,7 +31,7 @@ export class UsersService {
       bio: user.bio || '',
       profileImageUrl: user.avatar || '',
       portfolioLink: user.portfolioLink || '',
-      galleryImageUrls: [user.gallery1, user.gallery2, user.gallery3, user.gallery4, user.gallery5].filter(Boolean),
+      galleryImageUrls: Array.isArray(user.galleryImages) ? user.galleryImages.filter(Boolean) : [],
     };
   }
 
@@ -49,11 +45,16 @@ export class UsersService {
     if (data.portfolioLink && !isValidUrl(data.portfolioLink)) {
       throw new Error('Invalid portfolio link URL');
     }
-    ['avatar', 'gallery1', 'gallery2', 'gallery3', 'gallery4', 'gallery5'].forEach((key) => {
-      if (data[key] && !isValidUrl(data[key])) {
-        throw new Error(`Invalid URL for ${key}`);
-      }
-    });
+    if (data.avatar && !isValidUrl(data.avatar)) {
+      throw new Error('Invalid URL for avatar');
+    }
+    if (Array.isArray(data.galleryImages)) {
+      data.galleryImages.forEach((url: string) => {
+        if (url && !isValidUrl(url)) {
+          throw new Error('Invalid URL in galleryImages');
+        }
+      });
+    }
 
     const updated = await this.prisma.user.update({
       where: { id: userId },
@@ -63,11 +64,7 @@ export class UsersService {
         bio: data.bio,
         portfolioLink: data.portfolioLink,
         avatar: data.avatar,
-        gallery1: data.gallery1,
-        gallery2: data.gallery2,
-        gallery3: data.gallery3,
-        gallery4: data.gallery4,
-        gallery5: data.gallery5,
+        galleryImages: Array.isArray(data.galleryImages) ? data.galleryImages.filter(Boolean) : [],
       },
     });
     return {
@@ -77,7 +74,7 @@ export class UsersService {
       bio: updated.bio || '',
       profileImageUrl: updated.avatar || '',
       portfolioLink: updated.portfolioLink || '',
-      galleryImageUrls: [updated.gallery1, updated.gallery2, updated.gallery3, updated.gallery4, updated.gallery5].filter(Boolean),
+      galleryImageUrls: Array.isArray(updated.galleryImages) ? updated.galleryImages.filter(Boolean) : [],
     };
   }
 }

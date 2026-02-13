@@ -5,6 +5,7 @@
       <router-view />
     </main>
     <Footer v-if="!isBlankLayout" />
+      <Toast v-if="toast && toast.message" :message="toast.message" :type="toast.type" :duration="toast.duration" />
   </div>
 </template>
 
@@ -12,13 +13,14 @@
 
 <script setup lang="ts">
 import { onMounted, computed, onUnmounted } from 'vue';
+import Toast from '@/components/common/Toast.vue';
 import { useTheme } from '@/stores/theme';
 const { theme, setTheme } = useTheme();
 import { useRoute } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import Header from '@/components/layout/Header.vue';
 import Footer from '@/components/layout/Footer.vue';
-
+import { toast } from '@/composables/useToast';
 const route = useRoute();
 const authStore = useAuthStore();
 

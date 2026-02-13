@@ -23,12 +23,12 @@
         :tagline="profile.tagline"
         :description="profile.bio"
         :profile-image="profile.profileImageUrl"
-        :gallery-images="profile.galleryImageUrls"
+        :gallery-images="profile.galleryImageUrls || []"
         :social-links="profile.socialLinks || {}"
         :portfolio-link="profile.portfolioLink"
         :profile-user-id="profile.userId"
       />
-      <FeaturedWorks :works="profile.works" :portfolio-link="profile.portfolioLink" />
+      <FeaturedWorks :works="profile.works" :portfolio-link="profile.portfolioLink" :gallery-images="profile.galleryImageUrls || []" />
     </div>
   </div>
 </template>

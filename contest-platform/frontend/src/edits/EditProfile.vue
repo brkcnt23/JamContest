@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
+import { showToast } from '@/composables/useToast';
 import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import axios from 'axios';
@@ -19,11 +20,7 @@ const form = ref({
   bio: '',
   portfolioLink: '',
   avatar: '',
-  gallery1: '',
-  gallery2: '',
-  gallery3: '',
-  gallery4: '',
-  gallery5: '',
+  galleryImages: [] as string[],
 });
 
 const loading = ref(false);
@@ -38,10 +35,7 @@ onMounted(async () => {
     return;
   }
 
-  if (!isOwnProfile.value) {
-    router.push(`/user/${userId.value}`);
-    return;
-  }
+  // Kullanıcı kendi profili değilse, router ile yönlendirme zaten var. Ekstra mesaj veya uyarı gösterilmiyor.
 
   loading.value = true;
   try {
@@ -52,11 +46,7 @@ onMounted(async () => {
       bio: data.bio || '',
       portfolioLink: data.portfolioLink || '',
       avatar: data.profileImageUrl || '',
-      gallery1: data.galleryImageUrls[0] || '',
-      gallery2: data.galleryImageUrls[1] || '',
-      gallery3: data.galleryImageUrls[2] || '',
-      gallery4: data.galleryImageUrls[3] || '',
-      gallery5: data.galleryImageUrls[4] || '',
+      galleryImages: Array.isArray(data.galleryImages) ? data.galleryImages : (data.galleryImageUrls || []),
     };
   } catch (e: any) {
     error.value = e.response?.data?.message || 'Failed to load profile';
@@ -91,9 +81,9 @@ const validate = (): boolean => {
     validationErrors.value.avatar = 'Invalid URL';
   }
 
-  ['gallery1', 'gallery2', 'gallery3', 'gallery4', 'gallery5'].forEach((key) => {
-    if (form.value[key as keyof typeof form.value] && !isValidUrl(form.value[key as keyof typeof form.value])) {
-      validationErrors.value[key] = 'Invalid URL';
+  form.value.galleryImages.forEach((url, idx) => {
+    if (url && !isValidUrl(url)) {
+      validationErrors.value[`galleryImages_${idx}`] = 'Invalid URL';
     }
   });
 
@@ -114,16 +104,13 @@ const handleSubmit = async () => {
       bio: form.value.bio.trim() || null,
       portfolioLink: form.value.portfolioLink.trim() || null,
       avatar: form.value.avatar.trim() || null,
-      gallery1: form.value.gallery1.trim() || null,
-      gallery2: form.value.gallery2.trim() || null,
-      gallery3: form.value.gallery3.trim() || null,
-      gallery4: form.value.gallery4.trim() || null,
-      gallery5: form.value.gallery5.trim() || null,
+      galleryImages: form.value.galleryImages.map(url => url.trim()).filter(Boolean),
     });
-
-    router.push(`/user/${userId.value}`);
+    showToast('Profil başarıyla güncellendi!', 'success');
+    setTimeout(() => router.push(`/user/${userId.value}`), 1200);
   } catch (e: any) {
     error.value = e.response?.data?.message || 'Failed to update profile';
+    showToast(error.value, 'error');
   } finally {
     saving.value = false;
   }
@@ -242,23 +229,24 @@ const handleCancel = () => {
             Gallery Images (Floating around profile)
           </h3>
           <p class="text-sm text-[hsl(var(--muted-foreground))]">
-            Add up to 5 image URLs for the floating gallery effect
+            İlk 5 görsel Hero'da görünecek. Tüm görseller portfolio gridde gösterilecek.
           </p>
-
-          <div v-for="i in 5" :key="i" class="space-y-2">
-            <label class="block text-sm font-medium text-[hsl(var(--foreground))]">
-              Gallery Image {{ i }}
-            </label>
+          <div v-for="(url, idx) in form.galleryImages" :key="idx" class="space-y-2 flex items-center gap-2">
             <input
-              v-model="form[`gallery${i}` as keyof typeof form]"
+              v-model="form.galleryImages[idx]"
               type="url"
               class="w-full px-4 py-2 rounded-lg border bg-[hsl(var(--background))] border-[hsl(var(--border))] text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))] focus:border-transparent"
-              :placeholder="`https://images.example.com/work${i}.jpg`"
+              :placeholder="`https://images.example.com/work${idx+1}.jpg`"
             />
-            <p v-if="validationErrors[`gallery${i}`]" class="text-sm text-red-500">
-              {{ validationErrors[`gallery${i}`] }}
+            <button type="button" @click="form.galleryImages.splice(idx, 1)" class="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600">Sil</button>
+            <p v-if="validationErrors[`galleryImages_${idx}`]" class="text-sm text-red-500">
+              {{ validationErrors[`galleryImages_${idx}`] }}
             </p>
+            <div v-if="url" class="mt-2">
+              <img :src="url" alt="Gallery Image" class="max-h-32 rounded border" />
+            </div>
           </div>
+          <button type="button" @click="form.galleryImages.push('')" class="mt-2 px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600">+ Görsel Ekle</button>
         </div>
 
         <!-- Actions -->
