@@ -1,27 +1,38 @@
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
 
-// Global theme store (reactive)
-const theme = ref(
-  localStorage.getItem('theme') ||
-  (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
-);
+export type Theme = 'light' | 'dark';
 
-function setTheme(newTheme: 'light' | 'dark') {
-  console.log('[theme.ts] setTheme called with:', newTheme);
-  theme.value = newTheme;
-  document.documentElement.classList.remove('light', 'dark');
-  document.documentElement.classList.add(newTheme);
-  localStorage.setItem('theme', newTheme);
-  console.log('[theme.ts] theme.value:', theme.value, 'html class:', document.documentElement.className);
-}
-
-function toggleTheme() {
-  setTheme(theme.value === 'dark' ? 'light' : 'dark');
-}
-
-// Ensure theme is set on load
-setTheme(theme.value as 'light' | 'dark');
+const theme = ref<Theme>((localStorage.getItem('theme') as Theme) || 'light');
 
 export function useTheme() {
-  return { theme, setTheme, toggleTheme };
+  const setTheme = (newTheme: Theme) => {
+    console.log('[theme.ts] setTheme called with:', newTheme);
+    theme.value = newTheme;
+    localStorage.setItem('theme', newTheme);
+    
+    console.log('[theme.ts] theme.value:', theme.value, 'html class:', document.documentElement.className);
+    
+    // Update DOM
+    if (newTheme === 'dark') {
+      document.documentElement.classList.add('dark');
+      document.documentElement.classList.remove('light');
+    } else {
+      document.documentElement.classList.add('light');
+      document.documentElement.classList.remove('dark');
+    }
+  };
+
+  const toggleTheme = () => {
+    const newTheme = theme.value === 'light' ? 'dark' : 'light';
+    setTheme(newTheme);
+  };
+
+  // Initialize on mount
+  setTheme(theme.value);
+
+  return {
+    theme,
+    setTheme,
+    toggleTheme,
+  };
 }

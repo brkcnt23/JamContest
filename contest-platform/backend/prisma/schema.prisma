@@ -15,12 +15,12 @@ enum UserRole {
 }
 
 enum ContestStatus {
-  DRAFT           // admin oluşturdu, henüz yayınlanmadı
-  APPLICATIONS    // başvurular açık
-  ACTIVE          // konu yayınlandı, submission açık
-  SUBMISSION_CLOSED // teslim kapandı, jüri puanlıyor
-  JUDGING         // jüri değerlendirmesi devam ediyor
-  COMPLETED       // sonuçlar açıklandı
+  DRAFT
+  APPLICATIONS
+  ACTIVE
+  SUBMISSION_CLOSED
+  JUDGING
+  COMPLETED
   CANCELLED
 }
 
@@ -30,11 +30,20 @@ model User {
   passwordHash  String
   username      String   @unique
   displayName   String?
-  bio           String?
-  avatar        String?  // profile photo path
+  bio           String?  // 3-5 cümle, max 250 karakter
+  about         String?  @db.Text // 3-4 paragraf, max 1000 karakter
+  avatar        String?
   tagline       String?
   portfolioLink String?
   galleryImages String[]
+  
+  // Contact fields
+  contactEmail      String?
+  contactInstagram  String?
+  contactTwitter    String?
+  contactBehance    String?
+  contactArtStation String?
+  
   role          UserRole @default(USER)
 
   createdAt     DateTime @default(now())
@@ -56,32 +65,27 @@ model Contest {
   description       String        @db.Text
   slug              String        @unique
   
-  // Timeline
   applicationStart  DateTime
   applicationEnd    DateTime
-  topicRevealAt     DateTime      // konu açılma zamanı
+  topicRevealAt     DateTime
   submissionEnd     DateTime
   judgingEnd        DateTime?
   
-  // Content
-  topic             String?       @db.Text  // null iken gizli
+  topic             String?       @db.Text
   rules             String?       @db.Text
   prizes            String?       @db.Text
   
-  // Settings
   maxParticipants   Int?
   requiresApproval  Boolean       @default(false)
   
-  // File constraints
-  maxFileSize       Int           @default(209715200) // 200MB
-  allowedFormats    String[]      // ['png','jpg','mp4','zip']
+  maxFileSize       Int           @default(209715200)
+  allowedFormats    String[]
   
   status            ContestStatus @default(DRAFT)
   
   createdAt         DateTime      @default(now())
   updatedAt         DateTime      @updatedAt
   
-  // Relations
   applications      ContestApplication[]
   submissions       Submission[]
   juryAssignments   JuryAssignment[]
@@ -95,7 +99,7 @@ model ContestApplication {
   userId      String
   contestId   String
   
-  status      String   @default("PENDING") // PENDING, APPROVED, REJECTED
+  status      String   @default("PENDING")
   message     String?  @db.Text
   
   createdAt   DateTime @default(now())
@@ -115,13 +119,10 @@ model Submission {
   title       String
   description String?  @db.Text
   
-  // File metadata
   files       SubmissionFile[]
-  
-  // Jury evaluation
   scores      JuryScore[]
-  finalScore  Float?   // average of all jury scores
-  rank        Int?     // calculated rank in contest
+  finalScore  Float?
+  rank        Int?
   
   submittedAt DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -129,7 +130,7 @@ model Submission {
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   contest     Contest  @relation(fields: [contestId], references: [id], onDelete: Cascade)
   
-  @@unique([userId, contestId]) // her user contest'e 1 submission
+  @@unique([userId, contestId])
   @@index([contestId, finalScore])
 }
 
@@ -139,7 +140,7 @@ model SubmissionFile {
   
   filename     String
   originalName String
-  filepath     String   // uploads/contests/{contestId}/submissions/{userId}/{submissionId}/file.ext
+  filepath     String
   mimeType     String
   size         Int
   
@@ -169,7 +170,7 @@ model JuryScore {
   juryId       String
   submissionId String
   
-  score        Float    // 0-100
+  score        Float
   comment      String?  @db.Text
   
   createdAt    DateTime @default(now())

@@ -20,53 +20,9 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  works: () => [
-    {
-      id: 1,
-      title: 'Abstract Dreams',
-      category: 'Digital Art',
-      year: '2024',
-      image: 'https://images.unsplash.com/photo-1541961017774-22349e4a1262?w=800&h=1000&fit=crop',
-      span: 'large',
-    },
-    {
-      id: 2,
-      title: 'Urban Symphony',
-      category: 'Mixed Media',
-      year: '2024',
-      image: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=800&h=1000&fit=crop',
-    },
-    {
-      id: 3,
-      title: 'Color Theory',
-      category: 'Painting',
-      year: '2023',
-      image: 'https://images.unsplash.com/photo-1547891654-e66ed7ebb968?w=800&h=1000&fit=crop',
-    },
-    {
-      id: 4,
-      title: 'Ethereal Moments',
-      category: 'Photography',
-      year: '2023',
-      image: 'https://images.unsplash.com/photo-1460661419201-fd4cecdf8a8b?w=800&h=1000&fit=crop',
-      span: 'wide',
-    },
-    {
-      id: 5,
-      title: 'Neon Nights',
-      category: 'Digital Art',
-      year: '2024',
-      image: 'https://images.unsplash.com/photo-1549887534-1541e9326642?w=800&h=1000&fit=crop',
-      span: 'tall',
-    },
-    {
-      id: 6,
-      title: 'Textured Horizons',
-      category: 'Mixed Media',
-      year: '2023',
-      image: 'https://images.unsplash.com/photo-1518998053901-5348d3961a04?w=800&h=1000&fit=crop',
-    },
-  ],
+  works: () => [],
+  portfolioLink: undefined,
+  galleryImages: () => [],
 });
 
 const inView = ref<boolean[]>([]);

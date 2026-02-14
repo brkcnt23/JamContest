@@ -2,7 +2,11 @@
   <header class="header">
     <div class="container">
       <router-link to="/" class="logo">
-        <h1>Contest Platform</h1>
+        <img 
+          :src="theme === 'dark' ? '/images/jamcontest_logo_white_for_dark.png' : '/images/logo-JC.png'" 
+          alt="JamContest" 
+          class="logo-img"
+        />
       </router-link>
       
       <nav class="nav">
@@ -13,7 +17,9 @@
           <router-link v-if="authStore.isAdmin" to="/admin">Admin</router-link>
           <router-link v-if="authStore.isJury" to="/jury">Jury</router-link>
           <template v-if="authStore.user?.id">
-            <router-link :to="{ name: 'UserProfile', params: { id: authStore.user.id } }">{{ authStore.user?.username }}</router-link>
+            <router-link :to="{ name: 'UserProfile', params: { id: authStore.user.id } }">
+              {{ authStore.user?.username }}
+            </router-link>
           </template>
           <template v-else>
             <router-link to="/profile">{{ authStore.user?.username || 'Profile' }}</router-link>
@@ -33,9 +39,11 @@
 <script setup lang="ts">
 import { useAuthStore } from '@/stores/auth';
 import { useRouter } from 'vue-router';
+import { useTheme } from '@/stores/theme';
 
 const authStore = useAuthStore();
 const router = useRouter();
+const { theme } = useTheme();
 
 const handleLogout = () => {
   authStore.logout();
@@ -45,90 +53,131 @@ const handleLogout = () => {
 
 <style scoped>
 .header {
-  background: linear-gradient(90deg, #667eea 0%, #8e44ff 100%);
-  color: white;
-  padding: 1rem 0;
-  box-shadow: 0 6px 20px rgba(102,126,234,0.12);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: hsl(var(--background));
+  border-bottom: 1px solid hsl(var(--border));
+  backdrop-filter: blur(12px);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .container {
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
-  padding: 0 20px;
+  padding: 0 2rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  height: 72px;
 }
 
 .logo {
   text-decoration: none;
-  color: white;
+  display: flex;
+  align-items: center;
 }
 
-.logo h1 {
-  font-size: 1.5rem;
-  font-weight: 600;
-  margin: 0;
+.logo-img {
+  height: 48px;
+  width: auto;
+  transition: transform 0.2s ease;
+}
+
+.logo-img:hover {
+  transform: scale(1.05);
 }
 
 .nav {
   display: flex;
-  gap: 1.5rem;
+  gap: 2rem;
   align-items: center;
 }
 
 .nav a {
-  color: rgba(255,255,255,0.95);
+  color: hsl(var(--foreground));
   text-decoration: none;
-  font-weight: 600;
-  transition: opacity 0.18s, transform 0.12s;
+  font-weight: 500;
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
+  position: relative;
 }
 
-.nav a:hover {
-  opacity: 1;
-  transform: translateY(-2px);
+.nav a::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: hsl(var(--foreground));
+  transition: width 0.2s ease;
+}
+
+.nav a:hover::after {
+  width: 100%;
 }
 
 .nav a.router-link-active {
-  border-bottom: 2px solid white;
-  padding-bottom: 2px;
+  color: hsl(var(--foreground));
+  font-weight: 600;
+}
+
+.nav a.router-link-active::after {
+  width: 100%;
 }
 
 .btn-primary, .btn-secondary, .btn-logout {
-  padding: 8px 16px;
-  border-radius: 4px;
+  padding: 0.5rem 1.25rem;
+  border-radius: 8px;
   font-weight: 500;
-  transition: all 0.2s;
-}
-
-.btn-primary {
-  background: #7c5cff;
-  color: white;
-}
-
-.btn-primary:hover {
-  background: #6749e6;
-}
-
-.btn-secondary {
-  background: transparent;
-  border: 2px solid rgba(255,255,255,0.35);
-  color: white;
-}
-
-.btn-secondary:hover {
-  background: rgba(255,255,255,0.95);
-  color: #2c3e50;
-}
-
-.btn-logout {
-  background: #e74c3c;
-  color: white;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
   border: none;
   cursor: pointer;
 }
 
+.btn-primary {
+  background: #000;
+  color: #fff;
+}
+
+:root.dark .btn-primary {
+  background: #fff;
+  color: #000;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.btn-secondary {
+  background: transparent;
+  border: 1.5px solid hsl(var(--border));
+  color: hsl(var(--foreground));
+}
+
+.btn-secondary:hover {
+  background: hsl(var(--muted));
+}
+
+.btn-logout {
+  background: #ef4444;
+  color: white;
+}
+
 .btn-logout:hover {
-  background: #c0392b;
+  background: #dc2626;
+}
+
+@media (max-width: 768px) {
+  .nav {
+    gap: 1rem;
+  }
+  
+  .nav a {
+    font-size: 0.85rem;
+  }
 }
 </style>

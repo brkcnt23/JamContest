@@ -5,7 +5,7 @@
       <router-view />
     </main>
     <Footer v-if="!isBlankLayout" />
-      <Toast v-if="toast && toast.message" :message="toast.message" :type="toast.type" :duration="toast.duration" />
+      <Toast :message="toast?.message || ''" :type="toast?.type" :duration="toast?.duration" />
   </div>
 </template>
 

@@ -7,7 +7,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, watch, computed } from 'vue'  // ← TEKRAR KONTROL ET
 
 const props = defineProps<{
   message: string

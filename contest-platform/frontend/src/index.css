@@ -50,3 +50,90 @@ body, #app {
     --accent-foreground: 210 40% 98%;
   }
 }
+/* View Transition API - Smooth Theme Change */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 1s;
+  animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+::view-transition-old(root) {
+  animation-name: fade-out, slide-to-left;
+}
+
+::view-transition-new(root) {
+  animation-name: fade-in, slide-from-right;
+}
+
+@keyframes fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes slide-to-left {
+  to {
+    transform: translateX(-30px);
+  }
+}
+
+@keyframes slide-from-right {
+  from {
+    transform: translateX(30px);
+  }
+}
+
+/* Dark/Light theme CSS variables */
+:root.light {
+  --background: 0 0% 100%;
+  --foreground: 0 0% 0%;
+  --muted: 0 0% 96%;
+  --muted-foreground: 0 0% 45%;
+  --border: 0 0% 90%;
+  --ring: 0 0% 0%;
+}
+
+:root.dark {
+  --background: 0 0% 0%;
+  --foreground: 0 0% 100%;
+  --muted: 0 0% 15%;
+  --muted-foreground: 0 0% 65%;
+  --border: 0 0% 20%;
+  --ring: 0 0% 100%;
+}
+
+/* Smooth transitions for all theme-dependent properties */
+* {
+  transition: 
+    background-color 1s cubic-bezier(0.4, 0, 0.2, 1),
+    color 1s cubic-bezier(0.4, 0, 0.2, 1),
+    border-color 1s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Preserve animation timing for specific elements */
+@media (prefers-reduced-motion: no-preference) {
+  .fade-in {
+    animation: fade-in 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  .slide-up {
+    animation: slide-up 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+}
+
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
