@@ -1,3 +1,4 @@
+version: '3.8'
 
 services:
   postgres:
@@ -12,39 +13,60 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U contest"]
+      test: ["CMD-SHELL", "pg_isready -U contest -d contest_db"]
       interval: 5s
       timeout: 5s
       retries: 5
 
   backend:
     build:
-      context: .
-      dockerfile: backend/Dockerfile
+      context: ./backend
+      dockerfile: Dockerfile
     container_name: contest-backend
+    ports:
+      - "3000:3000"
     environment:
       DATABASE_URL: "postgresql://contest:contest@postgres:5432/contest_db"
       JWT_SECRET: "1uDVFfHYa0EcFaliwwCtt2Q120cZzKacbGLXZZtbbySxtu2q1cAgEkz0A99clKhK"
-      UPLOAD_PATH: /app/uploads
-    volumes:
-      - ./uploads:/app/uploads
-    ports:
-      - "3000:3000"
+      PORT: 3000
     depends_on:
       postgres:
         condition: service_healthy
-    command: sh -c "npx prisma migrate deploy && node dist/main.js"
-
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    command: sh -c "npx prisma migrate deploy && npm run start:dev"
 
   frontend:
     build:
-      context: .
-      dockerfile: frontend/Dockerfile
+      context: ./frontend
+      dockerfile: Dockerfile
     container_name: contest-frontend
     ports:
       - "5173:5173"
+    environment:
+      VITE_API_URL: "http://localhost:3000"
     depends_on:
       - backend
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: contest-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@jamcontest.com
+      PGADMIN_DEFAULT_PASSWORD: admin123
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: 'False'
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgres
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
 
 volumes:
   postgres_data:
+  pgadmin_data:

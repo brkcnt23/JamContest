@@ -15,6 +15,198 @@ body, #app {
 @tailwind components;
 @tailwind utilities;
 
+/* =====================================================
+   JAMCONTEST - ARTIST COLOR PALETTE
+   Siyah/Beyaz + 6 Canlı Renk
+   ===================================================== */
+
+/* Light Theme - Clean Canvas */
+:root.light {
+  /* Base - Siyah/Beyaz */
+  --background: 0 0% 100%;           /* Pure white */
+  --foreground: 0 0% 5%;             /* Almost black */
+  
+  /* Muted */
+  --muted: 0 0% 96%;                 /* Light gray */
+  --muted-foreground: 0 0% 45%;      /* Medium gray */
+  
+  /* Border & Ring */
+  --border: 0 0% 90%;
+  --ring: 0 0% 20%;
+  
+  /* BRAND COLORS - 6 Canlı Renk */
+  
+  /* 1. Deep Purple - Ana Marka */
+  --brand: 270 50% 40%;              /* #6B46C1 */
+  --brand-foreground: 0 0% 100%;
+  
+  /* 2. Coral - Warm Energy */
+  --accent-coral: 10 78% 60%;        /* #F87171 */
+  --accent-coral-dark: 10 78% 50%;
+  
+  /* 3. Teal - Cool Professional */
+  --accent-teal: 180 65% 45%;        /* #14B8A6 */
+  --accent-teal-dark: 180 65% 35%;
+  
+  /* 4. Amber - Creative Warmth */
+  --accent-amber: 40 96% 55%;        /* #FBBF24 */
+  --accent-amber-dark: 40 96% 45%;
+  
+  /* 5. Rose - Artistic Passion */
+  --accent-rose: 350 80% 60%;        /* #FB7185 */
+  --accent-rose-dark: 350 80% 50%;
+  
+  /* 6. Emerald - Fresh & Growth */
+  --accent-emerald: 160 84% 45%;     /* #10B981 */
+  --accent-emerald-dark: 160 84% 35%;
+}
+
+/* Dark Theme - Rich Canvas */
+:root.dark {
+  /* Base - Siyah/Beyaz */
+  --background: 0 0% 8%;             /* Deep charcoal */
+  --foreground: 0 0% 95%;            /* Off-white */
+  
+  /* Muted */
+  --muted: 0 0% 15%;
+  --muted-foreground: 0 0% 60%;
+  
+  /* Border & Ring */
+  --border: 0 0% 20%;
+  --ring: 0 0% 80%;
+  
+  /* BRAND COLORS - 6 Canlı Renk (Daha parlak) */
+  
+  /* 1. Vibrant Purple - Ana Marka */
+  --brand: 270 60% 65%;              /* #A78BFA */
+  --brand-foreground: 0 0% 100%;
+  
+  /* 2. Coral - Warm Energy */
+  --accent-coral: 10 78% 65%;        /* #FCA5A5 */
+  --accent-coral-dark: 10 78% 55%;
+  
+  /* 3. Teal - Cool Professional */
+  --accent-teal: 180 65% 55%;        /* #2DD4BF */
+  --accent-teal-dark: 180 65% 45%;
+  
+  /* 4. Amber - Creative Warmth */
+  --accent-amber: 40 96% 65%;        /* #FCD34D */
+  --accent-amber-dark: 40 96% 55%;
+  
+  /* 5. Rose - Artistic Passion */
+  --accent-rose: 350 80% 70%;        /* #FDA4AF */
+  --accent-rose-dark: 350 80% 60%;
+  
+  /* 6. Emerald - Fresh & Growth */
+  --accent-emerald: 160 84% 55%;     /* #34D399 */
+  --accent-emerald-dark: 160 84% 45%;
+}
+
+/* =====================================================
+   VIEW TRANSITION API - Smooth Theme Change
+   ===================================================== */
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 0.8s;
+  animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+::view-transition-old(root) {
+  animation-name: fade-out, slide-to-left;
+}
+
+::view-transition-new(root) {
+  animation-name: fade-in, slide-from-right;
+}
+
+@keyframes fade-out {
+  to { opacity: 0; }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+}
+
+@keyframes slide-to-left {
+  to { transform: translateX(-20px); }
+}
+
+@keyframes slide-from-right {
+  from { transform: translateX(20px); }
+}
+
+/* =====================================================
+   SMOOTH TRANSITIONS
+   ===================================================== */
+
+* {
+  transition: 
+    background-color 0.8s cubic-bezier(0.4, 0, 0.2, 1),
+    color 0.8s cubic-bezier(0.4, 0, 0.2, 1),
+    border-color 0.8s cubic-bezier(0.4, 0, 0.2, 1),
+    fill 0.8s cubic-bezier(0.4, 0, 0.2, 1),
+    stroke 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* =====================================================
+   BASE STYLES
+   ===================================================== */
+
+body {
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Inter', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* =====================================================
+   SCROLLBAR
+   ===================================================== */
+
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: hsl(var(--muted));
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--brand));
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--brand) / 0.8);
+}
+
+/* =====================================================
+   ANIMATIONS
+   ===================================================== */
+
+@media (prefers-reduced-motion: no-preference) {
+  .fade-in {
+    animation: fade-in 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  .slide-up {
+    animation: slide-up 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+}
+
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 @layer base {
   :root {
     --background: 0 0% 100%;

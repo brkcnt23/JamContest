@@ -1,11 +1,13 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue';
-import { ArrowRight, Menu, X, Sun, Moon, Instagram, Twitter, Mail } from 'lucide-vue-next';
-import Badge from '@/components/ui/Badge.vue';
-import Button from '@/components/ui/Button.vue';
-import BlurText from '@/components/ui/BlurText.vue';
-import Glow from '@/components/ui/Glow.vue';
+import { ref, watch, nextTick, onMounted, onUnmounted } from 'vue';
 import { useTheme } from '@/stores/theme';
+import { Menu, X, Instagram, Twitter, Mail, ArrowRight } from 'lucide-vue-next';
+import Badge from './Badge.vue';
+import Button from './Button.vue';
+import BlurText from './BlurText.vue';
+import Glow from './Glow.vue';
+import { Sun, Moon } from 'lucide-vue-next';
+
 import { useAuthStore } from '@/stores/auth';
 import { useRouter, useRoute } from 'vue-router';
 
@@ -37,8 +39,15 @@ const authStore = useAuthStore();
 const router = useRouter();
 const route = useRoute();
 
-const isMenuOpen = ref(false);
+const overlayActive = ref(false);
 const animationKey = ref(0);
+const isMenuOpen = ref(false);
+const activeSection = ref('portfolio');
+
+let overlayTimeout: ReturnType<typeof setTimeout> | null = null;
+let lastTheme = theme.value;
+let firstLoad = true;
+let observer: IntersectionObserver | null = null;
 
 const positions = [
   { left: '10%', top: '10%', delay: '-1s' },
@@ -55,32 +64,108 @@ const menuItems = [
   { label: 'CONTACT', href: '#contact' },
 ];
 
+function playOverlayOnce() {
+  if (overlayActive.value) return;
+  overlayActive.value = true;
+  if (overlayTimeout) clearTimeout(overlayTimeout);
+  overlayTimeout = setTimeout(() => {
+    overlayActive.value = false;
+    animationKey.value++;
+  }, 600);
+}
+
 function openPortfolio() {
   if (props.portfolioLink) {
     window.open(props.portfolioLink, '_blank');
   }
 }
 
-const handleThemeToggle = async () => {
-  // View Transition API ile smooth geçiş
-  if (!document.startViewTransition) {
-    toggleTheme();
-    animationKey.value++;
-    return;
-  }
+function debugToggleTheme() {
+  toggleTheme();
+}
 
-  await document.startViewTransition(() => {
-    toggleTheme();
-    animationKey.value++;
-  }).ready;
-};
+function handleMenuClick(event: MouseEvent, href: string) {
+  if (href.startsWith('#')) {
+    event.preventDefault();
+    isMenuOpen.value = false;
+    
+    const sectionId = href.substring(1);
+    const element = document.getElementById(sectionId);
+    
+    if (element) {
+      const headerOffset = 72;
+      const elementPosition = element.getBoundingClientRect().top;
+      const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: 'smooth'
+      });
+    }
+  }
+}
+
+function setupIntersectionObserver() {
+  const options = {
+    root: null,
+    rootMargin: '-100px 0px -66% 0px',
+    threshold: 0
+  };
+
+  observer = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (entry.isIntersecting) {
+        activeSection.value = entry.target.id;
+      }
+    });
+  }, options);
+
+  // Observe all sections
+  const sections = ['portfolio', 'about', 'contact'];
+  sections.forEach(id => {
+    const element = document.getElementById(id);
+    if (element && observer) {
+      observer.observe(element);
+    }
+  });
+}
+
+onMounted(() => {
+  playOverlayOnce();
+  firstLoad = false;
+  lastTheme = theme.value;
+  
+  // Setup intersection observer after a delay to ensure sections are rendered
+  setTimeout(() => {
+    setupIntersectionObserver();
+  }, 500);
+});
+
+onUnmounted(() => {
+  if (observer) {
+    observer.disconnect();
+  }
+});
+
+watch(theme, (newTheme, oldTheme) => {
+  if (firstLoad) return;
+  if (newTheme !== oldTheme) {
+    playOverlayOnce();
+    lastTheme = newTheme;
+  }
+});
 </script>
 
 <template>
   <div class="relative min-h-screen overflow-hidden">
+    <!-- White overlay for theme change -->
+    <transition name="overlay-fade">
+      <div v-if="overlayActive" class="fixed left-0 top-0 w-full h-full z-[9999] pointer-events-none" style="background: white; animation: overlay-slide-down 0.6s cubic-bezier(.7,0,.3,1);"></div>
+    </transition>
+    
     <!-- Header -->
     <header
-      class="custom-header fixed top-0 left-0 right-0 z-50 px-4 bg-[hsl(var(--background))]/80 backdrop-blur-sm flex items-center justify-center"
+      class="custom-header fixed top-0 left-0 right-0 z-50 px-4 bg-[hsl(var(--background))]/80 backdrop-blur-md flex items-center justify-center transition-all duration-300"
       style="height: 72px; min-height: 0;">
       <nav class="flex flex-row items-center justify-between w-full max-w-screen-2xl mx-auto h-full">
         <div class="flex items-center h-[56px]">
@@ -95,12 +180,9 @@ const handleThemeToggle = async () => {
         <!-- Center: Logo -->
         <div class="flex items-center justify-center h-[56px] relative">
           <a href="/" class="focus:outline-none cursor-pencil flex items-center justify-center">
-            <img 
-              :src="theme === 'dark' ? '/images/jamcontest_logo_white_for_dark.png' : '/images/logo-JC.png'" 
-              alt="JamContest Logo"
+            <img :src="theme === 'dark' ? '/images/jamcontest_logo_white_for_dark.png' : '/images/logo-JC.png'" alt="JamContest Logo"
               class="h-36 w-auto mx-auto transition-transform hover:scale-105 active:scale-95 cursor-pencil"
-              style="max-height: 120px;" 
-            />
+              style="max-height: 120px;" />
           </a>
         </div>
         
@@ -118,27 +200,19 @@ const handleThemeToggle = async () => {
             class="text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] transition-colors">
             <Mail class="w-5 h-5" />
           </a>
-          
-          <!-- Theme toggle with View Transition API -->
-          <button 
-            @click="handleThemeToggle" 
-            class="ml-2 p-2 rounded-full hover:bg-[hsl(var(--muted))] transition-colors"
-            aria-label="Toggle theme"
-          >
+          <!-- Theme toggle -->
+          <button @click="debugToggleTheme" class="ml-2 p-2 rounded-full hover:bg-[hsl(var(--muted))] transition-colors"
+            aria-label="Toggle theme">
             <Sun v-if="theme === 'light'" class="w-5 h-5" />
             <Moon v-else class="w-5 h-5" />
           </button>
         </div>
       </nav>
 
-      <transition 
-        enter-active-class="transition duration-200 ease-out" 
-        enter-from-class="opacity-0 -translate-y-5"
-        enter-to-class="opacity-100 translate-y-0" 
-        leave-active-class="transition duration-150 ease-in"
-        leave-from-class="opacity-100 translate-y-0" 
-        leave-to-class="opacity-0 -translate-y-5"
-      >
+      <!-- Burger Menu -->
+      <transition enter-active-class="transition duration-200 ease-out" enter-from-class="opacity-0 -translate-y-5"
+        enter-to-class="opacity-100 translate-y-0" leave-active-class="transition duration-150 ease-in"
+        leave-from-class="opacity-100 translate-y-0" leave-to-class="opacity-0 -translate-y-5">
         <div v-if="isMenuOpen"
           class="absolute top-full left-0 right-0 bg-[hsl(var(--background))]/95 backdrop-blur-md border-t border-[hsl(var(--border))] p-8">
           <div class="max-w-screen-2xl mx-auto">
@@ -146,9 +220,14 @@ const handleThemeToggle = async () => {
               v-for="(item, index) in menuItems" 
               :key="item.label" 
               :href="item.href"
-              class="block text-2xl font-bold py-3 hover:text-[hsl(var(--brand))] transition-colors"
-              :style="{ transitionDelay: `${index * 100}ms` }" 
-              @click="isMenuOpen = false"
+              :class="[
+                'block text-2xl font-bold py-3 transition-all duration-300',
+                activeSection === item.href.substring(1) && item.href.startsWith('#')
+                  ? 'text-[hsl(var(--foreground))] translate-x-2'
+                  : 'text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] hover:translate-x-2'
+              ]"
+              :style="{ transitionDelay: `${index * 50}ms` }" 
+              @click="(e) => handleMenuClick(e, item.href)"
             >
               {{ item.label }}
             </a>
@@ -163,6 +242,7 @@ const handleThemeToggle = async () => {
         <div class="grid lg:grid-cols-2 gap-12 items-center">
           <!-- Left: Text Content -->
           <div class="space-y-8">
+
             <div v-if="authStore.user && props.profileUserId && authStore.user.id === props.profileUserId" class="mb-2">
               <Button
                 size="sm"
@@ -173,21 +253,13 @@ const handleThemeToggle = async () => {
                 Edit Profile
               </Button>
             </div>
-            
             <Badge :key="animationKey + '-badge'" variant="outline" class="animate-appear opacity-0">
               <span class="text-[hsl(var(--muted-foreground))]">{{ badgeText }}</span>
             </Badge>
 
             <div>
-              <BlurText 
-                :key="animationKey + '-blur'" 
-                :text="artistName" 
-                :delay="80" 
-                animate-by="letters" 
-                direction="top"
-                class="text-6xl md:text-7xl lg:text-8xl font-bold leading-tight" 
-                style="color: hsl(var(--brand))" 
-              />
+              <BlurText :key="animationKey + '-blur'" :text="artistName" :delay="80" animate-by="letters" direction="top"
+                class="text-6xl md:text-7xl lg:text-8xl font-bold leading-tight" style="color: hsl(var(--brand))" />
             </div>
 
             <div :key="animationKey + '-desc'" class="space-y-4 animate-appear opacity-0 delay-300">
@@ -212,6 +284,14 @@ const handleThemeToggle = async () => {
               <Button size="lg" variant="outline">
                 Get in Touch
               </Button>
+              <Button
+                v-if="authStore.user && props.profileUserId && authStore.user.id === props.profileUserId"
+                size="lg"
+                variant="outline"
+                @click="() => router.push(`/user/${props.profileUserId}/edit`)"
+              >
+                Edit Profile
+              </Button>
             </div>
           </div>
 
@@ -225,18 +305,14 @@ const handleThemeToggle = async () => {
             </div>
 
             <!-- Gallery Images - Floating Around -->
-            <div 
-              v-for="(img, index) in galleryImages.slice(0, 5)" 
-              :key="animationKey + '-img-' + index"
-              class="absolute w-40 h-48 rounded-xl overflow-hidden shadow-lg animate-float-up" 
-              :style="{
+            <div v-for="(img, index) in galleryImages.slice(0, 5)" :key="animationKey + '-img-' + index"
+              class="absolute w-40 h-48 rounded-xl overflow-hidden shadow-lg animate-float-up" :style="{
                 left: positions[index].left,
                 right: positions[index].right,
                 top: positions[index].top,
                 bottom: positions[index].bottom,
                 animationDelay: positions[index].delay,
-              }"
-            >
+              }">
               <img :src="img" :alt="`Gallery ${index + 1}`" class="w-full h-full object-cover" />
             </div>
           </div>
@@ -250,7 +326,8 @@ const handleThemeToggle = async () => {
     <!-- Scroll Indicator -->
     <div :key="animationKey + '-scroll'" class="absolute bottom-8 left-1/2 -translate-x-1/2 text-center animate-appear opacity-0 delay-1000">
       <p class="text-sm text-[hsl(var(--muted-foreground))] mb-2">Scroll to explore</p>
-      <div class="w-6 h-10 border-2 border-[hsl(var(--muted-foreground))] rounded-full mx-auto flex items-start justify-center p-2">
+      <div
+        class="w-6 h-10 border-2 border-[hsl(var(--muted-foreground))] rounded-full mx-auto flex items-start justify-center p-2">
         <div class="w-1 h-2 bg-[hsl(var(--muted-foreground))] rounded-full animate-bounce" />
       </div>
     </div>
@@ -269,8 +346,7 @@ const handleThemeToggle = async () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: hsla(var(--background), 0.8);
-  backdrop-filter: blur(8px);
+  backdrop-filter: blur(12px);
 }
 
 .custom-header::after {
@@ -286,5 +362,32 @@ const handleThemeToggle = async () => {
 
 .cursor-pencil {
   cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"><path fill="%23222" d="M3 17.25V21h3.75l11.06-11.06-3.75-3.75zm2.92 2.92l-1.17-1.17 9.19-9.19 1.17 1.17zm13.06-13.06a1.003 1.003 0 0 0-1.42 0l-1.34 1.34 3.75 3.75 1.34-1.34a1.003 1.003 0 0 0 0-1.42l-2.33-2.33z"/></svg>') 4 24, pointer !important;
+}
+
+@keyframes overlay-slide-down {
+  0% {
+    opacity: 0.9;
+    transform: translateY(-100%);
+  }
+  80% {
+    opacity: 1;
+    transform: translateY(8%);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(0);
+  }
+}
+
+.overlay-fade-enter-active, .overlay-fade-leave-active {
+  transition: opacity 0.6s cubic-bezier(.7,0,.3,1);
+}
+
+.overlay-fade-enter-from, .overlay-fade-leave-to {
+  opacity: 0;
+}
+
+.overlay-fade-enter-to, .overlay-fade-leave-from {
+  opacity: 1;
 }
 </style>

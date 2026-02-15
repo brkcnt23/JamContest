@@ -13,6 +13,33 @@
         <router-link to="/">Home</router-link>
         <router-link to="/contests">Contests</router-link>
         
+        <!-- Theme Toggle (moved) -->
+        <button 
+          @click="handleThemeToggle" 
+          class="theme-toggle-btn"
+          aria-label="Toggle theme"
+        >
+          <Sun v-if="theme === 'light'" class="icon" />
+          <Moon v-else class="icon" />
+        </button>
+
+        <!-- Notifications Icon -->
+        <router-link to="/notifications" class="icon-btn" aria-label="Notifications">
+          <svg xmlns="http://www.w3.org/2000/svg" class="icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V4a2 2 0 10-4 0v1.341C7.67 7.165 6 9.388 6 12v2.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
+        </router-link>
+
+        <!-- Avatar/Profile Icon -->
+        <template v-if="authStore.isAuthenticated">
+          <router-link v-if="authStore.user?.id" :to="{ name: 'UserProfile', params: { id: authStore.user.id } }" class="icon-btn" aria-label="Profile">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A9.004 9.004 0 0112 15c2.21 0 4.21.805 5.879 2.146M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+          </router-link>
+        </template>
+
+        <template v-else>
+          <router-link to="/login" class="btn-primary">Login</router-link>
+          <router-link to="/register" class="btn-secondary">Register</router-link>
+        </template>
+
         <template v-if="authStore.isAuthenticated">
           <router-link v-if="authStore.isAdmin" to="/admin">Admin</router-link>
           <router-link v-if="authStore.isJury" to="/jury">Jury</router-link>
@@ -31,6 +58,16 @@
           <router-link to="/login" class="btn-primary">Login</router-link>
           <router-link to="/register" class="btn-secondary">Register</router-link>
         </template>
+
+        <!-- Theme Toggle -->
+        <button 
+          @click="handleThemeToggle" 
+          class="theme-toggle-btn"
+          aria-label="Toggle theme"
+        >
+          <Sun v-if="theme === 'light'" class="icon" />
+          <Moon v-else class="icon" />
+        </button>
       </nav>
     </div>
   </header>
@@ -40,14 +77,26 @@
 import { useAuthStore } from '@/stores/auth';
 import { useRouter } from 'vue-router';
 import { useTheme } from '@/stores/theme';
+import { Sun, Moon } from 'lucide-vue-next';
 
 const authStore = useAuthStore();
 const router = useRouter();
-const { theme } = useTheme();
+const { theme, toggleTheme } = useTheme();
 
 const handleLogout = () => {
   authStore.logout();
   router.push('/');
+};
+
+const handleThemeToggle = async () => {
+  if (!document.startViewTransition) {
+    toggleTheme();
+    return;
+  }
+
+  await document.startViewTransition(() => {
+    toggleTheme();
+  }).ready;
 };
 </script>
 
@@ -79,7 +128,7 @@ const handleLogout = () => {
 }
 
 .logo-img {
-  height: 48px;
+  height: 152px;  /* 48px → 56px */
   width: auto;
   transition: transform 0.2s ease;
 }
@@ -110,7 +159,7 @@ const handleLogout = () => {
   left: 0;
   width: 0;
   height: 2px;
-  background: hsl(var(--foreground));
+  background: hsl(var(--brand));
   transition: width 0.2s ease;
 }
 
@@ -119,7 +168,7 @@ const handleLogout = () => {
 }
 
 .nav a.router-link-active {
-  color: hsl(var(--foreground));
+  color: hsl(var(--brand));
   font-weight: 600;
 }
 
@@ -163,12 +212,34 @@ const handleLogout = () => {
 }
 
 .btn-logout {
-  background: #ef4444;
+  background: hsl(var(--accent-coral));
   color: white;
 }
 
 .btn-logout:hover {
-  background: #dc2626;
+  background: hsl(var(--accent-coral-dark));
+}
+
+.theme-toggle-btn {
+  background: none;
+  border: none;
+  padding: 0.5rem;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: hsl(var(--foreground));
+  transition: all 0.2s ease;
+}
+
+.theme-toggle-btn:hover {
+  background: hsl(var(--muted));
+}
+
+.theme-toggle-btn .icon {
+  width: 20px;
+  height: 20px;
 }
 
 @media (max-width: 768px) {

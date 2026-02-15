@@ -1,11 +1,5 @@
 <template>
   <div :class="['auth-bg', theme]">
-    <div class="theme-toggle">
-      <button @click="toggleTheme" :class="['toggle-btn', theme]">
-        <span v-if="theme === 'light'">🌞</span>
-        <span v-else>🌚</span>
-      </button>
-    </div>
     <div class="auth-card">
       <div class="icon-box">
         <svg width="48" height="48" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10zm0 2c-3.31 0-6 2.69-6 6v1a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-1c0-3.31-2.69-6-6-6z"/></svg>
@@ -86,12 +80,6 @@ const handleRegister = async () => {
   }
   .auth-bg.light {
     background: #fff;
-  }
-  .theme-toggle {
-    position: absolute;
-    top: 32px;
-    right: 32px;
-    z-index: 10;
   }
   .toggle-btn {
     background: none;

@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
+import { ArrowRight } from 'lucide-vue-next';
 import Badge from './Badge.vue';
 import Button from './Button.vue';
-import { ArrowRight } from 'lucide-vue-next';
 
-interface FeaturedWork {
+interface Work {
   id: number;
   title: string;
   category: string;
@@ -14,52 +14,61 @@ interface FeaturedWork {
 }
 
 interface Props {
-  works?: FeaturedWork[];
+  works?: Work[];
   portfolioLink?: string;
   galleryImages?: string[];
 }
 
 const props = withDefaults(defineProps<Props>(), {
   works: () => [],
-  portfolioLink: undefined,
+  portfolioLink: '',
   galleryImages: () => [],
 });
 
-const inView = ref<boolean[]>([]);
-
-const getGridClass = (span?: string) => {
-  switch (span) {
-    case 'large':
-      return 'md:col-span-2 md:row-span-2';
-    case 'wide':
-      return 'md:col-span-2';
-    case 'tall':
-      return 'md:row-span-2';
-    default:
-      return '';
-  }
-};
+const isVisible = ref(false);
+const imageSpans = ref<Record<number, string>>({});
 
 onMounted(() => {
-  inView.value = new Array(props.works.length).fill(false);
-
-  const observer = new IntersectionObserver(
-    (entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          const index = parseInt(entry.target.getAttribute('data-index') || '0');
-          inView.value[index] = true;
+  setTimeout(() => {
+    isVisible.value = true;
+  }, 100);
+  
+  // Calculate aspect ratios for gallery images
+  if (props.galleryImages.length > 0) {
+    props.galleryImages.forEach((url, index) => {
+      const img = new Image();
+      img.onload = () => {
+        const ratio = img.naturalWidth / img.naturalHeight;
+        
+        if (ratio > 1.5) {
+          imageSpans.value[index] = 'wide'; // Horizontal
+        } else if (ratio < 0.7) {
+          imageSpans.value[index] = 'tall'; // Vertical
+        } else if (ratio > 1.2) {
+          imageSpans.value[index] = 'default-wide';
+        } else {
+          imageSpans.value[index] = 'default'; // Square-ish
         }
-      });
-    },
-    { threshold: 0.1 }
-  );
+      };
+      img.src = url;
+    });
+  }
+});
 
-  document.querySelectorAll('.work-card').forEach((card) => {
-    observer.observe(card);
-  });
-
-  return () => observer.disconnect();
+const displayWorks = computed(() => {
+  if (props.works && props.works.length > 0) {
+    return props.works;
+  }
+  
+  // Convert gallery images to works format
+  return props.galleryImages.map((url, index) => ({
+    id: index,
+    title: `Artwork ${index + 1}`,
+    category: 'Gallery',
+    year: new Date().getFullYear().toString(),
+    image: url,
+    span: imageSpans.value[index] as any,
+  }));
 });
 
 function openPortfolio() {
@@ -70,43 +79,42 @@ function openPortfolio() {
 </script>
 
 <template>
-  <section class="relative py-24 px-6 bg-[hsl(var(--background))]">
+  <section id="portfolio" class="py-24 px-6 bg-[hsl(var(--background))] scroll-mt-20">
     <div class="max-w-screen-2xl mx-auto">
-      <!-- Section Header -->
-      <div class="mb-16 text-center">
+      <div class="text-center mb-16">
         <Badge variant="outline" class="mb-4">
-          <span class="text-[hsl(var(--muted-foreground))]">Featured Works</span>
+          <span class="text-[hsl(var(--muted-foreground))]">Portfolio</span>
         </Badge>
-        <h2 class="text-4xl md:text-5xl lg:text-6xl font-bold mb-4 text-[hsl(var(--foreground))]">
-          Selected Projects
+        <h2 class="text-5xl md:text-6xl font-bold text-[hsl(var(--foreground))] mb-4">
+          Featured Works
         </h2>
         <p class="text-lg text-[hsl(var(--muted-foreground))] max-w-2xl mx-auto">
-          Portfolioya eklediğiniz tüm görseller aşağıda grid olarak gösterilir.
+          A collection of creative projects and artistic expressions
         </p>
       </div>
-      <!-- Portfolio Grid -->
-      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-        <div v-for="(img, idx) in galleryImages" :key="'gallery-grid-' + idx" class="work-card rounded-xl overflow-hidden shadow-lg border animate-appear opacity-0" :data-index="idx">
-          <img :src="img" alt="Portfolio Image" class="w-full h-64 object-cover" />
-        </div>
-      </div>
-      <!-- Eski works grid aşağıda kalabilir veya kaldırılabilir -->
-      <!-- Masonry Grid Layout -->
-      <div class="grid grid-cols-1 md:grid-cols-3 auto-rows-[280px] gap-6 mt-12">
-        <div v-for="(work, index) in works" :key="work.id" :data-index="index"
-          class="work-card group cursor-pencil cursor-pointer relative overflow-hidden rounded-xl bg-[hsl(var(--muted))] transition-all duration-500"
+
+      <!-- Masonry Grid -->
+      <div class="masonry-grid">
+        <div
+          v-for="(work, index) in displayWorks"
+          :key="work.id"
           :class="[
-            getGridClass(work.span),
-            inView[index]
-              ? 'opacity-100 translate-y-0'
-              : 'opacity-0 translate-y-8'
-          ]" :style="{
-            transitionDelay: `${index * 100}ms`
-          }">
-          <img :src="work.image" :alt="work.title"
-            class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
-          <div
-            class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+            'masonry-item group relative overflow-hidden rounded-xl cursor-pointer',
+            work.span === 'wide' && 'masonry-wide',
+            work.span === 'tall' && 'masonry-tall',
+            work.span === 'default-wide' && 'masonry-default-wide',
+            isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+          ]"
+          :style="{
+            transitionDelay: `${index * 50}ms`
+          }"
+        >
+          <img 
+            :src="work.image" 
+            :alt="work.title"
+            class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+          />
+          <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
             <div class="absolute bottom-0 left-0 right-0 p-6 text-white">
               <Badge class="mb-2 bg-white/20 backdrop-blur-sm text-white border-white/40">
                 {{ work.category }}
@@ -128,8 +136,50 @@ function openPortfolio() {
     </div>
   </section>
 </template>
-<style>
-.cursor-pencil {
-  cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"><path fill="%23222" d="M3 17.25V21h3.75l11.06-11.06-3.75-3.75zm2.92 2.92l-1.17-1.17 9.19-9.19 1.17 1.17zm13.06-13.06a1.003 1.003 0 0 0-1.42 0l-1.34 1.34 3.75 3.75 1.34-1.34a1.003 1.003 0 0 0 0-1.42l-2.33-2.33z"/></svg>') 4 24, pointer !important;
+
+<style scoped>
+.masonry-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  grid-auto-rows: 200px;
+  gap: 1rem;
+}
+
+.masonry-item {
+  transition: opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1),
+              transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Default - Square */
+.masonry-item {
+  grid-row: span 2;
+}
+
+/* Wide - Horizontal */
+.masonry-wide {
+  grid-column: span 2;
+  grid-row: span 2;
+}
+
+/* Tall - Vertical */
+.masonry-tall {
+  grid-row: span 3;
+}
+
+/* Default Wide - Slightly wider */
+.masonry-default-wide {
+  grid-column: span 2;
+  grid-row: span 1;
+}
+
+@media (max-width: 768px) {
+  .masonry-grid {
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    grid-auto-rows: 180px;
+  }
+  
+  .masonry-wide {
+    grid-column: span 1;
+  }
 }
 </style>

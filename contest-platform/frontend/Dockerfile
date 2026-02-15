@@ -1,12 +1,19 @@
 FROM node:20-alpine
+
 WORKDIR /app
 
-COPY frontend/package.json frontend/package-lock.json* ./
+# Copy package files
+COPY package.json package-lock.json* ./
+
+# Install dependencies
 RUN npm install
 
-COPY frontend/src ./src
-COPY frontend/public ./public
-COPY frontend/index.html ./
-COPY frontend/*.config.* frontend/*.json frontend/*.ts ./
+# Copy source files
+COPY src ./src
+COPY public ./public
+COPY index.html ./
+COPY *.config.* *.json *.ts ./
 
-CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "5173"]
+EXPOSE 5173
+
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]

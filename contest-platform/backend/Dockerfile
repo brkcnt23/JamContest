@@ -1,27 +1,25 @@
-FROM node:20-slim AS builder
+FROM node:20-alpine
+
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y openssl
+# Install OpenSSL for Prisma
+RUN apk add --no-cache openssl
 
-COPY backend/package.json backend/package-lock.json* ./
+# Copy package files
+COPY package.json package-lock.json* ./
+
+# Install dependencies
 RUN npm install
 
-COPY backend/src ./src
-COPY backend/prisma ./prisma
-COPY backend/tsconfig.json ./
+# Copy source files
+COPY prisma ./prisma
+COPY src ./src
+COPY tsconfig.json ./
 
-ENV DATABASE_URL="postgresql://placeholder:placeholder@localhost:5432/placeholder"
-RUN npm run prisma:generate
-RUN npx nest build
+# Generate Prisma Client
+RUN npx prisma generate
 
-FROM node:20-slim
-WORKDIR /app
+EXPOSE 3000
 
-RUN apt-get update && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
-
-COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/prisma ./prisma
-COPY --from=builder /app/package.json ./package.json
-
-CMD ["node", "dist/main.js"]
+# Development mode
+CMD ["npm", "run", "start:dev"]
