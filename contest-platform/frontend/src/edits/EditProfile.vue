@@ -13,6 +13,11 @@ const authStore = useAuthStore();
 
 const userId = computed(() => String(route.params.id));
 
+interface GalleryArtwork {
+  title: string;
+  url: string;
+}
+
 const form = ref({
   displayName: '',
   tagline: '',
@@ -20,7 +25,7 @@ const form = ref({
   about: '',
   portfolioLink: '',
   avatar: '',
-  galleryImages: [] as string[],
+  galleryArtworks: [] as GalleryArtwork[], // YENİ
   contactEmail: '',
   contactInstagram: '',
   contactTwitter: '',
@@ -57,96 +62,81 @@ onMounted(async () => {
       about: data.about || '',
       portfolioLink: data.portfolioLink || '',
       avatar: data.profileImageUrl || '',
-      galleryImages: Array.isArray(data.galleryImageUrls) ? data.galleryImageUrls : [],
+      galleryArtworks: Array.isArray(data.galleryArtworks) 
+        ? data.galleryArtworks 
+        : [],
       contactEmail: data.contactEmail || '',
       contactInstagram: data.contactInstagram || '',
       contactTwitter: data.contactTwitter || '',
       contactBehance: data.contactBehance || '',
       contactArtStation: data.contactArtStation || '',
     };
-    console.log('[EditProfile] Gallery images loaded:', form.value.galleryImages);
-  } catch (e: any) {
-    error.value = e.response?.data?.message || 'Failed to load profile';
+  } catch (err: any) {
+    error.value = err.response?.data?.message || 'Failed to load profile';
+    showToast(error.value, 'error');
   } finally {
     loading.value = false;
   }
 });
 
-const isValidUrl = (url: string): boolean => {
-  if (!url) return true;
+const isValidUrl = (urlString: string) => {
   try {
-    new URL(url);
+    new URL(urlString);
     return true;
   } catch {
     return false;
   }
 };
 
-const validate = (): boolean => {
-  validationErrors.value = {};
+const addArtwork = () => {
+  form.value.galleryArtworks.push({ title: '', url: '' });
+};
 
-  if (!form.value.displayName.trim()) {
-    validationErrors.value.displayName = 'Display name is required';
-  }
-
-  if (form.value.bio.length > BIO_LIMIT) {
-    validationErrors.value.bio = `Bio must be ${BIO_LIMIT} characters or less`;
-  }
-
-  if (form.value.about.length > ABOUT_LIMIT) {
-    validationErrors.value.about = `About must be ${ABOUT_LIMIT} characters or less`;
-  }
-
-  if (form.value.portfolioLink && !isValidUrl(form.value.portfolioLink)) {
-    validationErrors.value.portfolioLink = 'Invalid URL';
-  }
-
-  if (form.value.avatar && !isValidUrl(form.value.avatar)) {
-    validationErrors.value.avatar = 'Invalid URL';
-  }
-
-  form.value.galleryImages.forEach((url, idx) => {
-    if (url && !isValidUrl(url)) {
-      validationErrors.value[`galleryImages_${idx}`] = 'Invalid URL';
-    }
-  });
-
-  const contactFields = ['contactInstagram', 'contactTwitter', 'contactBehance', 'contactArtStation'] as const;
-  contactFields.forEach(field => {
-    if (form.value[field] && !isValidUrl(form.value[field])) {
-      validationErrors.value[field] = 'Invalid URL';
-    }
-  });
-
-  return Object.keys(validationErrors.value).length === 0;
+const removeArtwork = (idx: number) => {
+  form.value.galleryArtworks.splice(idx, 1);
 };
 
 const handleSubmit = async () => {
-  if (!validate()) return;
+  validationErrors.value = {};
+  
+  // Validation
+  if (form.value.bio.length > BIO_LIMIT) {
+    validationErrors.value.bio = `Bio must be ${BIO_LIMIT} characters or less`;
+    return;
+  }
+  
+  if (form.value.about.length > ABOUT_LIMIT) {
+    validationErrors.value.about = `About must be ${ABOUT_LIMIT} characters or less`;
+    return;
+  }
+
+  // Filter out empty artworks
+  const validArtworks = form.value.galleryArtworks.filter(
+    art => art.url.trim() !== ''
+  );
 
   saving.value = true;
-  error.value = '';
-
   try {
     await axios.put(`/api/users/${userId.value}/profile`, {
-      displayName: form.value.displayName.trim(),
-      tagline: form.value.tagline.trim() || null,
-      bio: form.value.bio.trim() || null,
-      about: form.value.about.trim() || null,
-      portfolioLink: form.value.portfolioLink.trim() || null,
-      avatar: form.value.avatar.trim() || null,
-      galleryImages: form.value.galleryImages.map(url => url.trim()).filter(Boolean),
-      contactEmail: form.value.contactEmail.trim() || null,
-      contactInstagram: form.value.contactInstagram.trim() || null,
-      contactTwitter: form.value.contactTwitter.trim() || null,
-      contactBehance: form.value.contactBehance.trim() || null,
-      contactArtStation: form.value.contactArtStation.trim() || null,
+      displayName: form.value.displayName,
+      tagline: form.value.tagline,
+      bio: form.value.bio,
+      about: form.value.about,
+      portfolioLink: form.value.portfolioLink,
+      avatar: form.value.avatar,
+      galleryArtworks: validArtworks,
+      contactEmail: form.value.contactEmail,
+      contactInstagram: form.value.contactInstagram,
+      contactTwitter: form.value.contactTwitter,
+      contactBehance: form.value.contactBehance,
+      contactArtStation: form.value.contactArtStation,
     });
+
     showToast('Profile updated successfully!', 'success');
-    setTimeout(() => router.push(`/user/${userId.value}`), 1200);
-  } catch (e: any) {
-    error.value = e.response?.data?.message || 'Failed to update profile';
-    showToast(error.value, 'error');
+    router.push(`/user/${userId.value}`);
+  } catch (err: any) {
+    const message = err.response?.data?.message || 'Failed to update profile';
+    showToast(message, 'error');
   } finally {
     saving.value = false;
   }
@@ -158,47 +148,29 @@ const handleCancel = () => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-[hsl(var(--muted))] py-8 px-4">
-    <div class="max-w-7xl mx-auto">
-      <!-- Header -->
-      <div class="mb-8 bg-[hsl(var(--background))] rounded-xl p-6 shadow-sm border border-[hsl(var(--border))]">
-        <div class="flex items-center justify-between">
-          <div>
-            <h1 class="text-3xl font-bold text-[hsl(var(--foreground))]">Edit Profile</h1>
-            <p class="text-[hsl(var(--muted-foreground))] mt-1">Update your artist portfolio</p>
-          </div>
-          <button 
-            @click="handleCancel"
-            class="p-2 hover:bg-[hsl(var(--muted))] rounded-lg transition-colors"
-          >
-            <X class="w-6 h-6" />
-          </button>
-        </div>
+  <div class="min-h-screen bg-[hsl(var(--muted))] pt-8 pb-16">
+    <div class="max-w-6xl mx-auto px-4">
+      <div class="mb-8">
+        <h1 class="text-3xl font-bold text-[hsl(var(--foreground))]">Edit Profile</h1>
+        <p class="text-[hsl(var(--muted-foreground))] mt-2">Update your public artist profile</p>
       </div>
 
-      <div v-if="loading" class="flex items-center justify-center py-12">
-        <p class="text-[hsl(var(--muted-foreground))]">Loading profile...</p>
-      </div>
-
-      <form v-else @submit.prevent="handleSubmit" class="grid lg:grid-cols-2 gap-6">
-        <!-- LEFT COLUMN - Form Fields -->
+      <form @submit.prevent="handleSubmit" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        
+        <!-- LEFT COLUMN -->
         <div class="space-y-6">
           <!-- Basic Info Card -->
           <div class="card">
             <h2 class="card-title">Basic Information</h2>
             
             <div class="form-group">
-              <label class="form-label">
-                Display Name <span class="text-red-500">*</span>
-              </label>
+              <label class="form-label">Display Name</label>
               <input
                 v-model="form.displayName"
                 type="text"
-                required
                 class="form-input"
-                placeholder="Your Name"
+                placeholder="Your artist name"
               />
-              <p v-if="validationErrors.displayName" class="form-error">{{ validationErrors.displayName }}</p>
             </div>
 
             <div class="form-group">
@@ -207,42 +179,32 @@ const handleCancel = () => {
                 v-model="form.tagline"
                 type="text"
                 class="form-input"
-                placeholder="Visual Artist & Creative Director"
+                placeholder="One-line description"
               />
             </div>
 
             <div class="form-group">
-              <label class="form-label">
-                Bio <span class="text-xs text-[hsl(var(--muted-foreground))]">(max {{ BIO_LIMIT }})</span>
-              </label>
+              <label class="form-label">Bio ({{ bioCharCount }}/{{ BIO_LIMIT }})</label>
               <textarea
                 v-model="form.bio"
+                class="form-input"
                 rows="3"
                 :maxlength="BIO_LIMIT"
-                class="form-input"
-                placeholder="Brief introduction..."
-              />
-              <div class="flex justify-between mt-1">
-                <p v-if="validationErrors.bio" class="form-error">{{ validationErrors.bio }}</p>
-                <p class="text-xs text-[hsl(var(--muted-foreground))] ml-auto">{{ bioCharCount }}/{{ BIO_LIMIT }}</p>
-              </div>
+                placeholder="Short bio for your profile card"
+              ></textarea>
+              <p v-if="validationErrors.bio" class="form-error">{{ validationErrors.bio }}</p>
             </div>
 
             <div class="form-group">
-              <label class="form-label">
-                About <span class="text-xs text-[hsl(var(--muted-foreground))]">(max {{ ABOUT_LIMIT }})</span>
-              </label>
+              <label class="form-label">About ({{ aboutCharCount }}/{{ ABOUT_LIMIT }})</label>
               <textarea
                 v-model="form.about"
+                class="form-input"
                 rows="6"
                 :maxlength="ABOUT_LIMIT"
-                class="form-input text-sm"
-                placeholder="Your story, journey, and what drives your work..."
-              />
-              <div class="flex justify-between mt-1">
-                <p v-if="validationErrors.about" class="form-error">{{ validationErrors.about }}</p>
-                <p class="text-xs text-[hsl(var(--muted-foreground))] ml-auto">{{ aboutCharCount }}/{{ ABOUT_LIMIT }}</p>
-              </div>
+                placeholder="Tell your story, your journey, your inspirations..."
+              ></textarea>
+              <p v-if="validationErrors.about" class="form-error">{{ validationErrors.about }}</p>
             </div>
 
             <div class="form-group">
@@ -251,9 +213,8 @@ const handleCancel = () => {
                 v-model="form.portfolioLink"
                 type="url"
                 class="form-input"
-                placeholder="https://portfolio.example.com"
+                placeholder="https://yourportfolio.com"
               />
-              <p v-if="validationErrors.portfolioLink" class="form-error">{{ validationErrors.portfolioLink }}</p>
             </div>
           </div>
 
@@ -261,14 +222,14 @@ const handleCancel = () => {
           <div class="card">
             <h2 class="card-title">Contact Information</h2>
             
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="space-y-4">
               <div class="form-group">
                 <label class="form-label">Email</label>
                 <input
                   v-model="form.contactEmail"
                   type="email"
                   class="form-input"
-                  placeholder="artist@example.com"
+                  placeholder="your@email.com"
                 />
               </div>
 
@@ -276,19 +237,19 @@ const handleCancel = () => {
                 <label class="form-label">Instagram</label>
                 <input
                   v-model="form.contactInstagram"
-                  type="url"
+                  type="text"
                   class="form-input"
-                  placeholder="https://instagram.com/..."
+                  placeholder="@username"
                 />
               </div>
 
               <div class="form-group">
-                <label class="form-label">Twitter</label>
+                <label class="form-label">Twitter/X</label>
                 <input
                   v-model="form.contactTwitter"
-                  type="url"
+                  type="text"
                   class="form-input"
-                  placeholder="https://twitter.com/..."
+                  placeholder="@username"
                 />
               </div>
 
@@ -302,7 +263,7 @@ const handleCancel = () => {
                 />
               </div>
 
-              <div class="form-group md:col-span-2">
+              <div class="form-group">
                 <label class="form-label">ArtStation</label>
                 <input
                   v-model="form.contactArtStation"
@@ -315,7 +276,7 @@ const handleCancel = () => {
           </div>
         </div>
 
-        <!-- RIGHT COLUMN - Preview & Gallery -->
+        <!-- RIGHT COLUMN -->
         <div class="space-y-6">
           <!-- Avatar Preview Card -->
           <div class="card">
@@ -347,13 +308,13 @@ const handleCancel = () => {
             </div>
           </div>
 
-          <!-- Gallery Images Card -->
+          <!-- Gallery Artworks Card -->
           <div class="card">
             <div class="flex items-center justify-between mb-4">
-              <h2 class="card-title mb-0">Gallery Images</h2>
+              <h2 class="card-title mb-0">Gallery Artworks</h2>
               <button 
                 type="button" 
-                @click="form.galleryImages.push('')" 
+                @click="addArtwork" 
                 class="btn-icon"
               >
                 <Plus class="w-4 h-4" />
@@ -364,28 +325,45 @@ const handleCancel = () => {
               First 5 appear in Hero. All shown in portfolio grid.
             </p>
 
-            <div class="space-y-3 max-h-[600px] overflow-y-auto pr-2">
-              <div v-for="(url, idx) in form.galleryImages" :key="idx" class="gallery-item">
+            <div class="space-y-4 max-h-[600px] overflow-y-auto pr-2">
+              <div 
+                v-for="(artwork, idx) in form.galleryArtworks" 
+                :key="idx" 
+                class="artwork-item"
+              >
+                <!-- Title Input -->
                 <input
-                  v-model="form.galleryImages[idx]"
-                  type="url"
-                  class="form-input flex-1"
-                  :placeholder="`Image ${idx + 1} URL`"
+                  v-model="artwork.title"
+                  type="text"
+                  class="form-input"
+                  :placeholder="`Artwork ${idx + 1} Title`"
                 />
-                
-                <button 
-                  type="button" 
-                  @click="form.galleryImages.splice(idx, 1)" 
-                  class="btn-icon-danger"
-                >
-                  <Trash2 class="w-4 h-4" />
-                </button>
 
+                <!-- URL Input + Delete Button -->
+                <div class="flex gap-2">
+                  <input
+                    v-model="artwork.url"
+                    type="url"
+                    class="form-input flex-1"
+                    :placeholder="`Image ${idx + 1} URL`"
+                  />
+                  
+                  <button 
+                    type="button" 
+                    @click="removeArtwork(idx)" 
+                    class="btn-icon-danger-compact"
+                    title="Remove"
+                  >
+                    <Trash2 class="w-4 h-4" />
+                  </button>
+                </div>
+
+                <!-- Preview -->
                 <img 
-                  v-if="url && isValidUrl(url)" 
-                  :src="url" 
-                  alt="Gallery preview"
-                  class="w-full h-32 rounded-lg object-cover border-2 border-[hsl(var(--border))] mt-2"
+                  v-if="artwork.url && isValidUrl(artwork.url)" 
+                  :src="artwork.url" 
+                  :alt="artwork.title || 'Artwork preview'"
+                  class="artwork-preview"
                   @error="($event.target as HTMLImageElement).style.display='none'"
                 />
               </div>
@@ -394,14 +372,22 @@ const handleCancel = () => {
 
           <!-- Action Buttons -->
           <div class="card">
-            <div class="flex gap-4">
-              <Button type="submit" size="lg" class="flex-1" :disabled="saving">
-                <Save class="w-4 h-4 mr-2" />
-                {{ saving ? 'Saving...' : 'Save Changes' }}
-              </Button>
-              <Button type="button" size="lg" variant="outline" @click="handleCancel" :disabled="saving">
-                Cancel
-              </Button>
+            <div class="flex justify-center">
+              <div class="flex gap-4 max-w-md w-full">
+                <Button type="submit" size="lg" class="flex-1" :disabled="saving">
+                  <Save class="w-4 h-4 mr-2" />
+                  {{ saving ? 'Saving...' : 'Save Changes' }}
+                </Button>
+                <Button 
+                  type="button" 
+                  size="lg" 
+                  variant="outline" 
+                  @click="handleCancel" 
+                  :disabled="saving"
+                >
+                  Cancel
+                </Button>
+              </div>
             </div>
           </div>
         </div>
@@ -435,15 +421,19 @@ const handleCancel = () => {
   @apply text-sm text-[hsl(var(--accent-coral))];
 }
 
-.gallery-item {
-  @apply flex flex-col gap-2 p-3 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--muted))] hover:border-[hsl(var(--brand))] transition-colors;
+.artwork-item {
+  @apply flex flex-col gap-3 p-4 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--muted))] hover:border-[hsl(var(--brand))] transition-colors;
 }
 
 .btn-icon {
   @apply p-2 rounded-lg bg-[hsl(var(--brand))] text-white hover:bg-[hsl(var(--brand))]/90 transition-colors;
 }
 
-.btn-icon-danger {
-  @apply p-2 rounded-lg bg-[hsl(var(--accent-coral))] text-white hover:bg-[hsl(var(--accent-coral-dark))] transition-colors;
+.btn-icon-danger-compact {
+  @apply p-2 rounded-lg bg-[hsl(var(--accent-coral))] text-white hover:bg-[hsl(var(--accent-coral-dark))] transition-colors flex-shrink-0;
+}
+
+.artwork-preview {
+  @apply w-full h-40 rounded-lg object-cover border-2 border-[hsl(var(--border))];
 }
 </style>

@@ -1,185 +1,185 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue';
-import { ArrowRight } from 'lucide-vue-next';
-import Badge from './Badge.vue';
-import Button from './Button.vue';
+import { computed } from 'vue';
 
-interface Work {
-  id: number;
+interface GalleryArtwork {
   title: string;
-  category: string;
-  year: string;
-  image: string;
-  span?: 'large' | 'wide' | 'tall' | 'default';
+  url: string;
 }
 
 interface Props {
-  works?: Work[];
+  galleryArtworks?: GalleryArtwork[];
   portfolioLink?: string;
-  galleryImages?: string[];
 }
 
-const props = withDefaults(defineProps<Props>(), {
-  works: () => [],
-  portfolioLink: '',
-  galleryImages: () => [],
-});
+const props = defineProps<Props>();
 
-const isVisible = ref(false);
-const imageSpans = ref<Record<number, string>>({});
+const emit = defineEmits<{
+  openLightbox: [artwork: GalleryArtwork]
+}>();
 
-onMounted(() => {
-  setTimeout(() => {
-    isVisible.value = true;
-  }, 100);
+// Masonry grid logic
+const getAspectRatio = (index: number): string => {
+  const patterns = ['wide', 'tall', 'default', 'default', 'wide', 'default', 'tall'];
+  return patterns[index % patterns.length];
+};
+
+const gridClass = (index: number): string => {
+  const ratio = getAspectRatio(index);
   
-  // Calculate aspect ratios for gallery images
-  if (props.galleryImages.length > 0) {
-    props.galleryImages.forEach((url, index) => {
-      const img = new Image();
-      img.onload = () => {
-        const ratio = img.naturalWidth / img.naturalHeight;
-        
-        if (ratio > 1.5) {
-          imageSpans.value[index] = 'wide'; // Horizontal
-        } else if (ratio < 0.7) {
-          imageSpans.value[index] = 'tall'; // Vertical
-        } else if (ratio > 1.2) {
-          imageSpans.value[index] = 'default-wide';
-        } else {
-          imageSpans.value[index] = 'default'; // Square-ish
-        }
-      };
-      img.src = url;
-    });
+  switch (ratio) {
+    case 'wide':
+      return 'col-span-2 row-span-2'; // 2x2
+    case 'tall':
+      return 'col-span-1 row-span-3'; // 1x3
+    default:
+      return 'col-span-1 row-span-2'; // 1x2
   }
-});
-
-const displayWorks = computed(() => {
-  if (props.works && props.works.length > 0) {
-    return props.works;
-  }
-  
-  // Convert gallery images to works format
-  return props.galleryImages.map((url, index) => ({
-    id: index,
-    title: `Artwork ${index + 1}`,
-    category: 'Gallery',
-    year: new Date().getFullYear().toString(),
-    image: url,
-    span: imageSpans.value[index] as any,
-  }));
-});
-
-function openPortfolio() {
-  if (props.portfolioLink) {
-    window.open(props.portfolioLink, '_blank');
-  }
-}
+};
 </script>
 
 <template>
-  <section id="portfolio" class="py-24 px-6 bg-[hsl(var(--background))] scroll-mt-20">
-    <div class="max-w-screen-2xl mx-auto">
-      <div class="text-center mb-16">
-        <Badge variant="outline" class="mb-4">
-          <span class="text-[hsl(var(--muted-foreground))]">Portfolio</span>
-        </Badge>
-        <h2 class="text-5xl md:text-6xl font-bold text-[hsl(var(--foreground))] mb-4">
-          Featured Works
-        </h2>
-        <p class="text-lg text-[hsl(var(--muted-foreground))] max-w-2xl mx-auto">
-          A collection of creative projects and artistic expressions
-        </p>
-      </div>
-
+  <div class="featured-works">
+    <div class="max-w-screen-2xl mx-auto px-6 py-24">
       <!-- Masonry Grid -->
-      <div class="masonry-grid">
+      <div 
+        v-if="galleryArtworks && galleryArtworks.length > 0"
+        class="masonry-grid"
+      >
         <div
-          v-for="(work, index) in displayWorks"
-          :key="work.id"
-          :class="[
-            'masonry-item group relative overflow-hidden rounded-xl cursor-pointer',
-            work.span === 'wide' && 'masonry-wide',
-            work.span === 'tall' && 'masonry-tall',
-            work.span === 'default-wide' && 'masonry-default-wide',
-            isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-          ]"
-          :style="{
-            transitionDelay: `${index * 50}ms`
-          }"
+          v-for="(artwork, index) in galleryArtworks"
+          :key="index"
+          :class="['masonry-item', gridClass(index)]"
+          @click="emit('openLightbox', artwork)"
         >
-          <img 
-            :src="work.image" 
-            :alt="work.title"
-            class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+          <img
+            :src="artwork.url"
+            :alt="artwork.title"
+            class="masonry-image"
           />
-          <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-            <div class="absolute bottom-0 left-0 right-0 p-6 text-white">
-              <Badge class="mb-2 bg-white/20 backdrop-blur-sm text-white border-white/40">
-                {{ work.category }}
-              </Badge>
-              <h3 class="text-2xl font-bold mb-1">{{ work.title }}</h3>
-              <p class="text-white/80">{{ work.year }}</p>
-            </div>
+          <div class="masonry-overlay">
+            <h3 class="masonry-title">{{ artwork.title }}</h3>
           </div>
         </div>
       </div>
 
-      <!-- View All Button -->
-      <div v-if="props.portfolioLink" class="mt-16 text-center">
-        <Button size="lg" variant="outline" class="group" @click="openPortfolio">
-          View All Works
-          <ArrowRight class="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
-        </Button>
+      <!-- Empty State -->
+      <div 
+        v-else
+        class="empty-state"
+      >
+        <p class="text-[hsl(var(--muted-foreground))] text-lg">
+          No artworks yet
+        </p>
+      </div>
+
+      <!-- Portfolio Link -->
+      <div 
+        v-if="portfolioLink"
+        class="text-center mt-12"
+      >
+        <a
+          :href="portfolioLink"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="portfolio-link"
+        >
+          View Full Portfolio →
+        </a>
       </div>
     </div>
-  </section>
+  </div>
 </template>
 
 <style scoped>
+.featured-works {
+  background: hsl(var(--background));
+}
+
 .masonry-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  grid-auto-rows: 200px;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-auto-rows: 160px;
   gap: 1rem;
-}
-
-.masonry-item {
-  transition: opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1),
-              transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-/* Default - Square */
-.masonry-item {
-  grid-row: span 2;
-}
-
-/* Wide - Horizontal */
-.masonry-wide {
-  grid-column: span 2;
-  grid-row: span 2;
-}
-
-/* Tall - Vertical */
-.masonry-tall {
-  grid-row: span 3;
-}
-
-/* Default Wide - Slightly wider */
-.masonry-default-wide {
-  grid-column: span 2;
-  grid-row: span 1;
 }
 
 @media (max-width: 768px) {
   .masonry-grid {
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-    grid-auto-rows: 180px;
+    grid-template-columns: 1fr;
+    grid-auto-rows: 200px;
   }
   
-  .masonry-wide {
-    grid-column: span 1;
+  .masonry-item {
+    grid-column: span 1 !important;
+    grid-row: span 2 !important;
   }
+}
+
+.masonry-item {
+  position: relative;
+  border-radius: 12px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.masonry-item:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
+}
+
+.masonry-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.masonry-item:hover .masonry-image {
+  transform: scale(1.05);
+}
+
+.masonry-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.7), transparent);
+  display: flex;
+  align-items: flex-end;
+  padding: 1.5rem;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.masonry-item:hover .masonry-overlay {
+  opacity: 1;
+}
+
+.masonry-title {
+  color: white;
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.empty-state {
+  min-height: 400px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.portfolio-link {
+  display: inline-block;
+  padding: 0.75rem 2rem;
+  background: hsl(var(--brand));
+  color: hsl(var(--brand-foreground));
+  font-weight: 600;
+  border-radius: 8px;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.portfolio-link:hover {
+  background: hsl(var(--brand-dark));
+  transform: translateY(-2px);
 }
 </style>

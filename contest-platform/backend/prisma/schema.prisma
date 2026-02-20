@@ -35,9 +35,10 @@ model User {
   avatar        String?
   tagline       String?
   portfolioLink String?
-  galleryImages String[]
   
-  // Contact fields
+  galleryImages   String[] @default([]) 
+  galleryArtworks Json     @default("[]")
+  
   contactEmail      String?
   contactInstagram  String?
   contactTwitter    String?

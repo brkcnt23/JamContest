@@ -156,34 +156,40 @@ const navigateTo = (path: string) => {
 .sidebar.collapsed {
   width: 72px;
 }
+/* Sidebar.vue <style scoped> içinde değiştirilecek kısım */
 
 /* Logo Section */
+
 .logo-section {
   padding: 1rem;
   border-bottom: 1px solid hsl(var(--border));
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 88px;
-  /* Sabit yükseklik - değişmez */
+  min-height: 88px;
+  transition: none;
 }
 
 .logo-link {
   display: flex;
   align-items: center;
   justify-content: center;
-}
-
-.logo {
-  height: 80px; /* 56px → 80px */
-  width: auto;
-  max-width: 100%;
-  object-fit: contain;
   transition: none;
 }
 
+.logo {
+  height: 56px;
+  width: auto;
+  object-fit: contain;
+  transition: none;
+  /* GÖRSELİ BÜYÜT */
+  transform: scale(1.4);
+  transform-origin: center;
+}
+
 .sidebar.collapsed .logo {
-  height: 80px; /* Aynı boyut */
+  height: 56px;
+  transform: scale(1.4); /* Aynı boyut */
 }
 
 /* Collapse Button */

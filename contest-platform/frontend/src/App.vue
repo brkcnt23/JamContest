@@ -2,7 +2,7 @@
   <component :is="layoutComponent">
     <router-view />
   </component>
-  <Toast :message="toast?.message || ''" :type="toast?.type" :duration="toast?.duration" />
+  <ToastContainer />
 </template>
 
 <script setup lang="ts">
@@ -10,8 +10,9 @@ import { onMounted, computed, onUnmounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import { useTheme } from '@/stores/theme';
-import { toast } from '@/composables/useToast';
-import Toast from '@/components/common/Toast.vue';
+import { ref } from 'vue';
+import ToastContainer from '@/components/ui/ToastContainer.vue';
+
 import DashboardLayout from '@/layouts/DashboardLayout.vue';
 import PortfolioLayout from '@/layouts/PortfolioLayout.vue';
 import BlankLayout from '@/layouts/BlankLayout.vue';

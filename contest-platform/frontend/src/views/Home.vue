@@ -1,358 +1,643 @@
-<template>
-    <div class="home">
-        <section class="hero">
-            <div class="container">
-                <h1>Welcome to Contest Platform</h1>
-                <p>Showcase your talent, compete with the best, and win amazing prizes</p>
-                <div class="cta-buttons" v-if="!authStore.isAuthenticated">
-                    <router-link to="/register" class="btn-large btn-primary">Get Started</router-link>
-                    <router-link to="/contests" class="btn-large btn-secondary">Browse Contests</router-link>
-                </div>
-            </div>
-        </section>
-
-        <section class="contests-section">
-            <div class="container">
-                <h2>Active Contests</h2>
-                <div v-if="loading" class="loading">Loading contests...</div>
-                <div v-else-if="contests.length === 0" class="empty">
-                    <p>No active contests at the moment. Check back soon!</p>
-                </div>
-                <div v-else class="contest-grid">
-                    <div v-for="contest in contests" :key="contest.id" class="contest-card">
-                        <div class="contest-status">{{ contest.status }}</div>
-                        <h3>{{ contest.title }}</h3>
-                        <p class="contest-desc">{{ contest.description }}</p>
-                        <div class="contest-dates">
-                            <span>Applications: {{ formatDate(contest.applicationStart) }} - {{
-                                formatDate(contest.applicationEnd) }}</span>
-                        </div>
-                        <router-link :to="`/contests/${contest.slug}`" class="btn-view">View Details</router-link>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <section class="mission-statement">
-            <div class="container">
-                <div class="mission-box">
-                    <h2>Our Mission</h2>
-                    <p class="lead">
-                        This platform operates on a <strong>volunteer basis</strong> and is <strong>completely
-                            non-profit</strong>.
-                        Our goal is simple: help developers and artists come together, form teams, and ship real
-                        products.
-                    </p>
-                    <p>
-                        Every contest features <strong>transparent judging</strong> by publicly listed jury members.
-                        No hidden scores, no black boxes—just honest feedback from experienced professionals.
-                    </p>
-                    <p>
-                        Winners don't just get trophies. They get <strong>real value</strong>: mentorship, guidance on
-                        taking
-                        their product to market, and support throughout the development process. We're here to turn your
-                        ideas
-                        into something people can actually use.
-                    </p>
-                    <p class="motto">
-                        <em>No corporate BS. No fake communities. Just people building real things together.</em>
-                    </p>
-                </div>
-            </div>
-        </section>
-
-        <section class="features">
-            <div class="container">
-                <h2>Why Join Us?</h2>
-                <div class="features-grid">
-                    <div class="feature">
-                        <div class="icon">🏆</div>
-                        <h3>Compete & Win</h3>
-                        <p>Participate in exciting contests and win amazing prizes</p>
-                    </div>
-                    <div class="feature">
-                        <div class="icon">👥</div>
-                        <h3>Build Portfolio</h3>
-                        <p>Showcase your work and build a professional portfolio</p>
-                    </div>
-                    <div class="feature">
-                        <div class="icon">⚖️</div>
-                        <h3>Fair Judging</h3>
-                        <p>Expert jury panel ensures fair and transparent evaluation</p>
-                    </div>
-                    <div class="feature">
-                        <div class="icon">📈</div>
-                        <h3>Grow Skills</h3>
-                        <p>Learn from feedback and improve your craft</p>
-                    </div>
-                </div>
-            </div>
-        </section>
-    </div>
-</template>
-
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
-import { useAuthStore } from '@/stores/auth';
-import axios from 'axios';
+import { useRouter } from 'vue-router';
+import { Trophy, Users, Award, TrendingUp, ArrowRight, Sparkles } from 'lucide-vue-next';
 
-const authStore = useAuthStore();
-const contests = ref([]);
-const loading = ref(true);
+const router = useRouter();
 
-const formatDate = (date: string) => {
-    return new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-};
+interface Contest {
+  id: string;
+  title: string;
+  description: string;
+  imageUrl?: string;
+  startDate: string;
+  endDate: string;
+  participantCount?: number;
+  status: string;
+}
 
-const fetchContests = async () => {
-    try {
-        // Şimdilik boş - backend endpoint henüz yok
-        contests.value = [];
-    } catch (error) {
-        console.error('Failed to fetch contests:', error);
-    } finally {
-        loading.value = false;
-    }
-};
-
-onMounted(() => {
-    fetchContests();
+const featuredContests = ref<Contest[]>([]);
+const stats = ref({
+  totalContests: 0,
+  activeArtists: 0,
+  awardsGiven: 0,
+  submissions: 0,
 });
+
+onMounted(async () => {
+  // Mock data - replace with API calls
+  featuredContests.value = [
+    {
+      id: '1',
+      title: 'Fantasy Character Design',
+      description: 'Create an original fantasy character with unique magical abilities',
+      imageUrl: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe',
+      startDate: '2024-02-01',
+      endDate: '2024-02-28',
+      participantCount: 45,
+      status: 'ACTIVE',
+    },
+    {
+      id: '2',
+      title: 'Cyberpunk Environment',
+      description: 'Design a futuristic cityscape with neon lights and advanced technology',
+      imageUrl: 'https://images.unsplash.com/photo-1617791160505-6f00504e3519',
+      startDate: '2024-02-05',
+      endDate: '2024-03-05',
+      participantCount: 38,
+      status: 'ACTIVE',
+    },
+    {
+      id: '3',
+      title: 'Minimalist Logo Challenge',
+      description: 'Create a clean, impactful logo using only 3 colors',
+      imageUrl: 'https://images.unsplash.com/photo-1561070791-2526d30994b5',
+      startDate: '2024-02-10',
+      endDate: '2024-03-10',
+      participantCount: 62,
+      status: 'ACTIVE',
+    },
+  ];
+
+  stats.value = {
+    totalContests: 127,
+    activeArtists: 1840,
+    awardsGiven: 342,
+    submissions: 5420,
+  };
+});
+
+const navigateToContests = () => {
+  router.push('/contests');
+};
 </script>
 
+<template>
+  <div class="home-page">
+    <!-- Hero Section -->
+    <section class="hero-section">
+      <div class="hero-background">
+        <div class="gradient-orb orb-1"></div>
+        <div class="gradient-orb orb-2"></div>
+        <div class="gradient-orb orb-3"></div>
+      </div>
+
+      <div class="hero-content">
+        <div class="hero-badge">
+          <Sparkles class="w-4 h-4" />
+          <span>Join the Creative Revolution</span>
+        </div>
+
+        <h1 class="hero-title">
+          Compete. Create. <span class="hero-title-gradient">Conquer.</span>
+        </h1>
+
+        <p class="hero-description">
+          Join thousands of artists in creative challenges. Showcase your talent,
+          win prizes, and build your portfolio with JamContest.
+        </p>
+
+        <div class="hero-actions">
+          <button @click="navigateToContests" class="btn-primary">
+            Browse Contests
+            <ArrowRight class="w-5 h-5" />
+          </button>
+          <button @click="$router.push('/register')" class="btn-secondary">
+            Get Started Free
+          </button>
+        </div>
+
+        <!-- Stats Row -->
+        <div class="hero-stats">
+          <div class="stat-item">
+            <Trophy class="stat-icon" />
+            <div class="stat-content">
+              <p class="stat-number">{{ stats.totalContests }}+</p>
+              <p class="stat-label">Active Contests</p>
+            </div>
+          </div>
+          <div class="stat-item">
+            <Users class="stat-icon" />
+            <div class="stat-content">
+              <p class="stat-number">{{ stats.activeArtists.toLocaleString() }}+</p>
+              <p class="stat-label">Creative Artists</p>
+            </div>
+          </div>
+          <div class="stat-item">
+            <Award class="stat-icon" />
+            <div class="stat-content">
+              <p class="stat-number">{{ stats.awardsGiven }}+</p>
+              <p class="stat-label">Awards Given</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Featured Contests -->
+    <section class="contests-section">
+      <div class="section-header">
+        <div>
+          <h2 class="section-title">Featured Contests</h2>
+          <p class="section-subtitle">Join the most popular creative challenges</p>
+        </div>
+        <button @click="navigateToContests" class="view-all-btn">
+          View All
+          <ArrowRight class="w-4 h-4" />
+        </button>
+      </div>
+
+      <div class="contests-grid">
+        <div
+          v-for="contest in featuredContests"
+          :key="contest.id"
+          class="contest-card"
+          @click="$router.push(`/contests/${contest.id}`)"
+        >
+          <div class="contest-image">
+            <img :src="contest.imageUrl" :alt="contest.title" />
+            <div class="contest-badge">
+              <TrendingUp class="w-4 h-4" />
+              <span>Trending</span>
+            </div>
+          </div>
+
+          <div class="contest-body">
+            <h3 class="contest-title">{{ contest.title }}</h3>
+            <p class="contest-description">{{ contest.description }}</p>
+
+            <div class="contest-meta">
+              <div class="meta-item">
+                <Users class="w-4 h-4" />
+                <span>{{ contest.participantCount }} joined</span>
+              </div>
+              <div class="meta-item">
+                <Trophy class="w-4 h-4" />
+                <span>Active</span>
+              </div>
+            </div>
+
+            <button class="contest-btn">
+              Join Contest
+              <ArrowRight class="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- How It Works -->
+    <section class="how-it-works">
+      <h2 class="section-title">How It Works</h2>
+      <p class="section-subtitle">Start your creative journey in 3 simple steps</p>
+
+      <div class="steps-grid">
+        <div class="step-card">
+          <div class="step-number">1</div>
+          <h3 class="step-title">Choose a Contest</h3>
+          <p class="step-description">
+            Browse through various creative challenges across different categories
+          </p>
+        </div>
+
+        <div class="step-card">
+          <div class="step-number">2</div>
+          <h3 class="step-title">Create & Submit</h3>
+          <p class="step-description">
+            Unleash your creativity and submit your best work before the deadline
+          </p>
+        </div>
+
+        <div class="step-card">
+          <div class="step-number">3</div>
+          <h3 class="step-title">Win Prizes</h3>
+          <p class="step-description">
+            Get judged by professionals and win amazing prizes and recognition
+          </p>
+        </div>
+      </div>
+    </section>
+  </div>
+</template>
+
 <style scoped>
-.hero {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    padding: 100px 0;
-    text-align: center;
+.home-page {
+  min-height: 100vh;
+  background: hsl(var(--background));
 }
 
-.hero h1 {
-    font-size: 3rem;
-    margin-bottom: 1rem;
-    font-weight: 700;
+/* Hero Section */
+.hero-section {
+  position: relative;
+  min-height: 90vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  overflow: hidden;
 }
 
-.hero p {
-    font-size: 1.25rem;
-    margin-bottom: 2rem;
-    opacity: 0.9;
+.hero-background {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
 }
 
-.cta-buttons {
-    display: flex;
-    gap: 1rem;
-    justify-content: center;
+.gradient-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(100px);
+  opacity: 0.4;
+  animation: float 25s infinite ease-in-out;
 }
 
-.btn-large {
-    padding: 14px 32px;
-    border-radius: 6px;
-    font-size: 1.1rem;
-    font-weight: 600;
-    text-decoration: none;
-    transition: all 0.3s;
+.orb-1 {
+  width: 600px;
+  height: 600px;
+  background: hsl(var(--accent-purple));
+  top: -10%;
+  left: -5%;
 }
 
-.btn-primary {
-    background: white;
-    color: #667eea;
+.orb-2 {
+  width: 500px;
+  height: 500px;
+  background: hsl(var(--accent-coral));
+  bottom: -10%;
+  right: -5%;
+  animation-delay: 8s;
 }
 
-.btn-primary:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+.orb-3 {
+  width: 400px;
+  height: 400px;
+  background: hsl(var(--accent-teal));
+  top: 40%;
+  right: 20%;
+  animation-delay: 16s;
 }
 
-.btn-secondary {
-    background: transparent;
-    color: white;
-    border: 2px solid white;
+@keyframes float {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(50px, -50px) scale(1.1); }
+  66% { transform: translate(-30px, 30px) scale(0.9); }
 }
 
-.btn-secondary:hover {
-    background: white;
-    color: #667eea;
-}
-
-.contests-section {
-    padding: 60px 0;
-}
-
-.container {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 0 20px;
-}
-
-h2 {
-    font-size: 2rem;
-    margin-bottom: 2rem;
-    text-align: center;
-    color: #2c3e50;
-}
-
-.loading,
-.empty {
-    text-align: center;
-    padding: 40px;
-    color: #7f8c8d;
-}
-
-.contest-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 2rem;
-}
-
-.contest-card {
-    background: white;
-    border-radius: 8px;
-    padding: 24px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    transition: transform 0.2s, box-shadow 0.2s;
-    position: relative;
-}
-
-.contest-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
-}
-
-.contest-status {
-    position: absolute;
-    top: 12px;
-    right: 12px;
-    background: #3498db;
-    color: white;
-    padding: 4px 12px;
-    border-radius: 12px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    text-transform: uppercase;
-}
-
-.contest-card h3 {
-    margin-bottom: 0.5rem;
-    color: #2c3e50;
-    font-size: 1.25rem;
-}
-
-.contest-desc {
-    color: #7f8c8d;
-    margin-bottom: 1rem;
-    line-height: 1.5;
-}
-
-.contest-dates {
-    font-size: 0.875rem;
-    color: #95a5a6;
-    margin-bottom: 1rem;
-}
-
-.btn-view {
-    display: inline-block;
-    padding: 8px 16px;
-    background: #3498db;
-    color: white;
-    text-decoration: none;
-    border-radius: 4px;
-    font-weight: 500;
-    transition: background 0.2s;
-}
-
-.btn-view:hover {
-    background: #2980b9;
-}
-
-.features {
-    background: white;
-    padding: 60px 0;
-}
-
-.features-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 2rem;
-}
-
-.feature {
-    text-align: center;
-    padding: 20px;
-}
-
-.icon {
-    font-size: 3rem;
-    margin-bottom: 1rem;
-}
-
-.feature h3 {
-    font-size: 1.25rem;
-    margin-bottom: 0.5rem;
-    color: #2c3e50;
-}
-
-.feature p {
-    color: #7f8c8d;
-    line-height: 1.6;
-}
-.mission-statement {
-  padding: 60px 0;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-}
-
-.mission-box {
+.hero-content {
+  position: relative;
+  z-index: 1;
   max-width: 900px;
-  margin: 0 auto;
   text-align: center;
 }
 
-.mission-box h2 {
-  color: white;
-  margin-bottom: 2rem;
-  font-size: 2.5rem;
-}
-
-.mission-box p {
-  font-size: 1.125rem;
-  line-height: 1.8;
-  margin-bottom: 1.5rem;
-  opacity: 0.95;
-}
-
-.mission-box .lead {
-  font-size: 1.25rem;
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: hsl(var(--muted));
+  border-radius: 9999px;
+  font-size: 0.875rem;
   font-weight: 500;
+  color: hsl(var(--foreground));
   margin-bottom: 2rem;
+  border: 1px solid hsl(var(--border));
 }
 
-.mission-box strong {
+.hero-title {
+  font-size: clamp(2.5rem, 8vw, 5rem);
+  font-weight: 900;
+  line-height: 1.1;
+  margin-bottom: 1.5rem;
+  color: hsl(var(--foreground));
+}
+
+.hero-title-gradient {
+  background: linear-gradient(
+    135deg,
+    hsl(var(--accent-purple)),
+    hsl(var(--accent-coral)),
+    hsl(var(--accent-teal))
+  );
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.hero-description {
+  font-size: clamp(1.125rem, 2vw, 1.25rem);
+  color: hsl(var(--muted-foreground));
+  margin-bottom: 3rem;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+  line-height: 1.6;
+}
+
+.hero-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 4rem;
+}
+
+.btn-primary {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem 2rem;
+  background: hsl(var(--brand));
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 1.125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-primary:hover {
+  background: hsl(var(--brand-dark));
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px -5px hsl(var(--brand) / 0.3);
+}
+
+.btn-secondary {
+  padding: 1rem 2rem;
+  background: transparent;
+  color: hsl(var(--foreground));
+  border: 2px solid hsl(var(--border));
+  border-radius: 12px;
+  font-size: 1.125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-secondary:hover {
+  background: hsl(var(--muted));
+  border-color: hsl(var(--foreground));
+}
+
+.hero-stats {
+  display: flex;
+  justify-content: center;
+  gap: 3rem;
+  flex-wrap: wrap;
+}
+
+.stat-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.stat-icon {
+  width: 40px;
+  height: 40px;
+  padding: 0.75rem;
+  background: hsl(var(--muted));
+  border-radius: 12px;
+  color: hsl(var(--brand));
+}
+
+.stat-number {
+  font-size: 1.75rem;
   font-weight: 700;
-  color: #ffd700;
+  color: hsl(var(--foreground));
+  line-height: 1;
+  margin-bottom: 0.25rem;
 }
 
-.motto {
-  font-size: 1.3rem;
-  font-style: italic;
-  margin-top: 2rem;
-  padding-top: 2rem;
-  border-top: 2px solid rgba(255,255,255,0.3);
-  opacity: 1 !important;
+.stat-label {
+  font-size: 0.875rem;
+  color: hsl(var(--muted-foreground));
+  margin: 0;
 }
+
+/* Contests Section */
+.contests-section {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 6rem 2rem;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 3rem;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+
+.section-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: hsl(var(--foreground));
+  margin-bottom: 0.5rem;
+}
+
+.section-subtitle {
+  font-size: 1.125rem;
+  color: hsl(var(--muted-foreground));
+  margin: 0;
+}
+
+.view-all-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: transparent;
+  color: hsl(var(--brand));
+  border: 2px solid hsl(var(--brand));
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.view-all-btn:hover {
+  background: hsl(var(--brand));
+  color: white;
+}
+
+.contests-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 2rem;
+}
+
+.contest-card {
+  background: hsl(var(--background));
+  border: 1px solid hsl(var(--border));
+  border-radius: 16px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.contest-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 20px 30px -10px rgba(0, 0, 0, 0.2);
+  border-color: hsl(var(--brand));
+}
+
+.contest-image {
+  position: relative;
+  aspect-ratio: 16/9;
+  overflow: hidden;
+}
+
+.contest-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.contest-card:hover .contest-image img {
+  transform: scale(1.05);
+}
+
+.contest-badge {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(10px);
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: hsl(var(--brand));
+}
+
+.contest-body {
+  padding: 1.5rem;
+}
+
+.contest-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: hsl(var(--foreground));
+  margin-bottom: 0.75rem;
+}
+
+.contest-description {
+  color: hsl(var(--muted-foreground));
+  line-height: 1.6;
+  margin-bottom: 1.5rem;
+}
+
+.contest-meta {
+  display: flex;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.meta-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: hsl(var(--muted-foreground));
+}
+
+.contest-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.875rem;
+  background: hsl(var(--brand));
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.contest-btn:hover {
+  background: hsl(var(--brand-dark));
+}
+
+/* How It Works */
+.how-it-works {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 6rem 2rem;
+  text-align: center;
+  background: hsl(var(--muted));
+  border-radius: 24px;
+}
+
+.steps-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 2rem;
+  margin-top: 3rem;
+}
+
+.step-card {
+  padding: 2rem;
+  background: hsl(var(--background));
+  border-radius: 16px;
+  border: 1px solid hsl(var(--border));
+}
+
+.step-number {
+  width: 60px;
+  height: 60px;
+  margin: 0 auto 1.5rem;
+  background: hsl(var(--brand));
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.step-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  color: hsl(var(--foreground));
+}
+
+.step-description {
+  color: hsl(var(--muted-foreground));
+  line-height: 1.6;
+}
+
+/* Mobile */
 @media (max-width: 768px) {
-    .hero h1 {
-        font-size: 2rem;
-    }
+  .hero-section {
+    min-height: auto;
+    padding: 4rem 1rem;
+  }
 
-    .cta-buttons {
-        flex-direction: column;
-    }
+  .hero-stats {
+    flex-direction: column;
+    gap: 1.5rem;
+  }
 
-    .contest-grid,
-    .features-grid {
-        grid-template-columns: 1fr;
-    }
+  .section-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .contests-grid {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

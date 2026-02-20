@@ -1,11 +1,20 @@
-import { ref } from 'vue'
+// frontend/src/composables/useToast.ts
 
-export const toast = ref<{
-  message: string
-  type?: 'success' | 'error' | 'info' | 'warning'
-  duration?: number
-} | null>(null)
+type ToastType = 'success' | 'error' | 'warning' | 'info';
 
-export function showToast(message: string, type: 'success' | 'error' | 'info' | 'warning' = 'info', duration = 3000) {
-  toast.value = { message, type, duration }
-}
+export const showToast = (
+  message: string,
+  type: ToastType = 'info',
+  duration: number = 5000
+) => {
+  // ToastContainer component will handle this via window.showToast
+  if (typeof window !== 'undefined' && (window as any).showToast) {
+    (window as any).showToast(message, type, duration);
+  } else {
+    console.warn('[Toast] ToastContainer not mounted yet');
+  }
+};
+
+export const useToast = () => {
+  return { showToast };
+};

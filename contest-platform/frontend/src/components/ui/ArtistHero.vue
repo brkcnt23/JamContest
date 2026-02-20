@@ -7,6 +7,7 @@ import Button from './Button.vue';
 import BlurText from './BlurText.vue';
 import Glow from './Glow.vue';
 import { Sun, Moon } from 'lucide-vue-next';
+import ParticleBackground from '@/components/ui/ParticleBackground.vue';
 
 import { useAuthStore } from '@/stores/auth';
 import { useRouter, useRoute } from 'vue-router';
@@ -158,6 +159,7 @@ watch(theme, (newTheme, oldTheme) => {
 
 <template>
   <div class="relative min-h-screen overflow-hidden">
+    <ParticleBackground />
     <!-- White overlay for theme change -->
     <transition name="overlay-fade">
       <div v-if="overlayActive" class="fixed left-0 top-0 w-full h-full z-[9999] pointer-events-none" style="background: white; animation: overlay-slide-down 0.6s cubic-bezier(.7,0,.3,1);"></div>

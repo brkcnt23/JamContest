@@ -1,5 +1,6 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { GalleryArtwork } from './types/gallery-artwork.type';
 
 @Injectable()
 export class UsersService {
@@ -8,31 +9,22 @@ export class UsersService {
   async getUserProfile(userId: string) {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
-      select: {
-        id: true,
-        username: true,
-        displayName: true,
-        bio: true,
-        about: true,
-        avatar: true,
-        tagline: true,
-        portfolioLink: true,
-        galleryImages: true,
-        contactEmail: true,
-        contactInstagram: true,
-        contactTwitter: true,
-        contactBehance: true,
-        contactArtStation: true,
-      },
     });
 
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new Error('User not found');
     }
 
-    console.log('[UsersService] getUserProfile - user.galleryImages:', user.galleryImages);
+    // galleryArtworks JSON parse
+    let galleryArtworks: GalleryArtwork[] = [];
+    try {
+      const raw = user.galleryArtworks as any;
+      galleryArtworks = Array.isArray(raw) ? raw : [];
+    } catch (error) {
+      console.error('[UsersService] Error parsing galleryArtworks:', error);
+    }
 
-    const result = {
+    return {
       userId: user.id,
       displayName: user.displayName || user.username,
       tagline: user.tagline || '',
@@ -40,60 +32,31 @@ export class UsersService {
       about: user.about || '',
       profileImageUrl: user.avatar || '',
       portfolioLink: user.portfolioLink || '',
-      galleryImageUrls: Array.isArray(user.galleryImages) ? user.galleryImages.filter(Boolean) : [],
+      galleryArtworks: galleryArtworks,
       contactEmail: user.contactEmail || '',
       contactInstagram: user.contactInstagram || '',
       contactTwitter: user.contactTwitter || '',
       contactBehance: user.contactBehance || '',
       contactArtStation: user.contactArtStation || '',
     };
-
-    console.log('[UsersService] getUserProfile - returning galleryImageUrls:', result.galleryImageUrls);
-
-    return result;
   }
 
   async updateUserProfile(userId: string, data: any) {
-    console.log('[UsersService] updateUserProfile called with data:', data);
-    console.log('[UsersService] Gallery images received:', data.galleryImages);
-    
-    const isValidUrl = (url: string) => {
-      if (!url) return true;
-      try { new URL(url); return true; } catch { return false; }
-    };
+    console.log('[UsersService] Updating profile:', userId);
+    console.log('[UsersService] Data:', data);
 
-    // Validation
-    if (data.portfolioLink && !isValidUrl(data.portfolioLink)) {
-      throw new Error('Invalid portfolio link URL');
-    }
-    if (data.avatar && !isValidUrl(data.avatar)) {
-      throw new Error('Invalid URL for avatar');
-    }
-    if (Array.isArray(data.galleryImages)) {
-      data.galleryImages.forEach((url: string) => {
-        if (url && !isValidUrl(url)) {
-          throw new Error('Invalid URL in galleryImages');
-        }
-      });
-    }
-    
-    const contactFields = ['contactInstagram', 'contactTwitter', 'contactBehance', 'contactArtStation'];
-    contactFields.forEach(field => {
-      if (data[field] && !isValidUrl(data[field])) {
-        throw new Error(`Invalid URL for ${field}`);
-      }
-    });
-
-    // Character limits
-    if (data.bio && data.bio.length > 250) {
-      throw new Error('Bio must be 250 characters or less');
-    }
-    if (data.about && data.about.length > 1000) {
-      throw new Error('About must be 1000 characters or less');
+    // galleryArtworks validation
+    let artworksToSave: GalleryArtwork[] = [];
+    if (Array.isArray(data.galleryArtworks)) {
+      artworksToSave = data.galleryArtworks
+        .filter((art: any) => art && typeof art === 'object' && art.url)
+        .map((art: any) => ({
+          title: art.title || 'Untitled',
+          url: art.url.trim(),
+        }));
     }
 
-    const galleryImagesToSave = Array.isArray(data.galleryImages) ? data.galleryImages.filter(Boolean) : [];
-    console.log('[UsersService] Gallery images to save:', galleryImagesToSave);
+    console.log('[UsersService] Gallery artworks to save:', artworksToSave);
 
     const updated = await this.prisma.user.update({
       where: { id: userId },
@@ -104,7 +67,7 @@ export class UsersService {
         about: data.about,
         portfolioLink: data.portfolioLink,
         avatar: data.avatar,
-        galleryImages: galleryImagesToSave,
+        galleryArtworks: artworksToSave as any,
         contactEmail: data.contactEmail,
         contactInstagram: data.contactInstagram,
         contactTwitter: data.contactTwitter,
@@ -113,7 +76,15 @@ export class UsersService {
       },
     });
 
-    console.log('[UsersService] Updated user galleryImages:', updated.galleryImages);
+    console.log('[UsersService] Updated galleryArtworks:', updated.galleryArtworks);
+
+    let savedArtworks: GalleryArtwork[] = [];
+    try {
+      const raw = updated.galleryArtworks as any;
+      savedArtworks = Array.isArray(raw) ? raw : [];
+    } catch (error) {
+      console.error('[UsersService] Error parsing saved artworks:', error);
+    }
 
     return {
       userId: updated.id,
@@ -123,7 +94,7 @@ export class UsersService {
       about: updated.about || '',
       profileImageUrl: updated.avatar || '',
       portfolioLink: updated.portfolioLink || '',
-      galleryImageUrls: Array.isArray(updated.galleryImages) ? updated.galleryImages.filter(Boolean) : [],
+      galleryArtworks: savedArtworks,
       contactEmail: updated.contactEmail || '',
       contactInstagram: updated.contactInstagram || '',
       contactTwitter: updated.contactTwitter || '',
