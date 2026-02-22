@@ -24,7 +24,7 @@ const errors = ref<Record<string, string>>({});
 
 const validateForm = () => {
   errors.value = {};
-  
+
   if (!form.value.username) {
     errors.value.username = 'Username is required';
   } else if (form.value.username.length < 3) {
@@ -32,39 +32,39 @@ const validateForm = () => {
   } else if (!/^[a-zA-Z0-9_]+$/.test(form.value.username)) {
     errors.value.username = 'Username can only contain letters, numbers, and underscores';
   }
-  
+
   if (!form.value.email) {
     errors.value.email = 'Email is required';
   } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.value.email)) {
     errors.value.email = 'Invalid email format';
   }
-  
+
   if (!form.value.password) {
     errors.value.password = 'Password is required';
   } else if (form.value.password.length < 6) {
     errors.value.password = 'Password must be at least 6 characters';
   }
-  
+
   if (!form.value.confirmPassword) {
     errors.value.confirmPassword = 'Please confirm your password';
   } else if (form.value.password !== form.value.confirmPassword) {
     errors.value.confirmPassword = 'Passwords do not match';
   }
-  
+
   return Object.keys(errors.value).length === 0;
 };
 
 const handleRegister = async () => {
   if (!validateForm()) return;
-  
+
   loading.value = true;
   try {
     await authStore.register(
-      form.value.username,
       form.value.email,
-      form.value.password
+      form.value.password,
+      form.value.username
     );
-    
+
     showToast('Account created successfully!', 'success');
     router.push('/');
   } catch (error: any) {
@@ -89,18 +89,9 @@ const handleRegister = async () => {
       <div class="auth-left">
         <!-- Logo -->
         <div class="auth-logo">
-          <img 
-            v-if="theme === 'dark'"
-            src="/images/jamcontest_logo_white_for_dark.png" 
-            alt="JamContest" 
-            class="logo-img" 
-          />
-          <img 
-            v-else
-            src="/images/logo-JC.png" 
-            alt="JamContest" 
-            class="logo-img" 
-          />
+          <img v-if="theme === 'dark'" src="/images/jamcontest_logo_white_for_dark.png" alt="JamContest"
+            class="logo-img" />
+          <img v-else src="/images/logo-JC.png" alt="JamContest" class="logo-img" />
         </div>
 
         <!-- Form Card -->
@@ -116,14 +107,8 @@ const handleRegister = async () => {
               <label class="form-label">Username</label>
               <div class="input-wrapper">
                 <User class="input-icon" />
-                <input
-                  v-model="form.username"
-                  type="text"
-                  class="form-input"
-                  :class="{ 'input-error': errors.username }"
-                  placeholder="Choose a username"
-                  autocomplete="username"
-                />
+                <input v-model="form.username" type="text" class="form-input"
+                  :class="{ 'input-error': errors.username }" placeholder="Choose a username" autocomplete="username" />
               </div>
               <p v-if="errors.username" class="error-message">{{ errors.username }}</p>
             </div>
@@ -133,14 +118,8 @@ const handleRegister = async () => {
               <label class="form-label">Email</label>
               <div class="input-wrapper">
                 <Mail class="input-icon" />
-                <input
-                  v-model="form.email"
-                  type="email"
-                  class="form-input"
-                  :class="{ 'input-error': errors.email }"
-                  placeholder="your@email.com"
-                  autocomplete="email"
-                />
+                <input v-model="form.email" type="email" class="form-input" :class="{ 'input-error': errors.email }"
+                  placeholder="your@email.com" autocomplete="email" />
               </div>
               <p v-if="errors.email" class="error-message">{{ errors.email }}</p>
             </div>
@@ -150,19 +129,10 @@ const handleRegister = async () => {
               <label class="form-label">Password</label>
               <div class="input-wrapper">
                 <Lock class="input-icon" />
-                <input
-                  v-model="form.password"
-                  :type="showPassword ? 'text' : 'password'"
-                  class="form-input"
-                  :class="{ 'input-error': errors.password }"
-                  placeholder="Create a password"
-                  autocomplete="new-password"
-                />
-                <button
-                  type="button"
-                  @click="showPassword = !showPassword"
-                  class="password-toggle"
-                >
+                <input v-model="form.password" :type="showPassword ? 'text' : 'password'" class="form-input"
+                  :class="{ 'input-error': errors.password }" placeholder="Create a password"
+                  autocomplete="new-password" />
+                <button type="button" @click="showPassword = !showPassword" class="password-toggle">
                   <EyeOff v-if="showPassword" class="w-5 h-5" />
                   <Eye v-else class="w-5 h-5" />
                 </button>
@@ -175,19 +145,10 @@ const handleRegister = async () => {
               <label class="form-label">Confirm Password</label>
               <div class="input-wrapper">
                 <Lock class="input-icon" />
-                <input
-                  v-model="form.confirmPassword"
-                  :type="showConfirmPassword ? 'text' : 'password'"
-                  class="form-input"
-                  :class="{ 'input-error': errors.confirmPassword }"
-                  placeholder="Confirm your password"
-                  autocomplete="new-password"
-                />
-                <button
-                  type="button"
-                  @click="showConfirmPassword = !showConfirmPassword"
-                  class="password-toggle"
-                >
+                <input v-model="form.confirmPassword" :type="showConfirmPassword ? 'text' : 'password'"
+                  class="form-input" :class="{ 'input-error': errors.confirmPassword }"
+                  placeholder="Confirm your password" autocomplete="new-password" />
+                <button type="button" @click="showConfirmPassword = !showConfirmPassword" class="password-toggle">
                   <EyeOff v-if="showConfirmPassword" class="w-5 h-5" />
                   <Eye v-else class="w-5 h-5" />
                 </button>
@@ -225,7 +186,7 @@ const handleRegister = async () => {
           </h2>
 
           <p class="hero-description">
-            Join thousands of artists in creative challenges. Showcase your talent, 
+            Join thousands of artists in creative challenges. Showcase your talent,
             win prizes, and build your portfolio.
           </p>
 
@@ -297,10 +258,9 @@ const handleRegister = async () => {
 .auth-background {
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, 
-    hsl(var(--background)) 0%, 
-    hsl(var(--muted)) 100%
-  );
+  background: linear-gradient(135deg,
+      hsl(var(--background)) 0%,
+      hsl(var(--muted)) 100%);
   z-index: 0;
 }
 
@@ -339,9 +299,19 @@ const handleRegister = async () => {
 }
 
 @keyframes float {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  33% { transform: translate(50px, -50px) scale(1.1); }
-  66% { transform: translate(-30px, 30px) scale(0.9); }
+
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+
+  33% {
+    transform: translate(50px, -50px) scale(1.1);
+  }
+
+  66% {
+    transform: translate(-30px, 30px) scale(0.9);
+  }
 }
 
 .auth-container {
@@ -380,7 +350,7 @@ const handleRegister = async () => {
   background: hsl(var(--background));
   border-radius: 24px;
   padding: 2.5rem;
-  box-shadow: 
+  box-shadow:
     0 20px 25px -5px rgba(0, 0, 0, 0.1),
     0 10px 10px -5px rgba(0, 0, 0, 0.04);
   border: 1px solid hsl(var(--border));
@@ -561,11 +531,9 @@ const handleRegister = async () => {
 }
 
 .hero-gradient {
-  background: linear-gradient(
-    135deg,
-    hsl(var(--accent-purple)),
-    hsl(var(--accent-coral))
-  );
+  background: linear-gradient(135deg,
+      hsl(var(--accent-purple)),
+      hsl(var(--accent-coral)));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }

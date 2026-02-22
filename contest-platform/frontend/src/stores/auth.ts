@@ -6,7 +6,7 @@ interface User {
   email: string;
   username: string;
   displayName: string;
-  role: string;
+  globalRole: string;
   avatar?: string;
 }
 
@@ -18,8 +18,9 @@ export const useAuthStore = defineStore('auth', {
 
   getters: {
     isAuthenticated: (state) => !!state.token,
-    isAdmin: (state) => state.user?.role === 'ADMIN',
-    isJury: (state) => state.user?.role === 'JURY' || state.user?.role === 'ADMIN',
+    isAdmin: (state) => ['ADMIN', 'SUPER_ADMIN'].includes(state.user?.globalRole || ''),
+    isJury: (state) => ['JURY', 'ADMIN', 'SUPER_ADMIN'].includes(state.user?.globalRole || ''),
+    isSuperAdmin: (state) => state.user?.globalRole === 'SUPER_ADMIN',
   },
 
   actions: {

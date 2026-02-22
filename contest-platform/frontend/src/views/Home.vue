@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
+import ParticleBackground from '@/components/ui/ParticleBackground.vue';
 import { useRouter } from 'vue-router';
 import { Trophy, Users, Award, TrendingUp, ArrowRight, Sparkles } from 'lucide-vue-next';
 
@@ -74,6 +75,7 @@ const navigateToContests = () => {
 
 <template>
   <div class="home-page">
+    <ParticleBackground />
     <!-- Hero Section -->
     <section class="hero-section">
       <div class="hero-background">
@@ -81,7 +83,7 @@ const navigateToContests = () => {
         <div class="gradient-orb orb-2"></div>
         <div class="gradient-orb orb-3"></div>
       </div>
-
+      
       <div class="hero-content">
         <div class="hero-badge">
           <Sparkles class="w-4 h-4" />

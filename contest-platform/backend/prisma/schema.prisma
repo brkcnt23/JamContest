@@ -7,130 +7,248 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Enum definitions
-enum UserRole {
+// ==========================================
+// ENUMS
+// ==========================================
+
+enum GlobalRole {
   USER
-  JURY
   ADMIN
+  SUPER_ADMIN
+}
+
+enum ContestRole {
+  ORGANIZER
+  CO_ORGANIZER
+  JURY
+  PARTICIPANT
 }
 
 enum ContestStatus {
   DRAFT
+  PENDING_APPROVAL
+  APPROVED
   APPLICATIONS
   ACTIVE
   SUBMISSION_CLOSED
   JUDGING
+  FINALIZED
   COMPLETED
   CANCELLED
+  REJECTED
 }
 
+enum ApplicationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum ApprovalMode {
+  MANUAL
+  AUTO
+}
+
+enum BadgeType {
+  EARLY_ADOPTER       // İlk 100 user
+  ORGANIZER           // Organizatör olmuş
+  JURY_MEMBER         // Jüri olmuş
+  FIRST_WIN           // İlk yarışma kazanma
+  FIRST_SUBMISSION    // İlk eser teslimi
+  SOCIAL_SHARER       // Sosyal medya paylaşımı
+  TOP_3               // İlk 3'e girme
+  VETERAN             // 5+ yarışmaya katılım
+  CONTEST_CREATOR     // İlk yarışma oluşturma
+}
+
+// ==========================================
+// USER
+// ==========================================
+
 model User {
-  id            String   @id @default(cuid())
-  email         String   @unique
+  id            String     @id @default(cuid())
+  email         String     @unique
   passwordHash  String
-  username      String   @unique
+  username      String     @unique
   displayName   String?
-  bio           String?  // 3-5 cümle, max 250 karakter
-  about         String?  @db.Text // 3-4 paragraf, max 1000 karakter
+  bio           String?
+  about         String?    @db.Text
   avatar        String?
   tagline       String?
   portfolioLink String?
-  
-  galleryImages   String[] @default([]) 
+
+  galleryImages   String[] @default([])
   galleryArtworks Json     @default("[]")
-  
+
   contactEmail      String?
   contactInstagram  String?
   contactTwitter    String?
   contactBehance    String?
   contactArtStation String?
-  
-  role          UserRole @default(USER)
 
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  globalRole    GlobalRole @default(USER)
+
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
 
   // Relations
-  applications  ContestApplication[]
-  submissions   Submission[]
-  juryAssignments JuryAssignment[]
-  scores        JuryScore[]
+  contestMembers    ContestMember[]
+  applications      ContestApplication[]
+  submissions       Submission[]
+  scores            JuryScore[]
+  badges            UserBadge[]
+  createdContests   Contest[]            @relation("ContestCreator")
+  socialShares      SocialShare[]
+  contestApprovals  ContestApproval[]
 
   @@index([username])
   @@index([email])
+  @@index([globalRole])
 }
+
+// ==========================================
+// CONTEST (Yarışma / Game Jam / Organizasyon)
+// ==========================================
 
 model Contest {
   id                String        @id @default(cuid())
   title             String
   description       String        @db.Text
   slug              String        @unique
-  
-  applicationStart  DateTime
-  applicationEnd    DateTime
-  topicRevealAt     DateTime
-  submissionEnd     DateTime
-  judgingEnd        DateTime?
-  
+  coverImage        String?
+
+  // Yarışmayı oluşturan kişi
+  createdById       String
+  createdBy         User          @relation("ContestCreator", fields: [createdById], references: [id])
+
+  // Tarihler
+  applicationStart  DateTime?
+  applicationEnd    DateTime?
+  topicRevealAt     DateTime?
+  submissionStart   DateTime?
+  submissionEnd     DateTime?
+  judgingStart       DateTime?
+  judgingEnd         DateTime?
+
+  // İçerik
   topic             String?       @db.Text
   rules             String?       @db.Text
   prizes            String?       @db.Text
-  
+  category          String?       // "game_jam", "contest", "hackathon" vs.
+
+  // Ayarlar
   maxParticipants   Int?
-  requiresApproval  Boolean       @default(false)
-  
+  approvalMode      ApprovalMode  @default(MANUAL)  // Katılımcı onay modu
   maxFileSize       Int           @default(209715200)
   allowedFormats    String[]
-  
+
+  // Durum
   status            ContestStatus @default(DRAFT)
-  
+
+  // Admin onay süreci
+  adminApprovalNote String?       @db.Text  // Red sebebi vs.
+
   createdAt         DateTime      @default(now())
   updatedAt         DateTime      @updatedAt
-  
+
+  // Relations
+  members           ContestMember[]
   applications      ContestApplication[]
   submissions       Submission[]
-  juryAssignments   JuryAssignment[]
-  
+  approvals         ContestApproval[]
+
   @@index([status])
   @@index([slug])
+  @@index([createdById])
 }
 
-model ContestApplication {
-  id          String   @id @default(cuid())
+// ==========================================
+// CONTEST MEMBER (Yarışma bazlı roller)
+// ==========================================
+// Bir user aynı anda farklı yarışmalarda farklı rollere sahip olabilir.
+// X yarışmasında JURY, Y yarışmasında PARTICIPANT, Z yarışmasında ORGANIZER
+
+model ContestMember {
+  id          String      @id @default(cuid())
   userId      String
   contestId   String
-  
-  status      String   @default("PENDING")
-  message     String?  @db.Text
-  
+  role        ContestRole
+
+  assignedAt  DateTime    @default(now())
+  assignedBy  String?     // Kim atadı
+
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  contest     Contest     @relation(fields: [contestId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, contestId, role])
+  @@index([contestId, role])
+  @@index([userId])
+}
+
+// ==========================================
+// CONTEST APPROVAL (Admin onay süreci)
+// ==========================================
+
+model ContestApproval {
+  id          String   @id @default(cuid())
+  contestId   String
+  reviewerId  String   // Onaylayan/reddeden admin
+  decision    String   // "APPROVED" | "REJECTED"
+  note        String?  @db.Text
+
   createdAt   DateTime @default(now())
-  
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   contest     Contest  @relation(fields: [contestId], references: [id], onDelete: Cascade)
-  
+  reviewer    User     @relation(fields: [reviewerId], references: [id])
+
+  @@index([contestId])
+}
+
+// ==========================================
+// CONTEST APPLICATION (Katılım başvurusu)
+// ==========================================
+
+model ContestApplication {
+  id          String            @id @default(cuid())
+  userId      String
+  contestId   String
+  status      ApplicationStatus @default(PENDING)
+  message     String?           @db.Text
+
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  contest     Contest           @relation(fields: [contestId], references: [id], onDelete: Cascade)
+
   @@unique([userId, contestId])
   @@index([contestId, status])
 }
+
+// ==========================================
+// SUBMISSION (Eser teslimi)
+// ==========================================
 
 model Submission {
   id          String   @id @default(cuid())
   userId      String
   contestId   String
-  
+
   title       String
   description String?  @db.Text
-  
+  link        String?  // Drive/Wetransfer linki
+
   files       SubmissionFile[]
   scores      JuryScore[]
   finalScore  Float?
   rank        Int?
-  
+
   submittedAt DateTime @default(now())
   updatedAt   DateTime @updatedAt
-  
+
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   contest     Contest  @relation(fields: [contestId], references: [id], onDelete: Cascade)
-  
+
   @@unique([userId, contestId])
   @@index([contestId, finalScore])
 }
@@ -138,48 +256,89 @@ model Submission {
 model SubmissionFile {
   id           String   @id @default(cuid())
   submissionId String
-  
+
   filename     String
   originalName String
   filepath     String
   mimeType     String
   size         Int
-  
+
   uploadedAt   DateTime @default(now())
-  
+
   submission   Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
-  
+
   @@index([submissionId])
 }
 
-model JuryAssignment {
-  id        String   @id @default(cuid())
-  juryId    String
-  contestId String
-  
-  assignedAt DateTime @default(now())
-  
-  jury      User     @relation(fields: [juryId], references: [id], onDelete: Cascade)
-  contest   Contest  @relation(fields: [contestId], references: [id], onDelete: Cascade)
-  
-  @@unique([juryId, contestId])
-  @@index([contestId])
-}
+// ==========================================
+// JURY SCORE (Jüri oylama - izole & gizli)
+// ==========================================
+// - Her jüri sadece kendi oyunu verir, başkasının oyunu göremez
+// - Oy verdikten sonra tekrar göremez/değiştiremez
+// - Katılımcılar sadece toplam skoru görür, kimin ne verdiğini değil
+// - Sadece SUPER_ADMIN tüm detayı görebilir
 
 model JuryScore {
   id           String   @id @default(cuid())
   juryId       String
   submissionId String
-  
+
   score        Float
   comment      String?  @db.Text
-  
+  isLocked     Boolean  @default(true)  // Oy verildikten sonra kilitlenir
+
   createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  
+
   jury         User       @relation(fields: [juryId], references: [id], onDelete: Cascade)
   submission   Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
-  
+
   @@unique([juryId, submissionId])
   @@index([submissionId])
+}
+
+// ==========================================
+// BADGE SİSTEMİ
+// ==========================================
+
+model Badge {
+  id          String    @id @default(cuid())
+  type        BadgeType @unique
+  name        String
+  description String
+  icon        String?   // emoji veya icon path
+  color       String?   // hex renk
+
+  users       UserBadge[]
+}
+
+model UserBadge {
+  id        String   @id @default(cuid())
+  userId    String
+  badgeId   String
+  earnedAt  DateTime @default(now())
+  metadata  Json?    // ek bilgi: hangi yarışma, kaçıncı user vs.
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  badge     Badge    @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, badgeId])
+  @@index([userId])
+}
+
+// ==========================================
+// SOCIAL SHARE (Paylaşım takibi - badge için)
+// ==========================================
+
+model SocialShare {
+  id        String   @id @default(cuid())
+  userId    String
+  platform  String   // "twitter", "instagram", "linkedin" vs.
+  url       String?
+  contestId String?
+
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }

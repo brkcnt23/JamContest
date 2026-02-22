@@ -27,11 +27,11 @@ export class AuthService {
         passwordHash,
         username,
         displayName: displayName || username,
-        role: 'USER',
+        globalRole: 'USER',
       },
     });
 
-    const token = this.generateToken(user.id, user.email, user.role);
+    const token = this.generateToken(user.id, user.email, user.globalRole);
     return { user: this.sanitizeUser(user), token };
   }
 
@@ -42,20 +42,31 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    const token = this.generateToken(user.id, user.email, user.role);
+    const token = this.generateToken(user.id, user.email, user.globalRole);
     return { user: this.sanitizeUser(user), token };
   }
 
   async getMe(userId: string) {
-    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        contestMembers: {
+          include: { contest: { select: { id: true, title: true, slug: true } } },
+        },
+        badges: {
+          include: { badge: true },
+        },
+      },
+    });
     return this.sanitizeUser(user);
   }
 
-  private generateToken(id: string, email: string, role: string) {
-    return this.jwtService.sign({ sub: id, email, role });
+  private generateToken(id: string, email: string, globalRole: string) {
+    return this.jwtService.sign({ sub: id, email, globalRole });
   }
 
   private sanitizeUser(user: any) {
+    if (!user) return null;
     const { passwordHash, ...rest } = user;
     return rest;
   }

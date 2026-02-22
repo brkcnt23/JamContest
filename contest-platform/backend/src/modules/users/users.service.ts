@@ -1,52 +1,136 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { GalleryArtwork } from './types/gallery-artwork.type';
 
 @Injectable()
 export class UsersService {
   constructor(private prisma: PrismaService) {}
 
+  // ==========================================
+  // KULLANICI LİSTESİ (Admin panel için)
+  // ==========================================
+
+  async getAllUsers() {
+    return this.prisma.user.findMany({
+      select: {
+        id: true,
+        email: true,
+        username: true,
+        displayName: true,
+        avatar: true,
+        globalRole: true,
+        createdAt: true,
+        contestMembers: {
+          select: {
+            role: true,
+            contest: { select: { id: true, title: true } },
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  // ==========================================
+  // ROL DEĞİŞTİRME (Global role)
+  // ==========================================
+
+  async updateGlobalRole(
+    targetUserId: string,
+    newRole: string,
+    requestingUser: { id: string; globalRole: string },
+  ) {
+    const target = await this.prisma.user.findUnique({ where: { id: targetUserId } });
+    if (!target) throw new NotFoundException('User not found');
+
+    // SUPER_ADMIN sadece SUPER_ADMIN tarafından değiştirilebilir
+    if (target.globalRole === 'SUPER_ADMIN' && requestingUser.globalRole !== 'SUPER_ADMIN') {
+      throw new ForbiddenException('Cannot modify Super Admin');
+    }
+
+    // ADMIN rolü sadece SUPER_ADMIN atayabilir
+    if (newRole === 'ADMIN' && requestingUser.globalRole !== 'SUPER_ADMIN') {
+      throw new ForbiddenException('Only Super Admin can assign Admin role');
+    }
+
+    if (newRole === 'SUPER_ADMIN' && requestingUser.globalRole !== 'SUPER_ADMIN') {
+      throw new ForbiddenException('Only Super Admin can assign Super Admin role');
+    }
+
+    // Admin başka bir adminin rolünü değiştiremez
+    if (target.globalRole === 'ADMIN' && requestingUser.globalRole === 'ADMIN') {
+      throw new ForbiddenException('Admins cannot modify other Admins');
+    }
+
+    return this.prisma.user.update({
+      where: { id: targetUserId },
+      data: { globalRole: newRole as any },
+      select: {
+        id: true,
+        username: true,
+        email: true,
+        globalRole: true,
+      },
+    });
+  }
+
+  // ==========================================
+  // PROFİL
+  // ==========================================
+
   async getUserProfile(userId: string) {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
+      include: {
+        badges: { include: { badge: true } },
+        contestMembers: {
+          include: { contest: { select: { id: true, title: true, slug: true, status: true } } },
+        },
+      },
     });
 
-    if (!user) {
-      throw new Error('User not found');
-    }
+    if (!user) throw new NotFoundException('User not found');
 
-    // galleryArtworks JSON parse
-    let galleryArtworks: GalleryArtwork[] = [];
+    let galleryArtworks: any[] = [];
     try {
       const raw = user.galleryArtworks as any;
       galleryArtworks = Array.isArray(raw) ? raw : [];
-    } catch (error) {
-      console.error('[UsersService] Error parsing galleryArtworks:', error);
-    }
+    } catch (error) {}
 
     return {
       userId: user.id,
       displayName: user.displayName || user.username,
+      username: user.username,
       tagline: user.tagline || '',
       bio: user.bio || '',
       about: user.about || '',
       profileImageUrl: user.avatar || '',
       portfolioLink: user.portfolioLink || '',
-      galleryArtworks: galleryArtworks,
+      galleryArtworks,
       contactEmail: user.contactEmail || '',
       contactInstagram: user.contactInstagram || '',
       contactTwitter: user.contactTwitter || '',
       contactBehance: user.contactBehance || '',
       contactArtStation: user.contactArtStation || '',
+      globalRole: user.globalRole,
+      badges: user.badges.map((ub) => ({
+        id: ub.badge.id,
+        type: ub.badge.type,
+        name: ub.badge.name,
+        icon: ub.badge.icon,
+        color: ub.badge.color,
+        earnedAt: ub.earnedAt,
+      })),
+      contestRoles: user.contestMembers.map((cm) => ({
+        contestId: cm.contest.id,
+        contestTitle: cm.contest.title,
+        contestSlug: cm.contest.slug,
+        role: cm.role,
+      })),
     };
   }
 
   async updateUserProfile(userId: string, data: any) {
-    console.log('[UsersService] Updating profile:', userId);
-    console.log('[UsersService] Data:', data);
-
-    // galleryArtworks validation
-    let artworksToSave: GalleryArtwork[] = [];
+    let artworksToSave: any[] = [];
     if (Array.isArray(data.galleryArtworks)) {
       artworksToSave = data.galleryArtworks
         .filter((art: any) => art && typeof art === 'object' && art.url)
@@ -55,8 +139,6 @@ export class UsersService {
           url: art.url.trim(),
         }));
     }
-
-    console.log('[UsersService] Gallery artworks to save:', artworksToSave);
 
     const updated = await this.prisma.user.update({
       where: { id: userId },
@@ -76,15 +158,11 @@ export class UsersService {
       },
     });
 
-    console.log('[UsersService] Updated galleryArtworks:', updated.galleryArtworks);
-
-    let savedArtworks: GalleryArtwork[] = [];
+    let savedArtworks: any[] = [];
     try {
       const raw = updated.galleryArtworks as any;
       savedArtworks = Array.isArray(raw) ? raw : [];
-    } catch (error) {
-      console.error('[UsersService] Error parsing saved artworks:', error);
-    }
+    } catch {}
 
     return {
       userId: updated.id,
@@ -101,5 +179,29 @@ export class UsersService {
       contactBehance: updated.contactBehance || '',
       contactArtStation: updated.contactArtStation || '',
     };
+  }
+
+  // ==========================================
+  // KULLANICI ARAMA (Jüri/organizatör seçimi için)
+  // ==========================================
+
+  async searchUsers(query: string, limit = 20) {
+    return this.prisma.user.findMany({
+      where: {
+        OR: [
+          { username: { contains: query, mode: 'insensitive' } },
+          { displayName: { contains: query, mode: 'insensitive' } },
+          { email: { contains: query, mode: 'insensitive' } },
+        ],
+      },
+      select: {
+        id: true,
+        username: true,
+        displayName: true,
+        avatar: true,
+        globalRole: true,
+      },
+      take: limit,
+    });
   }
 }
