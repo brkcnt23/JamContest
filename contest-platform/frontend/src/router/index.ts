@@ -54,6 +54,12 @@ const router = createRouter({
       meta: { layout: 'dashboard', requiresAuth: true }
     },
     { 
+      path: '/contests/:slug/results', 
+      name: 'ContestResults', 
+      component: () => import('@/views/ContestResults.vue'),
+      meta: { layout: 'dashboard' }
+    },
+    { 
       path: '/contests/:slug', 
       name: 'ContestDetail', 
       component: () => import('@/views/ContestDetail.vue'),
@@ -167,12 +173,20 @@ const router = createRouter({
       meta: { layout: 'dashboard' }
     },
     
+    // ORGANIZER
+    { 
+      path: '/organizer/contests', 
+      name: 'OrganizerDashboard', 
+      component: () => import('@/views/OrganizerDashboard.vue'),
+      meta: { layout: 'dashboard', requiresAuth: true }
+    },
+    
     // JURY
     { 
       path: '/jury', 
-      name: 'Jury', 
-      component: () => import('@/views/Jury.vue'),
-      meta: { layout: 'dashboard', requiresAuth: true, requiresJury: true }
+      name: 'JuryPanel', 
+      component: () => import('@/views/JuryPanel.vue'),
+      meta: { layout: 'dashboard', requiresAuth: true }
     },
     
     // ADMIN
@@ -185,11 +199,15 @@ const router = createRouter({
   ],
 });
 
-router.beforeEach((to, from, next) => {
+router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore();
   authStore.setupAxiosInterceptor();
-  
-  // Auth guards
+
+  // Eğer token var ama user yüklenmemişse bekle
+  if (authStore.isAuthenticated && !authStore.user) {
+    await authStore.fetchUser();
+  }
+
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {
     next('/login');
   } else if (to.meta.requiresJury && !authStore.isJury) {

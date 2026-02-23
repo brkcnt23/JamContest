@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue';
+import { ref, computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import {
   Home, Trophy, Share2, Image, MessageSquare,
   Bell, FileText, Heart, Settings, Sun, Moon,
   Gavel, ClipboardList, Award,
-  LayoutDashboard, Users, Cog,
+  LayoutDashboard, Users, Cog, PlusCircle,
   HelpCircle, BookOpen, ChevronLeft, ChevronRight
 } from 'lucide-vue-next';
 import { useTheme } from '@/stores/theme';
@@ -21,24 +21,50 @@ const isCollapsed = ref(false);
 const emit = defineEmits<{
   'collapse-change': [value: boolean]
 }>();
+
 const toggleSidebar = () => {
   isCollapsed.value = !isCollapsed.value;
-  emit('collapse-change', isCollapsed.value); // ← EKLE
+  emit('collapse-change', isCollapsed.value);
 };
 
-const majorLinks = [
+// ==========================================
+// ROLE CHECKS
+// ==========================================
+
+const isAdmin = computed(() => ['ADMIN', 'SUPER_ADMIN'].includes(authStore.user?.globalRole || ''));
+const isSuperAdmin = computed(() => authStore.user?.globalRole === 'SUPER_ADMIN');
+
+// Yarışma bazlı roller (contestMembers'dan)
+const hasContestRole = (role: string) => {
+  const members = (authStore.user as any)?.contestMembers || [];
+  return members.some((cm: any) => cm.role === role);
+};
+
+const isOrganizer = computed(() => isAdmin.value || hasContestRole('ORGANIZER') || hasContestRole('CO_ORGANIZER'));
+const isJury = computed(() => isAdmin.value || hasContestRole('JURY'));
+
+// ==========================================
+// NAV LINKS
+// ==========================================
+
+const majorLinks = computed(() => [
   { name: 'Home', icon: Home, path: '/' },
   { name: 'Contests', icon: Trophy, path: '/contests' },
   { name: 'Social', icon: Share2, path: '/social' },
   { name: 'Portfolio', icon: Image, path: authStore.user?.id ? `/user/${authStore.user.id}` : '/portfolio' },
   { name: 'Messages', icon: MessageSquare, path: '/messages' },
-];
+]);
 
 const minorLinks = [
   { name: 'Notifications', icon: Bell, path: '/notifications' },
   { name: 'Submissions', icon: FileText, path: '/submissions' },
   { name: 'Favorites', icon: Heart, path: '/favorites' },
   { name: 'Settings', icon: Settings, path: '/settings' },
+];
+
+const organizerLinks = [
+  { name: 'Yarışma Oluştur', icon: PlusCircle, path: '/contests/create' },
+  { name: 'Yarışmalarım', icon: Trophy, path: '/organizer/contests' },
 ];
 
 const juryLinks = [
@@ -59,13 +85,8 @@ const bottomLinks = [
   { name: 'Docs', icon: BookOpen, path: '/docs' },
 ];
 
-const isActive = (path: string) => {
-  return route.path === path;
-};
-
-const navigateTo = (path: string) => {
-  router.push(path);
-};
+const isActive = (path: string) => route.path === path;
+const navigateTo = (path: string) => router.push(path);
 </script>
 
 <template>
@@ -94,6 +115,7 @@ const navigateTo = (path: string) => {
           <span v-if="!isCollapsed" class="nav-label">{{ link.name }}</span>
         </a>
       </div>
+
       <!-- MINOR LINKS -->
       <div v-if="!isCollapsed" class="nav-group">
         <p class="nav-group-title">More</p>
@@ -102,12 +124,20 @@ const navigateTo = (path: string) => {
           <component :is="link.icon" class="nav-icon" />
           <span class="nav-label">{{ link.name }}</span>
         </a>
-
-        <!-- Theme Toggle KALDIRILDI - artık yok -->
       </div>
 
-      <!-- JURY SECTION -->
-      <div v-if="authStore.isJury && !isCollapsed" class="nav-group">
+      <!-- ORGANIZER SECTION — sadece organizatör veya admin -->
+      <div v-if="isOrganizer && !isCollapsed" class="nav-group">
+        <p class="nav-group-title">Organizer</p>
+        <a v-for="link in organizerLinks" :key="link.path" @click="navigateTo(link.path)"
+          :class="['nav-item small', isActive(link.path) && 'active']">
+          <component :is="link.icon" class="nav-icon" />
+          <span class="nav-label">{{ link.name }}</span>
+        </a>
+      </div>
+
+      <!-- JURY SECTION — sadece jüri veya admin -->
+      <div v-if="isJury && !isCollapsed" class="nav-group">
         <p class="nav-group-title">Jury</p>
         <a v-for="link in juryLinks" :key="link.path" @click="navigateTo(link.path)"
           :class="['nav-item small', isActive(link.path) && 'active']">
@@ -116,8 +146,8 @@ const navigateTo = (path: string) => {
         </a>
       </div>
 
-      <!-- ADMIN SECTION -->
-      <div v-if="authStore.isAdmin && !isCollapsed" class="nav-group">
+      <!-- ADMIN SECTION — sadece admin/super_admin -->
+      <div v-if="isAdmin && !isCollapsed" class="nav-group">
         <p class="nav-group-title">Admin</p>
         <a v-for="link in adminLinks" :key="link.path" @click="navigateTo(link.path)"
           :class="['nav-item small', isActive(link.path) && 'active']">
@@ -153,12 +183,7 @@ const navigateTo = (path: string) => {
   z-index: 100;
 }
 
-.sidebar.collapsed {
-  width: 72px;
-}
-/* Sidebar.vue <style scoped> içinde değiştirilecek kısım */
-
-/* Logo Section */
+.sidebar.collapsed { width: 72px; }
 
 .logo-section {
   padding: 1rem;
@@ -182,17 +207,15 @@ const navigateTo = (path: string) => {
   width: auto;
   object-fit: contain;
   transition: none;
-  /* GÖRSELİ BÜYÜT */
   transform: scale(1.4);
   transform-origin: center;
 }
 
 .sidebar.collapsed .logo {
   height: 56px;
-  transform: scale(1.4); /* Aynı boyut */
+  transform: scale(1.4);
 }
 
-/* Collapse Button */
 .collapse-btn {
   position: absolute;
   right: -12px;
@@ -216,21 +239,14 @@ const navigateTo = (path: string) => {
   transform: scale(1.1);
 }
 
-/* Navigation */
 .nav-section {
   flex: 1;
   overflow-y: auto;
   padding: 1rem 0;
 }
 
-.nav-section::-webkit-scrollbar {
-  width: 6px;
-}
-
-.nav-section::-webkit-scrollbar-thumb {
-  background: hsl(var(--muted));
-  border-radius: 3px;
-}
+.nav-section::-webkit-scrollbar { width: 6px; }
+.nav-section::-webkit-scrollbar-thumb { background: hsl(var(--muted)); border-radius: 3px; }
 
 .nav-group {
   margin-bottom: 1.5rem;
@@ -260,9 +276,7 @@ const navigateTo = (path: string) => {
   margin-bottom: 0.25rem;
 }
 
-.nav-item:hover {
-  background: hsl(var(--muted));
-}
+.nav-item:hover { background: hsl(var(--muted)); }
 
 .nav-item.active {
   background: hsl(var(--brand));
@@ -291,28 +305,16 @@ const navigateTo = (path: string) => {
   text-overflow: ellipsis;
 }
 
-.sidebar.collapsed .nav-label {
-  display: none;
-}
+.sidebar.collapsed .nav-label { display: none; }
 
-/* Bottom Section */
 .bottom-section {
   border-top: 1px solid hsl(var(--border));
   padding: 1rem 0.75rem;
 }
 
-/* Mobile */
 @media (max-width: 768px) {
-  .sidebar {
-    width: 72px;
-  }
-
-  .logo {
-    height: 32px;
-  }
-
-  .nav-label {
-    display: none;
-  }
+  .sidebar { width: 72px; }
+  .logo { height: 32px; }
+  .nav-label { display: none; }
 }
 </style>

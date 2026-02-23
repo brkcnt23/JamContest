@@ -27,7 +27,6 @@ export class ContestsController {
   async findAll(@Query('status') status?: string) {
     return this.contestsService.findAll(status);
   }
-
   // GET /api/contests/pending — Admin: onay bekleyenler
   @Get('pending')
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -36,21 +35,8 @@ export class ContestsController {
     return this.contestsService.getPendingContests();
   }
 
-  // GET /api/contests/:slug — Yarışma detay (slug ile)
-  @Get(':slug')
-  async findBySlug(@Param('slug') slug: string) {
-    return this.contestsService.findBySlug(slug);
-  }
-
-  // PUT /api/contests/:id — Yarışma güncelle
-  @Put(':id')
-  @UseGuards(JwtAuthGuard)
-  async update(@Param('id') id: string, @Body() body: any, @Req() req: any) {
-    return this.contestsService.update(id, body, req.user.id);
-  }
-
   // ==========================================
-  // ADMIN ONAY
+  // PARAMETRE ROUTES (SPECIFIC → CATCH-ALL)
   // ==========================================
 
   // PUT /api/contests/:id/approve
@@ -75,10 +61,6 @@ export class ContestsController {
   async updateStatus(@Param('id') id: string, @Body() body: { status: string }, @Req() req: any) {
     return this.contestsService.updateStatus(id, body.status, req.user.id);
   }
-
-  // ==========================================
-  // ÜYE YÖNETİMİ
-  // ==========================================
 
   // GET /api/contests/:id/members
   @Get(':id/members')
@@ -109,10 +91,6 @@ export class ContestsController {
     return this.contestsService.removeMember(id, userId, role, req.user.id);
   }
 
-  // ==========================================
-  // BAŞVURU
-  // ==========================================
-
   // POST /api/contests/:id/apply — Başvur
   @Post(':id/apply')
   @UseGuards(JwtAuthGuard)
@@ -141,10 +119,6 @@ export class ContestsController {
     return this.contestsService.rejectApplication(appId, req.user.id);
   }
 
-  // ==========================================
-  // ESER TESLİMİ
-  // ==========================================
-
   // POST /api/contests/:id/submit
   @Post(':id/submit')
   @UseGuards(JwtAuthGuard)
@@ -158,10 +132,6 @@ export class ContestsController {
   async getSubmissions(@Param('id') id: string, @Req() req: any) {
     return this.contestsService.getSubmissions(id, req.user.id);
   }
-
-  // ==========================================
-  // JÜRİ OYLAMA
-  // ==========================================
 
   // GET /api/contests/:id/jury/queue — Oylanacak eserler
   @Get(':id/jury/queue')
@@ -181,9 +151,12 @@ export class ContestsController {
     return this.contestsService.submitScore(id, req.user.id, body.submissionId, body.score, body.comment);
   }
 
-  // ==========================================
-  // SONUÇLAR
-  // ==========================================
+  // GET /api/contests/:id/jury/my-scores — Jürinin verdiği oylar
+  @Get(':id/jury/my-scores')
+  @UseGuards(JwtAuthGuard)
+  async getMyScores(@Param('id') id: string, @Req() req: any) {
+    return this.contestsService.getJuryScores(id, req.user.id);
+  }
 
   // POST /api/contests/:id/finalize — Sonuçları hesapla (org)
   @Post(':id/finalize')
@@ -204,5 +177,25 @@ export class ContestsController {
   @Roles('SUPER_ADMIN')
   async getDetailedScores(@Param('id') id: string) {
     return this.contestsService.getDetailedScores(id);
+  }
+
+  // GET /api/contests/:id/my-application — Kendi başvuruyu getir
+  @Get(':id/my-application')
+  @UseGuards(JwtAuthGuard)
+  async getMyApplication(@Param('id') id: string, @Req() req: any) {
+    return this.contestsService.getMyApplication(id, req.user.id);
+  }
+
+  // PUT /api/contests/:id — Yarışma güncelle
+  @Put(':id')
+  @UseGuards(JwtAuthGuard)
+  async update(@Param('id') id: string, @Body() body: any, @Req() req: any) {
+    return this.contestsService.update(id, body, req.user.id);
+  }
+
+  // GET /api/contests/:slug — Yarışma detay (slug ile) — MUST BE LAST!
+  @Get(':slug')
+  async findBySlug(@Param('slug') slug: string) {
+    return this.contestsService.findBySlug(slug);
   }
 }

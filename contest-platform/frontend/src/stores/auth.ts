@@ -10,6 +10,7 @@ interface User {
   avatar?: string;
 }
 
+
 export const useAuthStore = defineStore('auth', {
   state: () => ({
     user: null as User | null,

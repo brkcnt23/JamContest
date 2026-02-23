@@ -274,6 +274,12 @@ export class ContestsService {
     return application;
   }
 
+  async getMyApplication(contestId: string, userId: string) {
+    return this.prisma.contestApplication.findUnique({
+      where: { userId_contestId: { userId, contestId } },
+    });
+  }
+
   async getApplications(contestId: string, requestingUserId: string) {
     await this.assertOrganizerOrAdmin(contestId, requestingUserId);
 
@@ -434,6 +440,34 @@ export class ContestsService {
         isLocked: true,
       },
     });
+  }
+
+  async getJuryScores(contestId: string, juryId: string) {
+    // Verify jury membership
+    const member = await this.prisma.contestMember.findFirst({
+      where: { contestId, userId: juryId, role: 'JURY' },
+    });
+    if (!member) throw new ForbiddenException('You are not a jury in this contest');
+
+    // Get all scores submitted by this jury
+    const scores = await this.prisma.juryScore.findMany({
+      where: { juryId },
+      include: {
+        submission: {
+          include: {
+            user: {
+              select: { id: true, username: true, displayName: true },
+            },
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return {
+      count: scores.length,
+      scores,
+    };
   }
 
   // ==========================================
