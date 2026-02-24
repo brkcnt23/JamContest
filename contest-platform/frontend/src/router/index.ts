@@ -173,6 +173,14 @@ const router = createRouter({
       meta: { layout: 'dashboard' }
     },
     
+    // JURY INVITATIONS
+    { 
+      path: '/jury-invitations', 
+      name: 'JuryInvitations', 
+      component: () => import('@/views/JuryInvitations.vue'),
+      meta: { layout: 'dashboard', requiresAuth: true }
+    },
+    
     // ORGANIZER
     { 
       path: '/organizer/contests', 

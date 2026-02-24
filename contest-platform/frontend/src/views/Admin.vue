@@ -165,6 +165,125 @@
         </div>
       </div>
 
+      <!-- Jury Scores Tab -->
+      <div v-if="activeTab === 'jury-scores'">
+        <div class="section-header">
+          <h2 class="section-title">Jüri Skorları</h2>
+          <select v-model="selectedContestForScores" @change="loadContestScores(selectedContestForScores)" class="role-select" style="flex: 0 0 auto;">
+            <option value="">Yarışma Seçin...</option>
+            <option v-for="c in allContests" :key="c.id" :value="c.id">{{ c.title }}</option>
+          </select>
+        </div>
+        <div v-if="scoresLoading" class="loading">Yükleniyor...</div>
+        <div v-else-if="!selectedContestForScores" class="empty-mini">Yarışma seçin</div>
+        <div v-else-if="juryScores.length === 0" class="empty-mini">Skor bulunamadı</div>
+        <div v-else class="table-wrapper">
+          <table class="table">
+            <thead><tr><th>Jüri</th><th>Katılımcı</th><th>Skor</th><th>Yorum</th><th>Tarih</th><th>İşlem</th></tr></thead>
+            <tbody>
+              <tr v-for="score in juryScores" :key="score.id" :style="{ opacity: score.archivedAt ? '0.5' : '1' }">
+                <td>{{ score.jury?.displayName || score.jury?.username }}</td>
+                <td>{{ score.submission?.user?.username }}</td>
+                <td>{{ score.score }}</td>
+                <td class="text-muted">{{ score.comment || '—' }}</td>
+                <td class="text-muted">{{ formatDate(score.createdAt) }}</td>
+                <td>
+                  <button 
+                    v-if="!score.archivedAt"
+                    @click="archiveJuryScore(score.id)" 
+                    class="btn btn--danger btn--xs"
+                  >
+                    Arşivle
+                  </button>
+                  <span v-else class="text-muted">Arşivlenmiş</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Edit Requests Tab -->
+      <div v-if="activeTab === 'edit-requests'">
+        <div class="section-header">
+          <h2 class="section-title">Düzenleme Talepleri</h2>
+        </div>
+        <div v-if="editRequests.length === 0" class="empty-mini">Düzenleme talebı bulunmamaktadır</div>
+        <div v-else class="request-list">
+          <div v-for="req in editRequests" :key="req.id" class="request-card">
+            <div class="request-header">
+              <div>
+                <h4>{{ req.contest?.title }}</h4>
+                <p class="text-muted">Tarafından: {{ req.requester?.displayName || req.requester?.username }}</p>
+              </div>
+              <small class="text-muted">{{ formatDate(req.createdAt) }}</small>
+            </div>
+            <div class="request-changes">
+              <p><strong>Değişiklikler:</strong></p>
+              <pre>{{ JSON.stringify(req.changes, null, 2) }}</pre>
+            </div>
+            <div class="request-actions">
+              <button @click="approveEditRequest(req.id)" class="btn btn--approve btn--sm">Onayla</button>
+              <button @click="rejectEditRequest(req.id)" class="btn btn--reject btn--sm">Reddet</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Cancel Requests Tab -->
+      <div v-if="activeTab === 'cancel-requests'">
+        <div class="section-header">
+          <h2 class="section-title">İptal Talepleri</h2>
+        </div>
+        <div v-if="cancelRequests.length === 0" class="empty-mini">İptal talebı bulunmamaktadır</div>
+        <div v-else class="request-list">
+          <div v-for="req in cancelRequests" :key="req.id" class="request-card">
+            <div class="request-header">
+              <div>
+                <h4>{{ req.contest?.title }}</h4>
+                <p class="text-muted">Tarafından: {{ req.requester?.displayName || req.requester?.username }}</p>
+              </div>
+              <small class="text-muted">{{ formatDate(req.createdAt) }}</small>
+            </div>
+            <div class="request-reason">
+              <p><strong>Sebep:</strong> {{ req.reason }}</p>
+            </div>
+            <div class="request-actions">
+              <button @click="approveCancelRequest(req.contestId)" class="btn btn--approve btn--sm">Onayla (İptal Et)</button>
+              <button @click="rejectCancelRequest(req.contestId)" class="btn btn--reject btn--sm">Reddet</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bans Tab (SUPER_ADMIN only) -->
+      <div v-if="activeTab === 'bans' && authStore.isSuperAdmin">
+        <div class="section-header">
+          <h2 class="section-title">Aktif Ban Yönetimi</h2>
+        </div>
+        <div v-if="activeBans.length === 0" class="empty-mini">Aktif ban bulunmamaktadır</div>
+        <div v-else class="request-list">
+          <div v-for="ban in activeBans" :key="ban.id" class="request-card" style="border-color: #fee2e2;">
+            <div class="request-header">
+              <div>
+                <h4>{{ ban.user?.username }} ({{ ban.user?.email }})</h4>
+                <p class="text-muted">Ban Sebebi: {{ ban.reason }}</p>
+              </div>
+              <small class="text-muted">{{ formatDate(ban.createdAt) }}</small>
+            </div>
+            <div class="ban-restrictions">
+              <p><strong>Kısıtlanan İşlemler:</strong></p>
+              <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                <span v-for="r in ban.restrictions" :key="r" class="mini-badge" style="background: #fee2e2; color: #991b1b;">{{ r }}</span>
+              </div>
+            </div>
+            <div class="request-actions">
+              <button @click="removeBan(ban.id)" class="btn btn--danger btn--sm">Ban Kaldır</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Settings Tab -->
       <div v-if="activeTab === 'settings'">
         <div class="section-header">
@@ -286,6 +405,12 @@ const usersLoading = ref(true);
 const pendingContests = ref<any[]>([]);
 const allContests = ref<any[]>([]);
 const contestsLoading = ref(true);
+const editRequests = ref<any[]>([]);
+const cancelRequests = ref<any[]>([]);
+const activeBans = ref<any[]>([]);
+const juryScores = ref<any[]>([]);
+const selectedContestForScores = ref('');
+const scoresLoading = ref(false);
 
 const rejectModal = ref({ show: false, contest: null as any, note: '' });
 const assignModal = ref({ show: false, user: null as any, contestId: '', role: '' });
@@ -301,6 +426,10 @@ const contestRoleOptions = [
 const tabs = computed(() => [
   { key: 'users', label: 'Kullanıcılar', icon: Users, badge: users.value.length || null },
   { key: 'contests', label: 'Yarışmalar', icon: Trophy, badge: pendingContests.value.length || null },
+  { key: 'jury-scores', label: 'Jüri Skorları', icon: CheckCircle, badge: null },
+  { key: 'edit-requests', label: 'Düzenleme Talepleri', icon: Check, badge: editRequests.value.length || null },
+  { key: 'cancel-requests', label: 'İptal Talepleri', icon: X, badge: cancelRequests.value.length || null },
+  { key: 'bans', label: 'Banlar', icon: Shield, badge: activeBans.value.length || null },
   { key: 'settings', label: 'Ayarlar', icon: Cog, badge: null },
 ]);
 
@@ -336,7 +465,7 @@ const filteredUsers = computed(() => {
 });
 
 onMounted(async () => {
-  await Promise.all([loadUsers(), loadContests()]);
+  await Promise.all([loadUsers(), loadContests(), loadRequests(), loadBans()]);
 });
 
 async function loadUsers() {
@@ -498,6 +627,109 @@ async function removeMemberFromContest(userId: string, role: string) {
     await loadUsers();
   } catch (e: any) {
     showToast(e.response?.data?.message || 'Hata', 'error');
+  }
+}
+
+// ====== NEW: Requests and Bans ======
+
+async function loadRequests() {
+  try {
+    const [editRes, cancelRes] = await Promise.all([
+      axios.get('/api/contests/admin/edit-requests'),
+      axios.get('/api/contests/admin/cancel-requests'),
+    ]);
+    editRequests.value = editRes.data;
+    cancelRequests.value = cancelRes.data;
+  } catch (e: any) {
+    showToast('Taleptemler yüklenemedi', 'error');
+  }
+}
+
+async function loadBans() {
+  try {
+    const { data } = await axios.get('/api/users/bans/active');
+    activeBans.value = data;
+  } catch (e: any) {
+    showToast('Banlar yüklenemedi', 'error');
+  }
+}
+
+async function approveEditRequest(requestId: string) {
+  try {
+    await axios.put(`/api/contests/admin/edit-requests/${requestId}/approve`);
+    showToast('Düzenleme talebı onaylandı', 'success');
+    await loadRequests();
+  } catch (e: any) {
+    showToast(e.response?.data?.message || 'Hata', 'error');
+  }
+}
+
+async function rejectEditRequest(requestId: string) {
+  try {
+    const note = prompt('RED SEBEBİ GİRİN:');
+    if (!note) return;
+    await axios.put(`/api/contests/admin/edit-requests/${requestId}/reject`, { adminNote: note });
+    showToast('Düzenleme talebı reddedildi', 'success');
+    await loadRequests();
+  } catch (e: any) {
+    showToast(e.response?.data?.message || 'Hata', 'error');
+  }
+}
+
+async function approveCancelRequest(contestId: string) {
+  try {
+    await axios.put(`/api/contests/${contestId}/cancel-request/approve`);
+    showToast('İptal talebı onaylandı', 'success');
+    await loadRequests();
+  } catch (e: any) {
+    showToast(e.response?.data?.message || 'Hata', 'error');
+  }
+}
+
+async function rejectCancelRequest(contestId: string) {
+  try {
+    const note = prompt('RED SEBEBİ GİRİN:');
+    if (!note) return;
+    await axios.put(`/api/contests/${contestId}/cancel-request/reject`, { adminNote: note });
+    showToast('İptal talebı reddedildi', 'success');
+    await loadRequests();
+  } catch (e: any) {
+    showToast(e.response?.data?.message || 'Hata', 'error');
+  }
+}
+
+async function removeBan(banId: string) {
+  try {
+    await axios.delete(`/api/users/${activeBans.value.find(b => b.id === banId)?.user?.id}/ban/${banId}`);
+    showToast('Ban kaldırıldı', 'success');
+    await loadBans();
+  } catch (e: any) {
+    showToast(e.response?.data?.message || 'Hata', 'error');
+  }
+}
+
+async function archiveJuryScore(scoreId: string) {
+  try {
+    await axios.delete(`/api/contests/jury-scores/${scoreId}`);
+    showToast('Skor arşivlendi', 'success');
+    if (selectedContestForScores.value) {
+      await loadContestScores(selectedContestForScores.value);
+    }
+  } catch (e: any) {
+    showToast(e.response?.data?.message || 'Hata', 'error');
+  }
+}
+
+async function loadContestScores(contestId: string) {
+  if (!contestId) return;
+  scoresLoading.value = true;
+  try {
+    const { data } = await axios.get(`/api/contests/${contestId}/jury/scores`);
+    juryScores.value = data;
+  } catch (e: any) {
+    showToast('Skorlar yüklenemedi', 'error');
+  } finally {
+    scoresLoading.value = false;
   }
 }
 
@@ -1317,4 +1549,100 @@ function formatDate(d: string) {
   background: #d1fae5;
   color: #065f46;
 }
+
+/* Request cards */
+.request-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.request-card {
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  border-left: 4px solid hsl(var(--brand));
+  border-radius: 10px;
+  padding: 1rem;
+}
+
+.request-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.request-header h4 {
+  margin: 0 0 0.25rem 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.request-header p {
+  margin: 0;
+  font-size: 0.8rem;
+}
+
+.request-changes,
+.request-reason,
+.ban-restrictions {
+  background: hsl(var(--muted) / 0.5);
+  padding: 0.75rem;
+  border-radius: 6px;
+  margin: 0.75rem 0;
+  font-size: 0.85rem;
+}
+
+.request-changes pre {
+  background: hsl(var(--background));
+  padding: 0.5rem;
+  border-radius: 4px;
+  overflow-x: auto;
+  margin:  0.5rem 0 0 0;
+  font-size: 0.75rem;
+}
+
+.request-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.btn--approve {
+  background: #059669;
+  color: white;
+}
+
+.btn--approve:hover {
+  background: #047857;
+}
+
+.btn--reject {
+  background: #dc2626;
+  color: white;
+}
+
+.btn--reject:hover {
+  background: #b91c1c;
+}
+
+.btn--xs {
+  padding: 0.3rem 0.5rem;
+  font-size: 0.75rem;
+}
+
+.empty-mini {
+  padding: 2rem;
+  text-align: center;
+  color: hsl(var(--muted-foreground));
+  background: hsl(var(--muted) / 0.3);
+  border-radius: 8px;
+}
+
+.loading {
+  text-align: center;
+  padding: 2rem;
+  color: hsl(var(--muted-foreground));
+}
 </style>
+
+```

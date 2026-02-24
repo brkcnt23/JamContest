@@ -92,14 +92,20 @@ model User {
   updatedAt     DateTime   @updatedAt
 
   // Relations
-  contestMembers    ContestMember[]
-  applications      ContestApplication[]
-  submissions       Submission[]
-  scores            JuryScore[]
-  badges            UserBadge[]
-  createdContests   Contest[]            @relation("ContestCreator")
-  socialShares      SocialShare[]
-  contestApprovals  ContestApproval[]
+  contestMembers     ContestMember[]
+  applications       ContestApplication[]
+  submissions        Submission[]
+  scores             JuryScore[]
+  badges             UserBadge[]
+  createdContests    Contest[]            @relation("ContestCreator")
+  socialShares       SocialShare[]
+  contestApprovals   ContestApproval[]
+  userBans           UserBan[]            @relation("BannedUser")
+  bannedByRecords    UserBan[]            @relation("BannedByUser")
+  juryInvitationsSent JuryInvitation[]    @relation("InviterUser")
+  juryInvitationsReceived JuryInvitation[] @relation("InvitedUser")
+  editRequestsMade   ContestEditRequest[]
+  cancelRequestsMade ContestCancelRequest[]
 
   @@index([username])
   @@index([email])
@@ -144,6 +150,7 @@ model Contest {
 
   // Durum
   status            ContestStatus @default(DRAFT)
+  reviewStatus      String        @default("DRAFT") // DRAFT, REVIEW_PENDING, APPROVED, CANCELLED
 
   // Admin onay süreci
   adminApprovalNote String?       @db.Text  // Red sebebi vs.
@@ -156,6 +163,9 @@ model Contest {
   applications      ContestApplication[]
   submissions       Submission[]
   approvals         ContestApproval[]
+  juryInvitations   JuryInvitation[]
+  editRequests      ContestEditRequest[]
+  cancelRequest     ContestCancelRequest?
 
   @@index([status])
   @@index([slug])
@@ -286,6 +296,8 @@ model JuryScore {
   score        Float
   comment      String?  @db.Text
   isLocked     Boolean  @default(true)  // Oy verildikten sonra kilitlenir
+  archivedAt   DateTime?
+  archivedBy   String?
 
   createdAt    DateTime @default(now())
 
@@ -341,4 +353,89 @@ model SocialShare {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+}
+
+// ==========================================
+// USER BAN SYSTEM
+// ==========================================
+
+model UserBan {
+  id            String   @id @default(cuid())
+  userId        String
+  bannedBy      String
+  reason        String   @db.Text
+  restrictions  String[] // ["APPLY", "POST", "SUBMIT", "CREATE_CONTEST"]
+  active        Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user          User     @relation("BannedUser", fields: [userId], references: [id], onDelete: Cascade)
+  bannedByUser  User     @relation("BannedByUser", fields: [bannedBy], references: [id])
+
+  @@index([userId])
+  @@index([active])
+}
+
+// ==========================================
+// JURY INVITATION SYSTEM
+// ==========================================
+
+model JuryInvitation {
+  id          String    @id @default(cuid())
+  contestId   String
+  userId      String
+  invitedBy   String
+  status      String    @default("PENDING") // PENDING, ACCEPTED, REJECTED, CANCELLED
+  cancelledAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  contest     Contest   @relation(fields: [contestId], references: [id], onDelete: Cascade)
+  user        User      @relation("InvitedUser", fields: [userId], references: [id], onDelete: Cascade)
+  inviter     User      @relation("InviterUser", fields: [invitedBy], references: [id])
+
+  @@unique([contestId, userId])
+  @@index([userId, status])
+  @@index([contestId])
+}
+
+// ==========================================
+// CONTEST EDIT REQUEST
+// ==========================================
+
+model ContestEditRequest {
+  id          String   @id @default(cuid())
+  contestId   String
+  requestedBy String
+  changes     Json     // hangi alanlar değişecek
+  status      String   @default("PENDING") // PENDING, APPROVED, REJECTED
+  adminNote   String?  @db.Text
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  contest     Contest  @relation(fields: [contestId], references: [id], onDelete: Cascade)
+  requester   User     @relation(fields: [requestedBy], references: [id], onDelete: Cascade)
+
+  @@index([contestId, status])
+  @@index([status])
+}
+
+// ==========================================
+// CONTEST CANCEL REQUEST
+// ==========================================
+
+model ContestCancelRequest {
+  id          String   @id @default(cuid())
+  contestId   String   @unique
+  requestedBy String
+  reason      String   @db.Text
+  status      String   @default("PENDING") // PENDING, APPROVED, REJECTED
+  adminNote   String?  @db.Text
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  contest     Contest  @relation(fields: [contestId], references: [id], onDelete: Cascade)
+  requester   User     @relation(fields: [requestedBy], references: [id], onDelete: Cascade)
+
+  @@index([status])
 }

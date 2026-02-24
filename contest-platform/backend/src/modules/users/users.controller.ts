@@ -1,5 +1,5 @@
 import {
-  Controller, Get, Put, Param, Body, Query,
+  Controller, Get, Put, Post, Delete, Param, Body, Query,
   Req, ForbiddenException, UseGuards,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
@@ -59,5 +59,58 @@ export class UsersController {
       id: req.user.id,
       globalRole: req.user.globalRole,
     });
+  }
+
+  // ==========================================
+  // BAN SİSTEMİ (SUPER_ADMIN only)
+  // ==========================================
+
+  // POST /api/users/:id/ban
+  @Post(':id/ban')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('SUPER_ADMIN')
+  async banUser(
+    @Param('id') id: string,
+    @Body() body: { reason: string; restrictions: string[] },
+    @Req() req: any,
+  ) {
+    return this.usersService.banUser(id, body.reason, body.restrictions, req.user.id);
+  }
+
+  // DELETE /api/users/:id/ban/:banId
+  @Delete(':id/ban/:banId')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('SUPER_ADMIN')
+  async removeBan(@Param('id') id: string, @Param('banId') banId: string) {
+    return this.usersService.removeBan(banId);
+  }
+
+  // GET /api/users/:id/bans
+  @Get(':id/bans')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN', 'SUPER_ADMIN')
+  async getUserBans(@Param('id') id: string) {
+    return this.usersService.getUserBans(id);
+  }
+
+  // GET /api/users/bans/active (SUPER_ADMIN)
+  @Get('bans/active')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('SUPER_ADMIN')
+  async getActiveBans() {
+    return this.usersService.getActiveBans();
+  }
+
+  // ==========================================
+  // JURY DAVT DAVETLERİ
+  // ==========================================
+
+  // GET /api/jury-invitations/my
+  @Get('jury-invitations/my')
+  @UseGuards(JwtAuthGuard)
+  async getMyJuryInvitations(@Req() req: any) {
+    // Note: Bu endpoint contests.service.ts'de getMyJuryInvitations metodunda gerçekleşir
+    // Users controller'dan erişilebilmesi için contests controller'ında da olabilir
+    return { message: 'Use GET /api/contests/jury-invitations/my instead' };
   }
 }

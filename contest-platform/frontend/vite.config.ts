@@ -10,12 +10,13 @@ export default defineConfig({
     }
   },
   server: {
-    host: '0.0.0.0',  // ← EKLE
+    host: '0.0.0.0',
     port: 5173,
     proxy: {
       '/api': {
-        target: 'http://backend:3000',  // ← Docker içinde backend
+        target: 'http://backend:3000',
         changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, ''),  // Strip /api prefix
       },
     },
   },

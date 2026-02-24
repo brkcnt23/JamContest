@@ -156,8 +156,50 @@
         </div>
       </div>
 
-      <!-- STEP 4: Özet -->
+      <!-- STEP 4: Jüri Seç -->
       <div v-show="step === 4" class="form-section">
+        <h2 class="section-title">Jüri Seçin</h2>
+        <p class="section-desc">Yarışmanızı değerlendirecek jürileri seçin (opsiyonel)</p>
+
+        <div class="form-group">
+          <label class="form-label">Jüri Ara</label>
+          <input
+            v-model="form.jurySearch"
+            type="text"
+            class="form-input"
+            placeholder="Kullanıcı adı veya email ile ara..."
+            @input="searchJury"
+          />
+        </div>
+
+        <div v-if="juryResults.length > 0" class="jury-results">
+          <div v-for="user in juryResults" :key="user.id" class="jury-result-item" @click="addJury(user)">
+            <div class="jury-avatar">{{ user.displayName?.[0] || user.username?.[0] || '?' }}</div>
+            <div class="jury-info">
+              <div class="jury-name">{{ user.displayName || user.username }}</div>
+              <div class="jury-email">{{ user.email }}</div>
+            </div>
+          </div>
+        </div>
+
+        <div v-if="selectedJury.length > 0" class="selected-jury">
+          <h3 class="selected-jury-title">Seçilen Jüri ({{ selectedJury.length }})</h3>
+          <div class="jury-chips">
+            <div v-for="jury in selectedJury" :key="jury.id" class="jury-chip">
+              <div class="jury-chip-avatar">{{ jury.displayName?.[0] || jury.username?.[0] || '?' }}</div>
+              <span class="jury-chip-name">{{ jury.displayName || jury.username }}</span>
+              <button type="button" class="jury-chip-remove" @click="removeJury(jury.id)">✕</button>
+            </div>
+          </div>
+        </div>
+
+        <div v-if="selectedJury.length === 0" class="empty-jury-hint">
+          <p>Henüz jüri seçilmedi. Devam etmek için "İleri" butonuna basabilirsiniz.</p>
+        </div>
+      </div>
+
+      <!-- STEP 5: Özet & Gönder -->
+      <div v-show="step === 5" class="form-section">
         <h2 class="section-title">Yarışma Özeti</h2>
 
         <div class="summary-card">
@@ -188,6 +230,20 @@
           <div class="summary-row">
             <span class="summary-label">Maks. Katılımcı</span>
             <span class="summary-value">{{ form.maxParticipants || 'Sınırsız' }}</span>
+          </div>
+          <div v-if="selectedJury.length > 0" class="summary-row">
+            <span class="summary-label">Seçilen Jüri</span>
+            <span class="summary-value">{{ selectedJury.length }} kişi</span>
+          </div>
+        </div>
+
+        <div v-if="selectedJury.length > 0" class="jury-summary">
+          <h3 class="jury-summary-title">Jüri Üyeleri</h3>
+          <div class="jury-summary-list">
+            <div v-for="jury in selectedJury" :key="jury.id" class="jury-summary-item">
+              <div class="jury-summary-avatar">{{ jury.displayName?.[0] || jury.username?.[0] || '?' }}</div>
+              <span class="jury-summary-name">{{ jury.displayName || jury.username }}</span>
+            </div>
           </div>
         </div>
 
@@ -222,7 +278,7 @@ import { showToast } from '@/composables/useToast';
 const router = useRouter();
 const step = ref(0);
 const submitting = ref(false);
-const steps = ['Temel Bilgiler', 'Tarihler', 'Kurallar & Ödüller', 'Ayarlar', 'Özet & Gönder'];
+const steps = ['Temel Bilgiler', 'Tarihler', 'Kurallar & Ödüller', 'Ayarlar', 'Jüri Seç', 'Özet & Gönder'];
 
 const categories = [
   { value: 'game_jam', label: 'Game Jam', icon: '🎮' },
@@ -260,7 +316,11 @@ const form = ref({
   maxParticipants: null as number | null,
   approvalMode: 'MANUAL',
   allowedFormats: ['image', 'link'] as string[],
+  jurySearch: '',
 });
+
+const juryResults = ref<any[]>([]);
+const selectedJury = ref<any[]>([]);
 
 // Timeline visual
 const timelinePhases = computed(() => [
@@ -269,6 +329,31 @@ const timelinePhases = computed(() => [
   { key: 'sub', label: 'Gönderim', start: form.value.submissionStart, end: form.value.submissionEnd, color: 'dot-green' },
   { key: 'judge', label: 'Oylama', start: form.value.judgingStart, end: form.value.judgingEnd, color: 'dot-purple' },
 ]);
+
+async function searchJury() {
+  if (!form.value.jurySearch || form.value.jurySearch.length < 2) {
+    juryResults.value = [];
+    return;
+  }
+  try {
+    const { data } = await axios.get(`/api/users/search?q=${encodeURIComponent(form.value.jurySearch)}`);
+    juryResults.value = data.filter((u: any) => !selectedJury.value.some(j => j.id === u.id));
+  } catch (e) {
+    juryResults.value = [];
+  }
+}
+
+function addJury(user: any) {
+  if (!selectedJury.value.some(j => j.id === user.id)) {
+    selectedJury.value.push({ id: user.id, username: user.username, displayName: user.displayName, avatar: user.avatar });
+    form.value.jurySearch = '';
+    juryResults.value = [];
+  }
+}
+
+function removeJury(userId: string) {
+  selectedJury.value = selectedJury.value.filter(j => j.id !== userId);
+}
 
 function nextStep() {
   if (step.value === 0 && (!form.value.title || !form.value.description)) {
@@ -283,6 +368,7 @@ function nextStep() {
     showToast('Kurallar ve ödüller zorunludur', 'error');
     return;
   }
+  // Step 4 için validation yok (jüri opsiyonel)
   step.value++;
 }
 
@@ -310,6 +396,12 @@ async function handleSubmit() {
     };
 
     const { data } = await axios.post('/api/contests', payload);
+
+    // Seçilen jürileri ekle
+    for (const jury of selectedJury.value) {
+      await axios.post(`/api/contests/${data.id}/members`, { userId: jury.id, role: 'JURY' });
+    }
+
     showToast('Yarışma oluşturuldu! Admin onayı bekleniyor.', 'success');
     router.push(`/contests/${data.slug}`);
   } catch (e: any) {
@@ -454,6 +546,147 @@ function formatDateShort(d: string) {
 .format-check:hover { border-color: hsl(var(--brand)); }
 .format-check input[type="checkbox"] { accent-color: hsl(var(--brand)); }
 
+/* Jury Selection */
+.jury-results {
+  border: 1px solid hsl(var(--border));
+  border-radius: 8px;
+  max-height: 200px;
+  overflow-y: auto;
+  margin-bottom: 1.5rem;
+}
+
+.jury-result-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid hsl(var(--border));
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.jury-result-item:last-child { border-bottom: none; }
+.jury-result-item:hover { background: hsl(var(--muted) / 0.5); }
+
+.jury-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: hsl(var(--brand));
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.8rem;
+  flex-shrink: 0;
+}
+
+.jury-info { flex: 1; min-width: 0; }
+.jury-name { font-weight: 500; font-size: 0.85rem; color: hsl(var(--foreground)); }
+.jury-email { font-size: 0.75rem; color: hsl(var(--muted-foreground)); }
+
+.selected-jury { margin-bottom: 1.5rem; }
+.selected-jury-title { font-size: 0.95rem; font-weight: 600; color: hsl(var(--foreground)); margin-bottom: 0.75rem; }
+
+.jury-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.jury-chip {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.75rem;
+  background: hsl(var(--brand) / 0.1);
+  border: 1px solid hsl(var(--brand) / 0.3);
+  border-radius: 9999px;
+  font-size: 0.85rem;
+  color: hsl(var(--brand));
+}
+
+.jury-chip-avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: hsl(var(--brand));
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.65rem;
+  flex-shrink: 0;
+}
+
+.jury-chip-name { font-weight: 500; }
+
+.jury-chip-remove {
+  margin-left: 0.25rem;
+  background: none;
+  border: none;
+  color: hsl(var(--brand));
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 0;
+  line-height: 1;
+}
+
+.empty-jury-hint {
+  padding: 1.5rem;
+  text-align: center;
+  background: hsl(var(--muted) / 0.5);
+  border-radius: 8px;
+  color: hsl(var(--muted-foreground));
+  font-size: 0.85rem;
+}
+
+.jury-summary {
+  background: hsl(var(--muted) / 0.3);
+  border: 1px solid hsl(var(--border));
+  border-radius: 12px;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.jury-summary-title { font-size: 0.9rem; font-weight: 600; color: hsl(var(--foreground)); margin-bottom: 0.75rem; }
+
+.jury-summary-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.jury-summary-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.75rem;
+  background: hsl(var(--background));
+  border: 1px solid hsl(var(--border));
+  border-radius: 8px;
+  font-size: 0.8rem;
+  color: hsl(var(--foreground));
+}
+
+.jury-summary-avatar {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: hsl(var(--brand));
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.6rem;
+  flex-shrink: 0;
+}
+
+.jury-summary-name { font-weight: 500; }
+
 /* Summary */
 .summary-card {
   border: 1px solid hsl(var(--border)); border-radius: 12px;
@@ -502,6 +735,7 @@ function formatDateShort(d: string) {
   .date-grid { grid-template-columns: 1fr; }
   .form-row { grid-template-columns: 1fr; }
   .format-grid { grid-template-columns: 1fr; }
+  .jury-chips { gap: 0.25rem; }
   .stepper { gap: 0.25rem; }
   .step-label { display: none; }
 }

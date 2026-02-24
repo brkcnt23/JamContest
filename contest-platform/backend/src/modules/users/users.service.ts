@@ -204,4 +204,97 @@ export class UsersService {
       take: limit,
     });
   }
+
+  // ==========================================
+  // BAN SİSTEMİ
+  // ==========================================
+
+  /**
+   * Belirli bir aksiyon için kullanıcının aktif ban'ı var mı kontrol et
+   * @param userId
+   * @param action "APPLY", "POST", "SUBMIT", "CREATE_CONTEST"
+   */
+  async checkBan(userId: string, action: string): Promise<void> {
+    const ban = await this.prisma.userBan.findFirst({
+      where: {
+        userId,
+        active: true,
+        restrictions: { has: action },
+      },
+    });
+
+    if (ban) {
+      throw new ForbiddenException(`Bu işlem için banlandınız: ${ban.reason}`);
+    }
+  }
+
+  /**
+   * Kullanıcıyı banla
+   */
+  async banUser(userId: string, reason: string, restrictions: string[], bannedBy: string) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new NotFoundException('User not found');
+
+    if (userId === bannedBy) {
+      throw new ForbiddenException('Kendinizi banlamazsınız');
+    }
+
+    return this.prisma.userBan.create({
+      data: {
+        userId,
+        bannedBy,
+        reason,
+        restrictions,
+        active: true,
+      },
+      include: {
+        user: { select: { id: true, username: true, email: true } },
+        bannedByUser: { select: { id: true, username: true } },
+      },
+    });
+  }
+
+  /**
+   * Ban'ı kaldır (deaktif et)
+   */
+  async removeBan(banId: string) {
+    const ban = await this.prisma.userBan.findUnique({ where: { id: banId } });
+    if (!ban) throw new NotFoundException('Ban not found');
+
+    return this.prisma.userBan.update({
+      where: { id: banId },
+      data: { active: false, updatedAt: new Date() },
+      include: {
+        user: { select: { id: true, username: true, email: true } },
+        bannedByUser: { select: { id: true, username: true } },
+      },
+    });
+  }
+
+  /**
+   * Kullanıcının ban geçmişi
+   */
+  async getUserBans(userId: string) {
+    return this.prisma.userBan.findMany({
+      where: { userId },
+      include: {
+        bannedByUser: { select: { id: true, username: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  /**
+   * Tüm aktif banları getir (admin için)
+   */
+  async getActiveBans() {
+    return this.prisma.userBan.findMany({
+      where: { active: true },
+      include: {
+        user: { select: { id: true, username: true, email: true } },
+        bannedByUser: { select: { id: true, username: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
 }

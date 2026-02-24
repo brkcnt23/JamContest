@@ -563,4 +563,405 @@ export class ContestsService {
     const suffix = Math.random().toString(36).substring(2, 8);
     return `${base}-${suffix}`;
   }
+
+  // ==========================================
+  // JURY DAVET SİSTEMİ
+  // ==========================================
+
+  async inviteJury(contestId: string, username: string, invitedBy: string) {
+    const contest = await this.prisma.contest.findUnique({ where: { id: contestId } });
+    if (!contest) throw new NotFoundException('Contest not found');
+
+    const user = await this.prisma.user.findUnique({ where: { username } });
+    if (!user) throw new NotFoundException('User not found');
+
+    // Organizatör kendi contestine jury olamaz
+    if (contest.createdById === user.id) {
+      throw new ForbiddenException('Organizatör kendi contestinde jury olamaz');
+    }
+
+    // Zaten ACCEPTED jury vardır kontrol et
+    const existingMember = await this.prisma.contestMember.findFirst({
+      where: { contestId, userId: user.id, role: 'JURY' },
+    });
+    if (existingMember) {
+      throw new ConflictException('Bu user zaten jury olarak ekli');
+    }
+
+    // Tekrar davet edilemez kontrol et
+    const existingInvitation = await this.prisma.juryInvitation.findUnique({
+      where: { contestId_userId: { contestId, userId: user.id } },
+    });
+    if (existingInvitation && existingInvitation.status === 'PENDING') {
+      throw new ConflictException('Bu user\'a zaten pending davet var');
+    }
+
+    return this.prisma.juryInvitation.create({
+      data: {
+        contestId,
+        userId: user.id,
+        invitedBy,
+        status: 'PENDING',
+      },
+      include: {
+        user: { select: { id: true, username: true, displayName: true, avatar: true } },
+        contest: { select: { id: true, title: true, slug: true } },
+        inviter: { select: { id: true, username: true } },
+      },
+    });
+  }
+
+  async acceptJuryInvitation(invitationId: string, userId: string) {
+    const invitation = await this.prisma.juryInvitation.findUnique({
+      where: { id: invitationId },
+    });
+    if (!invitation) throw new NotFoundException('Invitation not found');
+    if (invitation.userId !== userId) {
+      throw new ForbiddenException('Not your invitation');
+    }
+    if (invitation.status !== 'PENDING') {
+      throw new BadRequestException('Invitation is not pending');
+    }
+
+    // ContestMember'a JURY rolüyle ekle
+    await this.prisma.contestMember.create({
+      data: {
+        contestId: invitation.contestId,
+        userId,
+        role: 'JURY',
+        assignedBy: invitation.invitedBy,
+      },
+    });
+
+    // Daveti ACCEPTED yap
+    return this.prisma.juryInvitation.update({
+      where: { id: invitationId },
+      data: { status: 'ACCEPTED', updatedAt: new Date() },
+      include: {
+        user: { select: { id: true, username: true, displayName: true } },
+        contest: { select: { id: true, title: true, slug: true } },
+      },
+    });
+  }
+
+  async rejectJuryInvitation(invitationId: string, userId: string) {
+    const invitation = await this.prisma.juryInvitation.findUnique({
+      where: { id: invitationId },
+    });
+    if (!invitation) throw new NotFoundException('Invitation not found');
+    if (invitation.userId !== userId) {
+      throw new ForbiddenException('Not your invitation');
+    }
+    if (invitation.status !== 'PENDING') {
+      throw new BadRequestException('Invitation is not pending');
+    }
+
+    return this.prisma.juryInvitation.update({
+      where: { id: invitationId },
+      data: { status: 'REJECTED', updatedAt: new Date() },
+    });
+  }
+
+  async cancelJuryInvitation(invitationId: string, organizerId: string) {
+    const invitation = await this.prisma.juryInvitation.findUnique({
+      where: { id: invitationId },
+      include: { contest: true },
+    });
+    if (!invitation) throw new NotFoundException('Invitation not found');
+    if (invitation.contest.createdById !== organizerId) {
+      throw new ForbiddenException('Not authorized');
+    }
+    if (invitation.status !== 'PENDING') {
+      throw new BadRequestException('Only pending invitations can be cancelled');
+    }
+
+    return this.prisma.juryInvitation.update({
+      where: { id: invitationId },
+      data: { status: 'CANCELLED', cancelledAt: new Date(), updatedAt: new Date() },
+    });
+  }
+
+  async getMyJuryInvitations(userId: string) {
+    return this.prisma.juryInvitation.findMany({
+      where: {
+        userId,
+        status: 'PENDING',
+      },
+      include: {
+        contest: { select: { id: true, title: true, slug: true, description: true } },
+        inviter: { select: { id: true, username: true, displayName: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  async getContestInvitations(contestId: string) {
+    return this.prisma.juryInvitation.findMany({
+      where: { contestId },
+      include: {
+        user: { select: { id: true, username: true, displayName: true, avatar: true } },
+        inviter: { select: { id: true, username: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  // ==========================================
+  // DÜZENLEME TALEPLERİ
+  // ==========================================
+
+  async createEditRequest(
+    contestId: string,
+    changes: object,
+    reason: string,
+    organizerId: string,
+  ) {
+    const contest = await this.prisma.contest.findUnique({ where: { id: contestId } });
+    if (!contest) throw new NotFoundException('Contest not found');
+
+    if (contest.createdById !== organizerId) {
+      throw new ForbiddenException('Not authorized');
+    }
+
+    if (!['APPROVED', 'ACTIVE'].includes(contest.status)) {
+      throw new BadRequestException('Contest must be APPROVED or ACTIVE');
+    }
+
+    return this.prisma.contestEditRequest.create({
+      data: {
+        contestId,
+        requestedBy: organizerId,
+        changes: changes as any,
+        status: 'PENDING',
+      },
+      include: {
+        requester: { select: { id: true, username: true } },
+        contest: { select: { id: true, title: true } },
+      },
+    });
+  }
+
+  async approveEditRequest(requestId: string, adminId: string) {
+    const request = await this.prisma.contestEditRequest.findUnique({
+      where: { id: requestId },
+      include: { contest: true },
+    });
+    if (!request) throw new NotFoundException('Request not found');
+    if (request.status !== 'PENDING') {
+      throw new BadRequestException('Request is not pending');
+    }
+
+    // changes'deki alanları contest'e uygula
+    const changes = request.changes as any;
+    await this.prisma.contest.update({
+      where: { id: request.contestId },
+      data: {
+        ...changes,
+        updatedAt: new Date(),
+      },
+    });
+
+    return this.prisma.contestEditRequest.update({
+      where: { id: requestId },
+      data: { status: 'APPROVED', updatedAt: new Date() },
+    });
+  }
+
+  async rejectEditRequest(requestId: string, adminNote: string) {
+    const request = await this.prisma.contestEditRequest.findUnique({
+      where: { id: requestId },
+    });
+    if (!request) throw new NotFoundException('Request not found');
+    if (request.status !== 'PENDING') {
+      throw new BadRequestException('Request is not pending');
+    }
+
+    return this.prisma.contestEditRequest.update({
+      where: { id: requestId },
+      data: { status: 'REJECTED', adminNote, updatedAt: new Date() },
+    });
+  }
+
+  async getPendingEditRequests() {
+    return this.prisma.contestEditRequest.findMany({
+      where: { status: 'PENDING' },
+      include: {
+        requester: { select: { id: true, username: true, displayName: true } },
+        contest: { select: { id: true, title: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  // ==========================================
+  // İPTAL TALEPLERİ
+  // ==========================================
+
+  async createCancelRequest(contestId: string, reason: string, organizerId: string) {
+    const contest = await this.prisma.contest.findUnique({ where: { id: contestId } });
+    if (!contest) throw new NotFoundException('Contest not found');
+
+    if (contest.createdById !== organizerId) {
+      throw new ForbiddenException('Not authorized');
+    }
+
+    if (!['APPROVED', 'ACTIVE'].includes(contest.status)) {
+      throw new BadRequestException('Contest must be APPROVED or ACTIVE');
+    }
+
+    // Sadece bir tane active cancel request olabilir
+    const existing = await this.prisma.contestCancelRequest.findUnique({
+      where: { contestId },
+    });
+    if (existing && existing.status === 'PENDING') {
+      throw new ConflictException('Cancel request already pending');
+    }
+
+    return this.prisma.contestCancelRequest.create({
+      data: {
+        contestId,
+        requestedBy: organizerId,
+        reason,
+        status: 'PENDING',
+      },
+      include: {
+        requester: { select: { id: true, username: true } },
+        contest: { select: { id: true, title: true } },
+      },
+    });
+  }
+
+  async approveCancelRequest(contestId: string, adminId: string) {
+    const request = await this.prisma.contestCancelRequest.findUnique({
+      where: { contestId },
+    });
+    if (!request) throw new NotFoundException('Cancel request not found');
+    if (request.status !== 'PENDING') {
+      throw new BadRequestException('Request is not pending');
+    }
+
+    // Contest'i CANCELLED yap
+    await this.prisma.contest.update({
+      where: { id: contestId },
+      data: { status: 'CANCELLED', reviewStatus: 'CANCELLED' },
+    });
+
+    // Tüm JuryScore'ları arşivle
+    await this.prisma.juryScore.updateMany({
+      where: { submission: { contestId } },
+      data: { archivedAt: new Date(), archivedBy: adminId },
+    });
+
+    return this.prisma.contestCancelRequest.update({
+      where: { contestId },
+      data: { status: 'APPROVED', updatedAt: new Date() },
+    });
+  }
+
+  async rejectCancelRequest(contestId: string, adminNote: string) {
+    const request = await this.prisma.contestCancelRequest.findUnique({
+      where: { contestId },
+    });
+    if (!request) throw new NotFoundException('Cancel request not found');
+    if (request.status !== 'PENDING') {
+      throw new BadRequestException('Request is not pending');
+    }
+
+    return this.prisma.contestCancelRequest.update({
+      where: { contestId },
+      data: { status: 'REJECTED', adminNote, updatedAt: new Date() },
+    });
+  }
+
+  async getPendingCancelRequests() {
+    return this.prisma.contestCancelRequest.findMany({
+      where: { status: 'PENDING' },
+      include: {
+        requester: { select: { id: true, username: true, displayName: true } },
+        contest: { select: { id: true, title: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  // ==========================================
+  // ONAYA GÖNDER (Submit for Review)
+  // ==========================================
+
+  async submitForReview(contestId: string, organizerId: string) {
+    const contest = await this.prisma.contest.findUnique({
+      where: { id: contestId },
+    });
+    if (!contest) throw new NotFoundException('Contest not found');
+
+    if (contest.createdById !== organizerId) {
+      throw new ForbiddenException('Not authorized');
+    }
+
+    if (contest.status !== 'DRAFT') {
+      throw new BadRequestException('Contest must be in DRAFT status');
+    }
+
+    // En az 1 ACCEPTED jury olmalı
+    const acceptedJury = await this.prisma.juryInvitation.findFirst({
+      where: { contestId, status: 'ACCEPTED' },
+    });
+    if (!acceptedJury) {
+      throw new BadRequestException('En az 1 ACCEPTED jury olmak zorunlu');
+    }
+
+    // Hiç PENDING invitation kalmamalı
+    const pendingInvitations = await this.prisma.juryInvitation.findMany({
+      where: { contestId, status: 'PENDING' },
+    });
+    if (pendingInvitations.length > 0) {
+      throw new BadRequestException(
+        'Tüm davetler ACCEPTED veya REJECTED/CANCELLED olmalı',
+      );
+    }
+
+    return this.prisma.contest.update({
+      where: { id: contestId },
+      data: { reviewStatus: 'REVIEW_PENDING', updatedAt: new Date() },
+      include: {
+        createdBy: { select: { id: true, username: true } },
+      },
+    });
+  }
+
+  // ==========================================
+  // JURY SKORU SİLME (Arşivleme)
+  // ==========================================
+
+  async archiveJuryScore(scoreId: string, adminId: string) {
+    const score = await this.prisma.juryScore.findUnique({ where: { id: scoreId } });
+    if (!score) throw new NotFoundException('Score not found');
+
+    return this.prisma.juryScore.update({
+      where: { id: scoreId },
+      data: { archivedAt: new Date(), archivedBy: adminId },
+      include: {
+        jury: { select: { id: true, username: true } },
+        submission: { select: { id: true, title: true } },
+      },
+    });
+  }
+
+  async getContestScores(contestId: string, includeArchived = false) {
+    const where: any = { submission: { contestId } };
+    if (!includeArchived) {
+      where.archivedAt = null;
+    }
+
+    return this.prisma.juryScore.findMany({
+      where,
+      include: {
+        jury: { select: { id: true, username: true, displayName: true, avatar: true } },
+        submission: {
+          select: { id: true, title: true, user: { select: { id: true, username: true } } },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
 }

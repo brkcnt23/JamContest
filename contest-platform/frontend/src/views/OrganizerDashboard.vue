@@ -99,31 +99,83 @@
 
         <!-- ====== JURY ====== -->
         <div v-if="activeTab === 'jury'" class="section">
-          <h3 class="section-title">Jüri Yönetimi</h3>
+          <h3 class="section-title">Jüri Daveti ve Yönetimi</h3>
 
-          <!-- Add jury -->
+          <!-- Invite jury -->
           <div class="add-member-box">
-            <input v-model="jurySearch" type="text" class="form-input" placeholder="Kullanıcı adı veya email ile ara..." @input="searchUsers" />
-            <div v-if="searchResults.length" class="search-results">
-              <div v-for="u in searchResults" :key="u.id" class="search-result-item" @click="addJury(u)">
-                <span class="result-name">{{ u.displayName || u.username }}</span>
-                <span class="result-email">{{ u.email }}</span>
+            <div style="display: flex; gap: 0.5rem;">
+              <input 
+                v-model="jurySearchUsername" 
+                type="text" 
+                class="form-input" 
+                placeholder="Kullanıcı adı girin (tam adı)" 
+                style="flex: 1;"
+              />
+              <button 
+                @click="inviteJury"
+                :disabled="!jurySearchUsername || invitingJury"
+                class="btn btn--primary"
+              >
+                {{ invitingJury ? 'Gönderiliyor...' : 'Davet Gönder' }}
+              </button>
+            </div>
+          </div>
+
+          <!-- Pending invitations -->
+          <div style="margin-top: 1.5rem;">
+            <h4 style="font-size: 0.9rem; font-weight: 600; margin-bottom: 0.75rem;">Beklemede olan Davetler</h4>
+            <div v-if="pendingInvitations.length === 0" class="empty-mini">Beklemede davet yok</div>
+            <div v-else class="member-list">
+              <div v-for="inv in pendingInvitations" :key="inv.id" class="member-item">
+                <div class="user-avatar">?</div>
+                <div class="member-info">
+                  <span class="user-name">{{ inv.user?.displayName || inv.user?.username }}</span>
+                  <small class="text-muted">{{ formatDate(inv.createdAt) }}</small>
+                </div>
+                <span class="role-tag" style="background: #fef3c7; color: #92400e;">PENDING</span>
+                <button 
+                  @click="cancelInvitation(inv.id)"
+                  :disabled="cancelingInvitationId === inv.id"
+                  class="btn btn--danger btn--sm"
+                >
+                  {{ cancelingInvitationId === inv.id ? '...' : 'İptal Et' }}
+                </button>
               </div>
             </div>
           </div>
 
-          <!-- Jury list -->
-          <div v-if="juryMembers.length === 0" class="empty-mini">Henüz jüri atanmamış</div>
-          <div v-else class="member-list">
-            <div v-for="m in juryMembers" :key="m.id" class="member-item">
-              <div class="user-avatar">{{ m.user?.displayName?.[0] || m.user?.username?.[0] || '?' }}</div>
-              <div class="member-info">
-                <span class="user-name">{{ m.user?.displayName || m.user?.username }}</span>
-                <span class="user-email">{{ m.user?.email }}</span>
+          <!-- Accepted jury -->
+          <div style="margin-top: 1.5rem;">
+            <h4 style="font-size: 0.9rem; font-weight: 600; margin-bottom: 0.75rem;">Kabul Eden Jüri Üyeleri</h4>
+            <div v-if="acceptedJury.length === 0" class="empty-mini">Henüz jüri üyesi yok</div>
+            <div v-else class="member-list">
+              <div v-for="m in acceptedJury" :key="m.id" class="member-item">
+                <div class="user-avatar">{{ m.user?.displayName?.[0] || m.user?.username?.[0] || '?' }}</div>
+                <div class="member-info">
+                  <span class="user-name">{{ m.user?.displayName || m.user?.username }}</span>
+                  <span class="user-email">{{ m.user?.email }}</span>
+                </div>
+                <span class="role-tag">JURY</span>
+                <button 
+                  @click="removeMember(m.user?.id, 'JURY')"
+                  class="btn btn--danger btn--sm"
+                >
+                  Çıkar
+                </button>
               </div>
-              <span class="role-tag">JURY</span>
-              <button class="btn btn--danger btn--sm" @click="removeMember(m.user?.id, 'JURY')">Çıkar</button>
             </div>
+          </div>
+
+          <!-- Submit for review button -->
+          <div v-if="selectedContest.status === 'DRAFT'" class="finalize-box" style="margin-top: 1.5rem;">
+            <p>En az 1 kabul eden jüri olmak zorunludur. Tüm davetler ACCEPTED veya REJECTED olmalıdır.</p>
+            <button 
+              @click="submitForReview"
+              :disabled="submittingForReview || acceptedJury.length === 0 || pendingInvitations.length > 0"
+              class="btn btn--submit"
+            >
+              {{ submittingForReview ? 'Gönderiliyor...' : '📋 Onaya Gönder' }}
+            </button>
           </div>
         </div>
 
@@ -175,12 +227,27 @@ const activeTab = ref('overview');
 const applications = ref<any[]>([]);
 const submissions = ref<any[]>([]);
 const members = ref<any[]>([]);
+const invitations = ref<any[]>([]);
 const jurySearch = ref('');
 const searchResults = ref<any[]>([]);
+const jurySearchUsername = ref('');
 const finalizing = ref(false);
+const invitingJury = ref(false);
+const cancelingInvitationId = ref<string | null>(null);
+const submittingForReview = ref(false);
 
 const selectedContest = computed(() => contests.value.find(c => c.id === selectedContestId.value));
 const juryMembers = computed(() => members.value.filter(m => m.role === 'JURY'));
+const acceptedJury = computed(() => {
+  // Accepted invitations + direct members
+  const fromInvitations = invitations.value
+    .filter(i => i.status === 'ACCEPTED')
+    .map(i => ({ ...i, user: i.user, role: 'JURY' }));
+  const memberIds = new Set(fromInvitations.map(m => m.user?.id));
+  const directMembers = members.value.filter(m => m.role === 'JURY' && !memberIds.has(m.user?.id));
+  return [...fromInvitations, ...directMembers];
+});
+const pendingInvitations = computed(() => invitations.value.filter(i => i.status === 'PENDING'));
 
 const tabs = computed(() => [
   { key: 'overview', label: 'Genel Bakış', icon: Eye, badge: null },
@@ -212,14 +279,16 @@ watch(selectedContestId, async (id) => {
 
 async function loadContestData(id: string) {
   try {
-    const [appRes, subRes, memRes] = await Promise.allSettled([
+    const [appRes, subRes, memRes, invRes] = await Promise.allSettled([
       axios.get(`/api/contests/${id}/applications`),
       axios.get(`/api/contests/${id}/submissions`),
       axios.get(`/api/contests/${id}/members`),
+      axios.get(`/api/contests/${id}/jury/invitations`),
     ]);
     applications.value = appRes.status === 'fulfilled' ? appRes.value.data : [];
     submissions.value = subRes.status === 'fulfilled' ? subRes.value.data : [];
     members.value = memRes.status === 'fulfilled' ? memRes.value.data : [];
+    invitations.value = invRes.status === 'fulfilled' ? invRes.value.data : [];
   } catch { /* silent */ }
 }
 
@@ -288,6 +357,62 @@ async function finalizeContest() {
     if (idx >= 0) contests.value[idx].status = 'FINALIZED';
   } catch (e: any) { showToast(e.response?.data?.message || 'Hata', 'error'); }
   finally { finalizing.value = false; }
+}
+
+async function inviteJury() {
+  if (!jurySearchUsername.value.trim()) {
+    showToast('Kullanıcı adı girin', 'error');
+    return;
+  }
+  invitingJury.value = true;
+  try {
+    await axios.post(`/api/contests/${selectedContestId.value}/jury/invite`, { 
+      username: jurySearchUsername.value.trim() 
+    });
+    showToast('Davet gönderildi!', 'success');
+    jurySearchUsername.value = '';
+    await loadContestData(selectedContestId.value);
+  } catch (e: any) { 
+    showToast(e.response?.data?.message || 'Davet gönderilemedi', 'error'); 
+  } finally { 
+    invitingJury.value = false; 
+  }
+}
+
+async function cancelInvitation(invitationId: string) {
+  cancelingInvitationId.value = invitationId;
+  try {
+    await axios.delete(`/api/contests/${selectedContestId.value}/jury/invite/${invitationId}`);
+    showToast('Davet iptal edildi', 'success');
+    await loadContestData(selectedContestId.value);
+  } catch (e: any) { 
+    showToast(e.response?.data?.message || 'Davet iptal edilemedi', 'error'); 
+  } finally { 
+    cancelingInvitationId.value = null; 
+  }
+}
+
+async function submitForReview() {
+  if (acceptedJury.value.length === 0) {
+    showToast('En az 1 kabul eden jüri olmak zorunlu', 'error');
+    return;
+  }
+  if (pendingInvitations.value.length > 0) {
+    showToast('Tüm davetler ACCEPTED veya REJECTED olmalı', 'error');
+    return;
+  }
+  submittingForReview.value = true;
+  try {
+    await axios.post(`/api/contests/${selectedContestId.value}/submit-for-review`);
+    showToast('Yarışma onaya gönderildi!', 'success');
+    const idx = contests.value.findIndex(c => c.id === selectedContestId.value);
+    if (idx >= 0) contests.value[idx].status = 'PENDING_APPROVAL';
+    await loadContestData(selectedContestId.value);
+  } catch (e: any) { 
+    showToast(e.response?.data?.message || 'Hata occurred', 'error'); 
+  } finally { 
+    submittingForReview.value = false; 
+  }
 }
 
 function formatDate(d: string) {

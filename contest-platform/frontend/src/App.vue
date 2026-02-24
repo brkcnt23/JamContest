@@ -10,6 +10,7 @@ import { onMounted, computed, onUnmounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import { useTheme } from '@/stores/theme';
+import { useServerTime } from '@/composables/useServerTime';
 import { ref } from 'vue';
 import ToastContainer from '@/components/ui/ToastContainer.vue';
 
@@ -20,6 +21,7 @@ import BlankLayout from '@/layouts/BlankLayout.vue';
 const route = useRoute();
 const authStore = useAuthStore();
 const { theme } = useTheme();
+const { syncTime } = useServerTime();
 
 // Dynamic layout based on route meta
 const layoutComponent = computed(() => {
@@ -64,6 +66,9 @@ onMounted(() => {
   if (authStore.token) {
     authStore.fetchUser();
   }
+
+  // Sync server time
+  syncTime();
   
   // Custom cursor
   cursorEl = document.createElement('div');

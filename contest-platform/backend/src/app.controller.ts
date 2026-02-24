@@ -23,4 +23,13 @@ export class AppController {
       };
     }
   }
+
+  @Get('time')
+  getServerTime() {
+    return {
+      serverTime: new Date().toISOString(),
+      timezone: 'UTC',
+      timestamp: Date.now(),
+    };
+  }
 }
