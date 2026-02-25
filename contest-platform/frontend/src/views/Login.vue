@@ -133,6 +133,9 @@ const handleLogin = async () => {
                 </button>
               </div>
               <p v-if="errors.password" class="error-message">{{ errors.password }}</p>
+              <router-link to="/forgot-password" class="text-sm text-purple-400 hover:text-purple-300 font-medium">
+                Şifremi Unuttum?
+              </router-link>
             </div>
 
             <!-- Submit Button -->

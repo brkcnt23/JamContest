@@ -3,16 +3,21 @@ import {
   BadRequestException, ConflictException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { UsersService } from '../users/users.service';
 
 @Injectable()
 export class ContestsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private usersService: UsersService,
+  ) {}
 
   // ==========================================
   // YARIŞMA CRUD
   // ==========================================
 
   async create(data: any, userId: string) {
+    await this.usersService.checkBan(userId, 'CREATE_CONTEST');
     const slug = this.generateSlug(data.title);
 
     const contest = await this.prisma.contest.create({
@@ -235,6 +240,7 @@ export class ContestsService {
   // ==========================================
 
   async apply(contestId: string, userId: string, message?: string) {
+    await this.usersService.checkBan(userId, 'APPLY');
     const contest = await this.prisma.contest.findUnique({ where: { id: contestId } });
     if (!contest) throw new NotFoundException('Contest not found');
 
@@ -334,6 +340,7 @@ export class ContestsService {
   // ==========================================
 
   async submitWork(contestId: string, userId: string, data: { title: string; description?: string; link?: string }) {
+    await this.usersService.checkBan(userId, 'SUBMIT');
     // Katılımcı mı kontrol
     const member = await this.prisma.contestMember.findFirst({
       where: { userId, contestId, role: 'PARTICIPANT' },
@@ -384,7 +391,7 @@ export class ContestsService {
       },
     });
   }
-
+  
   // ==========================================
   // JÜRİ OYLAMA
   // ==========================================

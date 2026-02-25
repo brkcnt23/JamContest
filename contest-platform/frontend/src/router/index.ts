@@ -36,6 +36,24 @@ const router = createRouter({
       meta: { layout: 'blank' }
     },
     { 
+      path: '/verify-email', 
+      name: 'VerifyEmail', 
+      component: () => import('@/views/VerifyEmail.vue'),
+      meta: { layout: 'blank' }
+    },
+    { 
+      path: '/forgot-password', 
+      name: 'ForgotPassword', 
+      component: () => import('@/views/ForgotPassword.vue'),
+      meta: { layout: 'blank' }
+    },
+    { 
+      path: '/reset-password', 
+      name: 'ResetPassword', 
+      component: () => import('@/views/ResetPassword.vue'),
+      meta: { layout: 'blank' }
+    },
+    { 
       path: '/about', 
       name: 'About', 
       component: About,

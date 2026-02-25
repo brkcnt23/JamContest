@@ -26,11 +26,9 @@ export const useAuthStore = defineStore('auth', {
 
   actions: {
     async register(email: string, password: string, username: string) {
-      const { data } = await axios.post('/api/auth/register', { email, password, username });
-      this.token = data.token;
-      this.user = data.user;
-      localStorage.setItem('token', data.token);
-      this.setupAxiosInterceptor();
+      await axios.post('/api/auth/register', { email, password, username });
+      // token yok artık, kullanıcıyı verify sayfasına yönlendir
+      return { message: 'Email doğrulama maili gönderildi' };
     },
 
     async login(email: string, password: string) {
@@ -51,19 +49,45 @@ export const useAuthStore = defineStore('auth', {
       }
     },
 
-    logout() {
-      this.token = null;
-      this.user = null;
-      localStorage.removeItem('token');
-    },
-
     setupAxiosInterceptor() {
+      // Request interceptor — accessToken ekle
       axios.interceptors.request.use((config) => {
         if (this.token) {
           config.headers.Authorization = `Bearer ${this.token}`;
         }
         return config;
       });
+
+      // Response interceptor — 401 gelirse refresh dene
+      axios.interceptors.response.use(
+        (res) => res,
+        async (error) => {
+          const original = error.config;
+          if (error.response?.status === 401 && !original._retry && !original.url?.includes('/auth/')) {
+            original._retry = true;
+            try {
+              const { data } = await axios.post('/api/auth/refresh');
+              this.token = data.accessToken;
+              localStorage.setItem('token', data.accessToken);
+              original.headers.Authorization = `Bearer ${data.accessToken}`;
+              return axios(original);
+            } catch {
+              this.logout();
+              window.location.href = '/login';
+            }
+          }
+          return Promise.reject(error);
+        }
+      );
+    },
+
+    async logout() {
+      try {
+        await axios.post('/api/auth/logout');
+      } catch {}
+      this.token = null;
+      this.user = null;
+      localStorage.removeItem('token');
     },
   },
 });

@@ -68,6 +68,7 @@ const organizerLinks = [
 ];
 
 const juryLinks = [
+  { name: 'Davetlerim', icon: Bell, path: '/jury-invitations' },
   { name: 'Jury Panel', icon: Gavel, path: '/jury' },
   { name: 'Assigned', icon: ClipboardList, path: '/jury/assigned' },
   { name: 'Reviews', icon: Award, path: '/jury/reviews' },

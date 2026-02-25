@@ -65,10 +65,10 @@ const handleRegister = async () => {
       form.value.username
     );
 
-    showToast('Account created successfully!', 'success');
-    router.push('/');
+    showToast('Kayıt başarılı! Email adresinizi doğrulayın.', 'success');
+    router.push('/login');
   } catch (error: any) {
-    showToast(error.response?.data?.message || 'Registration failed', 'error');
+    showToast(error.response?.data?.message || 'Kayıt başarısız', 'error');
   } finally {
     loading.value = false;
   }

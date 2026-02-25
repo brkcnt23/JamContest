@@ -87,6 +87,7 @@ model User {
   contactArtStation String?
 
   globalRole    GlobalRole @default(USER)
+  emailVerified Boolean    @default(false)
 
   createdAt     DateTime   @default(now())
   updatedAt     DateTime   @updatedAt
@@ -106,6 +107,8 @@ model User {
   juryInvitationsReceived JuryInvitation[] @relation("InvitedUser")
   editRequestsMade   ContestEditRequest[]
   cancelRequestsMade ContestCancelRequest[]
+  refreshTokens      RefreshToken[]
+  emailVerifications EmailVerification[]
 
   @@index([username])
   @@index([email])
@@ -438,4 +441,37 @@ model ContestCancelRequest {
   requester   User     @relation(fields: [requestedBy], references: [id], onDelete: Cascade)
 
   @@index([status])
+}
+
+// ==========================================
+// REFRESH TOKEN SYSTEM
+// ==========================================
+
+model RefreshToken {
+  id        String    @id @default(cuid())
+  userId    String
+  tokenHash String    @unique
+  userAgent String?
+  ip        String?
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// ==========================================
+// EMAIL VERIFICATION
+// ==========================================
+
+model EmailVerification {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
