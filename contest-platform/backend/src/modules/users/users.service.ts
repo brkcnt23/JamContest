@@ -206,6 +206,28 @@ export class UsersService {
   }
 
   // ==========================================
+  // KULLNAICI GÖNDERİMLERİ
+  // ==========================================
+
+  async getMySubmissions(userId: string) {
+    return this.prisma.submission.findMany({
+      where: { userId },
+      include: {
+        contest: { select: { id: true, title: true, slug: true, status: true, category: true, coverImage: true } },
+        scores: {
+          select: {
+            score: true,
+            comment: true,
+            jury: { select: { id: true, username: true, displayName: true } },
+          },
+        },
+        _count: { select: { scores: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  // ==========================================
   // BAN SİSTEMİ
   // ==========================================
 
@@ -296,5 +318,73 @@ export class UsersService {
       },
       orderBy: { createdAt: 'desc' },
     });
+  }
+
+  // ==========================================
+  // JÜRİ SKORLARI
+  // ==========================================
+
+  async getMyJuryScores(userId: string) {
+    return this.prisma.juryScore.findMany({
+      where: { juryId: userId },
+      include: {
+        submission: {
+          select: {
+            id: true,
+            title: true,
+            link: true,
+            user: { select: { id: true, username: true, displayName: true } },
+            contest: { select: { id: true, title: true, slug: true, status: true, category: true } },
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  // ==========================================
+  // KOMUNİ FAVORİLERİ
+  // ==========================================
+
+  async getMyFavorites(userId: string) {
+    return this.prisma.contestFavorite.findMany({
+      where: { userId },
+      include: {
+        contest: {
+          include: {
+            createdBy: { select: { id: true, username: true, displayName: true } },
+            _count: { select: { applications: true, submissions: true } },
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  async addFavorite(userId: string, contestId: string) {
+    await this.prisma.contestFavorite.upsert({
+      where: {
+        userId_contestId: { userId, contestId },
+      },
+      create: { userId, contestId },
+      update: {},
+    });
+    return { favorited: true };
+  }
+
+  async removeFavorite(userId: string, contestId: string) {
+    await this.prisma.contestFavorite.deleteMany({
+      where: { userId, contestId },
+    });
+    return { favorited: false };
+  }
+
+  async checkFavorite(userId: string, contestId: string) {
+    const favorite = await this.prisma.contestFavorite.findUnique({
+      where: {
+        userId_contestId: { userId, contestId },
+      },
+    });
+    return { favorited: !!favorite };
   }
 }

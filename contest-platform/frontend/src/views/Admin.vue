@@ -391,12 +391,14 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
+import { useRoute } from 'vue-router';
 import axios from 'axios';
 import { useAuthStore } from '@/stores/auth';
 import { showToast } from '@/composables/useToast';
 import { Shield, Search, Users, Trophy, Cog, Check, X, CheckCircle, UserPlus } from 'lucide-vue-next';
 
 const authStore = useAuthStore();
+const route = useRoute();
 const activeTab = ref('users');
 const userSearch = ref('');
 const roleFilter = ref('ALL');
@@ -465,6 +467,9 @@ const filteredUsers = computed(() => {
 });
 
 onMounted(async () => {
+  const tabParam = route.query.tab as string;
+  if (tabParam) activeTab.value = tabParam;
+  
   await Promise.all([loadUsers(), loadContests(), loadRequests(), loadBans()]);
 });
 

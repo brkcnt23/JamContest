@@ -5,6 +5,9 @@ import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
 import { ContestsModule } from './modules/contests/contests.module';
 import { MailModule } from './modules/mail/mail.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
+import { MessagesModule } from './modules/messages/messages.module';
+import { SocialModule } from './modules/social/social.module';
 import { AppController } from './app.controller';
 import { TimeController } from './modules/time/time.controller';
 
@@ -16,6 +19,9 @@ import { TimeController } from './modules/time/time.controller';
     AuthModule,
     UsersModule,
     ContestsModule,
+    NotificationsModule,
+    MessagesModule,
+    SocialModule,
   ],
   controllers: [AppController, TimeController],
   providers: [],

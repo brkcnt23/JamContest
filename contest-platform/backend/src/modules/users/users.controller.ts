@@ -26,6 +26,48 @@ export class UsersController {
     return this.usersService.searchUsers(query || '');
   }
 
+  // GET /api/users/me/submissions — Benim gonderimleim
+  @Get('me/submissions')
+  @UseGuards(JwtAuthGuard)
+  async getMySubmissions(@Req() req: any) {
+    return this.usersService.getMySubmissions(req.user.id);
+  }
+
+  // GET /api/users/me/favorites — Favori yarışmalarım
+  @Get('me/favorites')
+  @UseGuards(JwtAuthGuard)
+  async getMyFavorites(@Req() req: any) {
+    return this.usersService.getMyFavorites(req.user.id);
+  }
+
+  // POST /api/users/me/favorites/:contestId — Favori ekle
+  @Post('me/favorites/:contestId')
+  @UseGuards(JwtAuthGuard)
+  async addFavorite(@Req() req: any, @Param('contestId') contestId: string) {
+    return this.usersService.addFavorite(req.user.id, contestId);
+  }
+
+  // DELETE /api/users/me/favorites/:contestId — Favoriden çıkar
+  @Delete('me/favorites/:contestId')
+  @UseGuards(JwtAuthGuard)
+  async removeFavorite(@Req() req: any, @Param('contestId') contestId: string) {
+    return this.usersService.removeFavorite(req.user.id, contestId);
+  }
+
+  // GET /api/users/me/favorites/:contestId/check — Favori mi kontrol et
+  @Get('me/favorites/:contestId/check')
+  @UseGuards(JwtAuthGuard)
+  async checkFavorite(@Req() req: any, @Param('contestId') contestId: string) {
+    return this.usersService.checkFavorite(req.user.id, contestId);
+  }
+
+  // GET /api/users/me/jury-scores — Benim jüri puanlarım
+  @Get('me/jury-scores')
+  @UseGuards(JwtAuthGuard)
+  async getMyJuryScores(@Req() req: any) {
+    return this.usersService.getMyJuryScores(req.user.id);
+  }
+
   // GET /api/users/:id/profile — Profil görüntüle
   @Get(':id/profile')
   async getProfile(@Param('id') id: string) {

@@ -4,12 +4,14 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { UsersService } from '../users/users.service';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
 export class ContestsService {
   constructor(
     private prisma: PrismaService,
     private usersService: UsersService,
+    private notificationsService: NotificationsService,
   ) {}
 
   // ==========================================
@@ -167,10 +169,20 @@ export class ContestsService {
       data: { contestId, reviewerId, decision: 'APPROVED', note },
     });
 
-    return this.prisma.contest.update({
+    const updated = await this.prisma.contest.update({
       where: { id: contestId },
       data: { status: 'APPROVED' },
     });
+
+    await this.notificationsService.create(
+      contest.createdById,
+      'CONTEST_APPROVED',
+      'Yarışma Onaylandı',
+      `"${updated.title}" yarışmanız onaylandı`,
+      `/contests/${updated.slug}`,
+    );
+
+    return updated;
   }
 
   async rejectContest(contestId: string, reviewerId: string, note: string) {
@@ -181,10 +193,20 @@ export class ContestsService {
       data: { contestId, reviewerId, decision: 'REJECTED', note },
     });
 
-    return this.prisma.contest.update({
+    const updated = await this.prisma.contest.update({
       where: { id: contestId },
       data: { status: 'REJECTED', adminApprovalNote: note },
     });
+
+    await this.notificationsService.create(
+      contest.createdById,
+      'CONTEST_REJECTED',
+      'Yarışma Reddedildi',
+      `"${updated.title}" yarışmanız reddedildi`,
+      '/organizer/contests',
+    );
+
+    return updated;
   }
 
   async updateStatus(contestId: string, status: string, userId: string) {
@@ -507,10 +529,26 @@ export class ContestsService {
       });
     }
 
-    await this.prisma.contest.update({
+    const contest = await this.prisma.contest.update({
       where: { id: contestId },
       data: { status: 'FINALIZED' },
     });
+
+    // Get all participants and send notifications
+    const participants = await this.prisma.contestMember.findMany({
+      where: { contestId, role: 'PARTICIPANT' },
+      select: { userId: true },
+    });
+
+    for (const participant of participants) {
+      await this.notificationsService.create(
+        participant.userId,
+        'SUBMISSION_RESULT',
+        'Sonuçlar Açıklandı',
+        `"${contest.title}" yarışması sonuçlandı`,
+        `/contests/${contest.slug}/results`,
+      );
+    }
 
     return { message: 'Contest finalized', results: scored };
   }
@@ -603,7 +641,9 @@ export class ContestsService {
       throw new ConflictException('Bu user\'a zaten pending davet var');
     }
 
-    return this.prisma.juryInvitation.create({
+    const inviter = await this.prisma.user.findUnique({ where: { id: invitedBy } });
+
+    const result = await this.prisma.juryInvitation.create({
       data: {
         contestId,
         userId: user.id,
@@ -616,6 +656,16 @@ export class ContestsService {
         inviter: { select: { id: true, username: true } },
       },
     });
+
+    await this.notificationsService.create(
+      user.id,
+      'JURY_INVITATION',
+      'Jüri Daveti',
+      `${inviter?.displayName || inviter?.username} sizi "${contest.title}" yarışmasına jüri olarak davet etti`,
+      '/jury-invitations',
+    );
+
+    return result;
   }
 
   async acceptJuryInvitation(invitationId: string, userId: string) {

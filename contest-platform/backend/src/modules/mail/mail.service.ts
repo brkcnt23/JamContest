@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import * as nodemailer from 'nodemailer';
-import { LOGO_BASE64 } from './logo.constant';
 
 @Injectable()
 export class MailService {
+  private readonly logoUrl = process.env.LOGO_URL ?? 'https://jamcontest.com/images/jamcontest_logo_white_for_dark.png';
 
   private transporter = nodemailer.createTransport({
     host: process.env.MAIL_HOST,
@@ -52,7 +52,7 @@ export class MailService {
     <body style="margin:0;padding:0;background:#0f0f0f;font-family:system-ui,sans-serif;">
       <div style="max-width:560px;margin:40px auto;background:#1a1a1a;border-radius:16px;overflow:hidden;border:1px solid #2a2a2a;">
         <div style="background:linear-gradient(135deg,#7c3aed,#4f46e5);padding:32px;text-align:center;">
-          <img src="${LOGO_BASE64}" style="max-height:130px;width:auto;display:block;margin:0 auto 20px;"/>
+          <img src="${this.logoUrl}" style="max-height:130px;width:auto;display:block;margin:0 auto 20px;"/>
           <h1 style="color:#ffffff;margin:0;font-size:28px;font-weight:700;letter-spacing:0.5px;">JamContest</h1>
         </div>
         <div style="padding:40px;">
@@ -78,7 +78,7 @@ export class MailService {
     <body style="margin:0;padding:0;background:#0f0f0f;font-family:system-ui,sans-serif;">
       <div style="max-width:560px;margin:40px auto;background:#1a1a1a;border-radius:16px;overflow:hidden;border:1px solid #2a2a2a;">
         <div style="background:linear-gradient(135deg,#7c3aed,#4f46e5);padding:32px;text-align:center;">
-          <img src="${LOGO_BASE64}" style="max-height:130px;width:auto;display:block;margin:0 auto 20px;"/>
+          <img src="${this.logoUrl}" style="max-height:130px;width:auto;display:block;margin:0 auto 20px;"/>
           <h1 style="color:#ffffff;margin:0;font-size:28px;font-weight:700;letter-spacing:0.5px;">JamContest</h1>
         </div>
         <div style="padding:40px;">
@@ -104,7 +104,7 @@ export class MailService {
     <body style="margin:0;padding:0;background:#0f0f0f;font-family:system-ui,sans-serif;">
       <div style="max-width:560px;margin:40px auto;background:#1a1a1a;border-radius:16px;overflow:hidden;border:1px solid #2a2a2a;">
         <div style="background:linear-gradient(135deg,#7c3aed,#4f46e5);padding:32px;text-align:center;">
-          <img src="${LOGO_BASE64}" style="max-height:130px;width:auto;display:block;margin:0 auto 20px;"/>
+          <img src="${this.logoUrl}" style="max-height:130px;width:auto;display:block;margin:0 auto 20px;"/>
           <h1 style="color:#ffffff;margin:0;font-size:28px;font-weight:700;letter-spacing:0.5px;">JamContest</h1>
         </div>
         <div style="padding:40px;">

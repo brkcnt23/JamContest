@@ -214,8 +214,32 @@ const router = createRouter({
       component: () => import('@/views/JuryPanel.vue'),
       meta: { layout: 'dashboard', requiresAuth: true }
     },
+    { 
+      path: '/jury/assigned', 
+      name: 'JuryAssigned', 
+      component: () => import('@/views/JuryAssigned.vue'),
+      meta: { layout: 'dashboard', requiresAuth: true }
+    },
+    { 
+      path: '/jury/reviews', 
+      name: 'JuryReviews', 
+      component: () => import('@/views/JuryReviews.vue'),
+      meta: { layout: 'dashboard', requiresAuth: true }
+    },
     
     // ADMIN
+    { 
+      path: '/admin/contests', 
+      redirect: { path: '/admin', query: { tab: 'contests' } }
+    },
+    { 
+      path: '/admin/users', 
+      redirect: { path: '/admin', query: { tab: 'users' } }
+    },
+    { 
+      path: '/admin/settings', 
+      redirect: { path: '/admin', query: { tab: 'settings' } }
+    },
     { 
       path: '/admin', 
       name: 'Admin', 

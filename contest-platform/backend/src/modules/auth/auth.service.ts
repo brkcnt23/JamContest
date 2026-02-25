@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException, ConflictException, BadRequestException, NotFoundException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, ConflictException, BadRequestException, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma/prisma.service';
 import { MailService } from '../mail/mail.service';
@@ -161,6 +161,81 @@ export class AuthService {
       },
     });
     return this.sanitizeUser(user);
+  }
+
+  async changePassword(userId: string, currentPassword: string, newPassword: string) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user || !(await bcrypt.compare(currentPassword, user.passwordHash))) {
+      throw new UnauthorizedException('Geçersiz şifre');
+    }
+
+    const passwordHash = await bcrypt.hash(newPassword, 10);
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { passwordHash },
+    });
+    
+    await this.prisma.refreshToken.updateMany({
+      where: { userId },
+      data: { revokedAt: new Date() },
+    });
+
+    return { message: 'Şifre güncellendi' };
+  }
+
+  async changeEmail(userId: string, currentPassword: string, newEmail: string) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user || !(await bcrypt.compare(currentPassword, user.passwordHash))) {
+      throw new UnauthorizedException('Geçersiz şifre');
+    }
+
+    const existing = await this.prisma.user.findUnique({ where: { email: newEmail } });
+    if (existing) throw new ConflictException('Email zaten kullanımda');
+
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { email: newEmail, emailVerified: false },
+    });
+
+    const token = crypto.randomBytes(32).toString('hex');
+    await this.prisma.emailVerification.upsert({
+      where: { userId },
+      create: { userId, token, expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000) },
+      update: { token, expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000) },
+    });
+
+    await this.mailService.sendVerificationEmail(newEmail, user.username, token);
+
+    await this.prisma.refreshToken.updateMany({
+      where: { userId },
+      data: { revokedAt: new Date() },
+    });
+
+    return { message: 'Email güncellendi, doğrulama maili gönderildi' };
+  }
+
+  async deleteAccount(userId: string, password: string) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user || !(await bcrypt.compare(password, user.passwordHash))) {
+      throw new UnauthorizedException('Geçersiz şifre');
+    }
+
+    await this.prisma.user.delete({ where: { id: userId } });
+    return { message: 'Hesap silindi' };
+  }
+
+  async revokeSession(userId: string, sessionId: string) {
+    const token = await this.prisma.refreshToken.findUnique({ where: { id: sessionId } });
+    if (!token || token.userId !== userId) {
+      throw new ForbiddenException('Bu oturum sizin değil');
+    }
+
+    await this.prisma.refreshToken.update({
+      where: { id: sessionId },
+      data: { revokedAt: new Date() },
+    });
+
+    return { message: 'Oturum sonlandırıldı' };
   }
 
   private generateAccessToken(user: any) {

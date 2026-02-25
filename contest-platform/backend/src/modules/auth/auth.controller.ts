@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Body, UseGuards, Req, Res } from '@nestjs/common';
+import { Controller, Post, Get, Body, UseGuards, Req, Res, Put, Delete, Param } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { Request, Response } from 'express';
@@ -60,5 +60,31 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   async getMe(@Req() req: any) {
     return this.authService.getMe(req.user.id);
+  }
+
+  @Put('change-password')
+  @UseGuards(JwtAuthGuard)
+  async changePassword(@Req() req: any, @Body() body: { currentPassword: string; newPassword: string }) {
+    return this.authService.changePassword(req.user.id, body.currentPassword, body.newPassword);
+  }
+
+  @Put('change-email')
+  @UseGuards(JwtAuthGuard)
+  async changeEmail(@Req() req: any, @Body() body: { currentPassword: string; newEmail: string }) {
+    return this.authService.changeEmail(req.user.id, body.currentPassword, body.newEmail);
+  }
+
+  @Delete('account')
+  @UseGuards(JwtAuthGuard)
+  async deleteAccount(@Req() req: any, @Body() body: { password: string }, @Res({ passthrough: true }) res: Response) {
+    const result = await this.authService.deleteAccount(req.user.id, body.password);
+    res.clearCookie('refreshToken', { path: '/api/auth' });
+    return result;
+  }
+
+  @Delete('sessions/:id')
+  @UseGuards(JwtAuthGuard)
+  async revokeSession(@Req() req: any, @Param('id') sessionId: string) {
+    return this.authService.revokeSession(req.user.id, sessionId);
   }
 }

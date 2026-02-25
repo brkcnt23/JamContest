@@ -109,6 +109,10 @@ model User {
   cancelRequestsMade ContestCancelRequest[]
   refreshTokens      RefreshToken[]
   emailVerifications EmailVerification[]
+  notifications      Notification[]
+  favorites          ContestFavorite[]
+  conversations      ConversationParticipant[]
+  sentMessages       Message[]
 
   @@index([username])
   @@index([email])
@@ -169,6 +173,7 @@ model Contest {
   juryInvitations   JuryInvitation[]
   editRequests      ContestEditRequest[]
   cancelRequest     ContestCancelRequest?
+  favorites         ContestFavorite[]
 
   @@index([status])
   @@index([slug])
@@ -474,4 +479,84 @@ model EmailVerification {
   createdAt DateTime @default(now())
 
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ==========================================
+// NOTIFICATION SYSTEM
+// ==========================================
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  type      String   // JURY_INVITATION | CONTEST_APPROVED | CONTEST_REJECTED | SUBMISSION_RESULT | SYSTEM
+  title     String
+  body      String
+  link      String?  // frontend route
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, read])
+  @@index([userId, createdAt])
+}
+
+// ==========================================
+// CONTEST FAVORITE SYSTEM
+// ==========================================
+
+model ContestFavorite {
+  id        String   @id @default(cuid())
+  userId    String
+  contestId String
+  createdAt DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  contest Contest @relation(fields: [contestId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, contestId])
+  @@index([userId])
+}
+
+// ==========================================
+// DIRECT MESSAGE SYSTEM
+// ==========================================
+
+model Conversation {
+  id           String    @id @default(cuid())
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  participants ConversationParticipant[]
+  messages     Message[]
+
+  @@index([updatedAt])
+}
+
+model ConversationParticipant {
+  id             String   @id @default(cuid())
+  conversationId String
+  userId         String
+  lastReadAt     DateTime @default(now())
+
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([conversationId, userId])
+  @@index([userId])
+}
+
+model Message {
+  id             String   @id @default(cuid())
+  conversationId String
+  senderId       String
+  body           String   @db.Text
+  createdAt      DateTime @default(now())
+  editedAt       DateTime?
+  deletedAt      DateTime?
+
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender         User         @relation(fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId, createdAt])
 }
