@@ -4,7 +4,7 @@ import cookieParser from 'cookie-parser';
 
 async function bootstrap() {
 	const app = await NestFactory.create(AppModule);
-	app.enableCors();
+	app.enableCors({ credentials: true, origin: true });
 	app.use(cookieParser());
 	// Remove global prefix - Vite proxy handles /api routing
 	await app.listen(3000);

@@ -142,17 +142,4 @@ export class UsersController {
   async getActiveBans() {
     return this.usersService.getActiveBans();
   }
-
-  // ==========================================
-  // JURY DAVT DAVETLERİ
-  // ==========================================
-
-  // GET /api/jury-invitations/my
-  @Get('jury-invitations/my')
-  @UseGuards(JwtAuthGuard)
-  async getMyJuryInvitations(@Req() req: any) {
-    // Note: Bu endpoint contests.service.ts'de getMyJuryInvitations metodunda gerçekleşir
-    // Users controller'dan erişilebilmesi için contests controller'ında da olabilir
-    return { message: 'Use GET /api/contests/jury-invitations/my instead' };
-  }
 }

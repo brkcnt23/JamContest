@@ -251,7 +251,6 @@ const router = createRouter({
 
 router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore();
-  authStore.setupAxiosInterceptor();
 
   // Eğer token var ama user yüklenmemişse bekle
   if (authStore.isAuthenticated && !authStore.user) {

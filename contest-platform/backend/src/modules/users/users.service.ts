@@ -223,7 +223,7 @@ export class UsersService {
         },
         _count: { select: { scores: true } },
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { submittedAt: 'desc' },
     });
   }
 

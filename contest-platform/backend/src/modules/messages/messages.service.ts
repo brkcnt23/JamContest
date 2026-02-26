@@ -205,6 +205,14 @@ export class MessagesService {
     });
   }
 
+  async getConversationParticipants(conversationId: string) {
+    const conv = await this.prisma.conversation.findUnique({
+      where: { id: conversationId },
+      select: { participants: { select: { userId: true } } },
+    });
+    return conv?.participants ?? [];
+  }
+
   async getUnreadCount(userId: string) {
     const participants = await this.prisma.conversationParticipant.findMany({
       where: { userId },

@@ -62,7 +62,6 @@ const moveCursor = (e: MouseEvent) => {
 };
 
 onMounted(() => {
-  authStore.setupAxiosInterceptor();
   if (authStore.token) {
     authStore.fetchUser();
   }
@@ -158,5 +157,11 @@ input, textarea, a, select, [role="button"] {
 
 button {
   cursor: url('data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'32\' height=\'32\' viewBox=\'0 0 24 24\'><path fill=\'%23222\' d=\'M3 17.25V21h3.75l11.06-11.06-3.75-3.75zm2.92 2.92l-1.17-1.17 9.19-9.19 1.17 1.17zm13.06-13.06a1.003 1.003 0 0 0-1.42 0l-1.34 1.34 3.75 3.75 1.34-1.34a1.003 1.003 0 0 0 0-1.42l-2.33-2.33z\'/></svg>') 4 24, pointer;
+}
+
+/* Hero gradient text selection */
+.hero-title-gradient::selection {
+  -webkit-text-fill-color: white;
+  background: hsl(271 91% 65% / 0.5);
 }
 </style>

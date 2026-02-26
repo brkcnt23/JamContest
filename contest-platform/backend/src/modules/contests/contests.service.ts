@@ -643,12 +643,19 @@ export class ContestsService {
 
     const inviter = await this.prisma.user.findUnique({ where: { id: invitedBy } });
 
-    const result = await this.prisma.juryInvitation.create({
-      data: {
+    const result = await this.prisma.juryInvitation.upsert({
+      where: { contestId_userId: { contestId, userId: user.id } },
+      create: {
         contestId,
         userId: user.id,
         invitedBy,
         status: 'PENDING',
+      },
+      update: {
+        invitedBy,
+        status: 'PENDING',
+        cancelledAt: null,
+        updatedAt: new Date(),
       },
       include: {
         user: { select: { id: true, username: true, displayName: true, avatar: true } },

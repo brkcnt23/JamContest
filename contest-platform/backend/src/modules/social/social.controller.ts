@@ -1,7 +1,7 @@
 import { Controller, Get, Query } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 
-@Controller('api/social')
+@Controller('social')
 export class SocialController {
   constructor(private readonly prisma: PrismaService) {}
 
@@ -16,7 +16,6 @@ export class SocialController {
 
     return this.prisma.submission.findMany({
       where: {
-        deletedAt: null,
         contest: {
           status: {
             in: [
@@ -48,6 +47,15 @@ export class SocialController {
             status: true,
           },
         },
+        files: {
+          select: {
+            id: true,
+            filename: true,
+            originalName: true,
+            mimeType: true,
+          },
+          take: 1,
+        },
         _count: {
           select: {
             scores: true,
@@ -55,7 +63,7 @@ export class SocialController {
         },
       },
       orderBy: {
-        createdAt: 'desc',
+        submittedAt: 'desc',
       },
       take: takeParsed,
       skip: skipParsed,
@@ -81,11 +89,7 @@ export class SocialController {
           },
         }),
         this.prisma.user.count(),
-        this.prisma.submission.count({
-          where: {
-            deletedAt: null,
-          },
-        }),
+        this.prisma.submission.count({}),
       ]);
 
     return {

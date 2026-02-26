@@ -181,18 +181,11 @@ onMounted(async () => {
   try {
     // Get contests where user is jury
     const { data } = await axios.get('/api/contests');
-    // Filter by jury membership
     const userId = authStore.user?.id;
-    const allContests = data;
-    // For each contest, check if user is jury (we check members)
-    const juryContests: any[] = [];
-    for (const c of allContests) {
-      try {
-        const memRes = await axios.get(`/api/contests/${c.id}/members`);
-        const isJury = memRes.data.some((m: any) => m.userId === userId && m.role === 'JURY');
-        if (isJury) juryContests.push(c);
-      } catch { /* skip */ }
-    }
+    // Filter by jury membership from members[] that already exist in contest data
+    const juryContests = data.filter((c: any) =>
+      c.members?.some((m: any) => m.user?.id === userId && m.role === 'JURY')
+    );
     contests.value = juryContests;
     if (contests.value.length) {
       selectedContestId.value = contests.value[0].id;

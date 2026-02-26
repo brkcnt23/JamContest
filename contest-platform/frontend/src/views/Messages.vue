@@ -2,12 +2,14 @@
 import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
+import { useSocket } from '@/composables/useSocket';
 import axios from 'axios';
 import { Send, Search, MessageSquare, X, ArrowLeft, MoreVertical } from 'lucide-vue-next';
 
 const authStore = useAuthStore();
 const router = useRouter();
 const route = useRoute();
+const { connect, disconnect, joinConversation, leaveConversation, sendMessage: socketSend, on, off } = useSocket();
 
 // ── Types ─────────────────────────────────────────────
 interface User { id: string; username: string; displayName?: string; avatar?: string }
@@ -33,8 +35,6 @@ const searchResults = ref<User[]>([]);
 const searchLoading = ref(false);
 const showSearch = ref(false);
 const messagesEndRef = ref<HTMLElement | null>(null);
-const pollInterval = ref<ReturnType<typeof setInterval> | null>(null);
-const lastMsgCount = ref(0);
 
 // ── Computed ──────────────────────────────────────────
 const activeConv = computed(() => conversations.value.find(c => c.id === activeConvId.value));
@@ -122,13 +122,14 @@ async function loadConversations() {
 
 async function openConversation(convId: string) {
   if (activeConvId.value === convId) return;
+  if (activeConvId.value) leaveConversation(activeConvId.value);
   activeConvId.value = convId;
+  joinConversation(convId);
   messages.value = [];
   msgLoading.value = true;
   try {
     const { data } = await axios.get(`/api/messages/${convId}`);
     messages.value = data;
-    lastMsgCount.value = data.length;
     await axios.put(`/api/messages/${convId}/read`);
     // mark local as read
     const conv = conversations.value.find(c => c.id === convId);
@@ -159,7 +160,6 @@ async function startConversation(user: User) {
 async function sendMessage() {
   const body = newMessage.value.trim();
   if (!body || !activeConvId.value || sending.value) return;
-  sending.value = true;
   const optimistic: Message = {
     id: `temp-${Date.now()}`,
     conversationId: activeConvId.value,
@@ -171,34 +171,7 @@ async function sendMessage() {
   messages.value.push(optimistic);
   newMessage.value = '';
   scrollBottom();
-  try {
-    const { data } = await axios.post(`/api/messages/${activeConvId.value}`, { body });
-    // replace optimistic
-    const idx = messages.value.findIndex(m => m.id === optimistic.id);
-    if (idx !== -1) messages.value[idx] = data;
-    // update conv preview
-    const conv = conversations.value.find(c => c.id === activeConvId.value);
-    if (conv) {
-      conv.messages = [data];
-      conv.updatedAt = data.createdAt;
-    }
-  } catch {
-    messages.value = messages.value.filter(m => m.id !== optimistic.id);
-  } finally {
-    sending.value = false;
-  }
-}
-
-async function pollMessages() {
-  if (!activeConvId.value) return;
-  try {
-    const { data } = await axios.get(`/api/messages/${activeConvId.value}`);
-    if (data.length > lastMsgCount.value) {
-      messages.value = data;
-      lastMsgCount.value = data.length;
-      scrollBottom();
-    }
-  } catch { /* silent */ }
+  socketSend(activeConvId.value, body);
 }
 
 let searchTimeout: ReturnType<typeof setTimeout>;
@@ -227,8 +200,22 @@ function handleKeydown(e: KeyboardEvent) {
 
 // ── Lifecycle ─────────────────────────────────────────
 onMounted(async () => {
+  connect();
+
+  on('new_message', (msg: Message) => {
+    if (msg.conversationId !== activeConvId.value) return;
+    // replace optimistic if exists, otherwise push
+    const idx = messages.value.findIndex(m => m.id.startsWith('temp-') && m.body === msg.body);
+    if (idx !== -1) messages.value[idx] = msg;
+    else messages.value.push(msg);
+    scrollBottom();
+  });
+
+  on('conversation_updated', async ({ conversationId }: { conversationId: string }) => {
+    await loadConversations();
+  });
+
   await loadConversations();
-  // open from route query ?with=userId
   const withUserId = route.query.with as string;
   if (withUserId) {
     try {
@@ -239,11 +226,12 @@ onMounted(async () => {
   } else if (conversations.value.length) {
     await openConversation(conversations.value[0].id);
   }
-  pollInterval.value = setInterval(pollMessages, 5000);
 });
 
 onUnmounted(() => {
-  if (pollInterval.value) clearInterval(pollInterval.value);
+  off('new_message', () => {});
+  off('conversation_updated', () => {});
+  disconnect();
 });
 
 watch(searchQuery, searchUsers);
@@ -251,9 +239,7 @@ watch(searchQuery, searchUsers);
 
 <template>
   <div class="messages-page">
-    <!-- Sidebar: conversation list -->
-    <div class="conv-sidebar" :class="activeConvId && 'sidebar-hidden-mobile'">
-      <!-- Header -->
+    <div class="conv-sidebar">
       <div class="sidebar-header">
         <h2 class="sidebar-title">Mesajlar</h2>
         <button class="icon-btn" @click="showSearch = !showSearch" title="Yeni konuşma">

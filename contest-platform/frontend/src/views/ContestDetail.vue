@@ -99,6 +99,52 @@
                 <label class="form-label">Link (Drive, WeTransfer, Web)</label>
                 <input v-model="submission.link" type="url" class="form-input" placeholder="https://drive.google.com/..." />
               </div>
+
+              <!-- File Upload -->
+              <div class="form-group">
+                <label class="form-label">Dosya Yükle</label>
+                <div
+                  class="upload-zone"
+                  :class="dragOver && 'upload-zone--active'"
+                  @dragover.prevent="dragOver = true"
+                  @dragleave="dragOver = false"
+                  @drop.prevent="onDrop"
+                  @click="fileInputRef?.click()"
+                >
+                  <input ref="fileInputRef" type="file" multiple hidden @change="onFileSelect" />
+                  <p class="upload-hint">Dosyaları buraya sürükleyin veya tıklayın</p>
+                  <p class="upload-sub">Maks. 200MB · {{ contest?.allowedFormats?.join(', ') || 'Tüm formatlar' }}</p>
+                </div>
+
+                <!-- Staged files (henüz yüklenmemiş) -->
+                <div v-if="stagedFiles.length" class="file-list">
+                  <div v-for="(f, i) in stagedFiles" :key="i" class="file-item">
+                    <span class="file-name">{{ f.name }}</span>
+                    <span class="file-size">{{ formatSize(f.size) }}</span>
+                    <button class="file-remove" @click="stagedFiles.splice(i, 1)">✕</button>
+                  </div>
+                </div>
+
+                <!-- Uploaded files -->
+                <div v-if="uploadedFiles.length" class="file-list file-list--uploaded">
+                  <p class="file-list-label">Yüklendi:</p>
+                  <div v-for="f in uploadedFiles" :key="f.id" class="file-item file-item--done">
+                    <span class="file-name">✓ {{ f.originalName }}</span>
+                    <span class="file-size">{{ formatSize(f.size) }}</span>
+                    <button class="file-remove" @click="removeUploadedFile(f.id)">✕</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Upload progress -->
+              <div v-if="uploadProgress.length" class="upload-progress-list">
+                <div v-for="p in uploadProgress" :key="p.name" class="upload-progress-item">
+                  <span>{{ p.name }}</span>
+                  <div class="progress-bar"><div class="progress-fill" :style="{ width: p.pct + '%' }"></div></div>
+                  <span>{{ p.pct }}%</span>
+                </div>
+              </div>
+
               <button class="btn btn--submit" @click="submitWork" :disabled="submitting || !submission.title">
                 {{ submitting ? 'Gönderiliyor...' : 'Gönder' }}
               </button>
@@ -182,6 +228,11 @@ const applying = ref(false);
 const submitting = ref(false);
 
 const submission = ref({ title: '', description: '', link: '' });
+const fileInputRef = ref<HTMLInputElement | null>(null);
+const stagedFiles = ref<File[]>([]);
+const uploadedFiles = ref<any[]>([]);
+const uploadProgress = ref<{ name: string; pct: number }[]>([]);
+const dragOver = ref(false);
 
 onMounted(async () => {
   try {
@@ -301,13 +352,15 @@ async function applyToContest() {
 async function submitWork() {
   submitting.value = true;
   try {
-    await axios.post(`/api/contests/${contest.value.id}/submit`, {
+    const { data } = await axios.post(`/api/contests/${contest.value.id}/submit`, {
       title: submission.value.title,
       description: submission.value.description,
       link: submission.value.link,
     });
+    if (stagedFiles.value.length) await uploadFiles(data.id);
     showToast('Eser gönderildi!', 'success');
     submission.value = { title: '', description: '', link: '' };
+    uploadedFiles.value = [];
   } catch (e: any) {
     showToast(e.response?.data?.message || 'Gönderilemedi', 'error');
   } finally {
@@ -338,6 +391,53 @@ function getCategoryLabel(cat: string) {
 
 function getRankEmoji(i: number) {
   return ['🥇', '🥈', '🥉'][i] || '';
+}
+
+function onFileSelect(e: Event) {
+  const input = e.target as HTMLInputElement;
+  if (input.files) stagedFiles.value.push(...Array.from(input.files));
+  input.value = '';
+}
+
+function onDrop(e: DragEvent) {
+  dragOver.value = false;
+  if (e.dataTransfer?.files) stagedFiles.value.push(...Array.from(e.dataTransfer.files));
+}
+
+function formatSize(bytes: number) {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+  return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+}
+
+async function removeUploadedFile(fileId: string) {
+  try {
+    await axios.delete(`/api/uploads/file/${fileId}`);
+    uploadedFiles.value = uploadedFiles.value.filter(f => f.id !== fileId);
+  } catch {
+    showToast('Dosya silinemedi', 'error');
+  }
+}
+
+async function uploadFiles(submissionId: string) {
+  uploadProgress.value = stagedFiles.value.map(f => ({ name: f.name, pct: 0 }));
+  const results = await Promise.allSettled(
+    stagedFiles.value.map(async (file, i) => {
+      const fd = new FormData();
+      fd.append('file', file);
+      const { data } = await axios.post(`/api/uploads/submission/${submissionId}`, fd, {
+        onUploadProgress: (e) => {
+          uploadProgress.value[i].pct = Math.round((e.loaded / (e.total ?? 1)) * 100);
+        },
+      });
+      uploadedFiles.value.push(data);
+      return data;
+    })
+  );
+  uploadProgress.value = [];
+  stagedFiles.value = [];
+  const failed = results.filter(r => r.status === 'rejected');
+  if (failed.length) showToast(`${failed.length} dosya yüklenemedi`, 'error');
 }
 </script>
 
@@ -442,6 +542,35 @@ function getRankEmoji(i: number) {
 .info-val { font-weight: 600; color: hsl(var(--foreground)); }
 
 .text-muted { color: hsl(var(--muted-foreground)); font-size: 0.85rem; }
+
+.upload-zone {
+  border: 2px dashed hsl(var(--border));
+  border-radius: 10px;
+  padding: 2rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.upload-zone:hover, .upload-zone--active {
+  border-color: hsl(var(--brand));
+  background: hsl(var(--brand) / 0.04);
+}
+.upload-hint { font-size: 0.9rem; color: hsl(var(--foreground)); margin-bottom: 0.25rem; }
+.upload-sub { font-size: 0.75rem; color: hsl(var(--muted-foreground)); }
+.file-list { display: flex; flex-direction: column; gap: 0.4rem; margin-top: 0.75rem; }
+.file-list-label { font-size: 0.75rem; color: hsl(var(--muted-foreground)); margin-bottom: 0.25rem; }
+.file-item { display: flex; align-items: center; gap: 0.5rem; padding: 0.4rem 0.75rem; background: hsl(var(--muted)); border-radius: 6px; font-size: 0.8rem; }
+.file-item--done { background: hsl(142 71% 45% / 0.1); }
+.file-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.file-size { color: hsl(var(--muted-foreground)); flex-shrink: 0; }
+.file-remove { background: none; border: none; cursor: pointer; color: hsl(var(--muted-foreground)); padding: 0 0.25rem; font-size: 0.8rem; }
+.file-remove:hover { color: hsl(var(--foreground)); }
+.upload-progress-list { display: flex; flex-direction: column; gap: 0.5rem; }
+.upload-progress-item { display: flex; align-items: center; gap: 0.75rem; font-size: 0.8rem; }
+.upload-progress-item .progress-bar { flex: 1; height: 4px; background: hsl(var(--border)); border-radius: 2px; }
+.upload-progress-item .progress-fill { height: 100%; background: hsl(var(--brand)); border-radius: 2px; transition: width 0.2s; }
+
+.file-list--uploaded { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid hsl(var(--border)); }
 
 @media (max-width: 768px) {
   .content-grid { grid-template-columns: 1fr; }

@@ -16,6 +16,7 @@ interface Submission {
   createdAt: string;
   user: { id: string; username: string; displayName?: string; avatar?: string };
   contest: { id: string; title: string; slug: string; category: string; status: string };
+  files?: { id: string; filename: string; originalName: string; mimeType: string }[];
   _count: { scores: number };
 }
 
@@ -78,6 +79,10 @@ function timeAgo(d: string): string {
 
 function avatar(u: Submission['user']): string {
   return (u.displayName || u.username)[0].toUpperCase();
+}
+
+function firstImage(s: Submission) {
+  return s.files?.find(f => f.mimeType.startsWith('image/')) ?? null;
 }
 
 // Infinite scroll
@@ -165,6 +170,21 @@ onUnmounted(() => observer?.disconnect());
             class="status-pill"
             :style="{ background: (statusLabel[s.contest.status]?.color ?? '#6b7280') + '22', color: statusLabel[s.contest.status]?.color ?? '#6b7280' }"
           >{{ statusLabel[s.contest.status]?.text ?? s.contest.status }}</span>
+        </div>
+
+        <!-- Thumbnail -->
+        <div
+          v-if="firstImage(s)"
+          class="card-thumbnail"
+          @click="s.link && window.open(s.link, '_blank')"
+        >
+          <img
+            :src="`/api/uploads/file/${firstImage(s)!.id}`"
+            :alt="s.title"
+            class="thumb-img"
+            loading="lazy"
+            @error="($event.target as HTMLImageElement).closest('.card-thumbnail')!.style.display='none'"
+          />
         </div>
 
         <!-- Submission content -->
@@ -284,4 +304,9 @@ onUnmounted(() => observer?.disconnect());
 .sentinel { padding: 1.5rem; display: flex; justify-content: center; }
 .load-more { display: flex; align-items: center; gap: 0.5rem; color: hsl(var(--muted-foreground)); font-size: 0.875rem; }
 .end-text { font-size: 0.8rem; color: hsl(var(--muted-foreground)); }
+
+/* Thumbnails */
+.card-thumbnail { max-height: 320px; overflow: hidden; cursor: pointer; background: hsl(var(--muted)); }
+.thumb-img { width: 100%; max-height: 320px; object-fit: cover; display: block; transition: transform 0.2s; }
+.feed-card:hover .thumb-img { transform: scale(1.02); }
 </style>

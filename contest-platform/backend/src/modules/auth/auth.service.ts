@@ -67,9 +67,9 @@ export class AuthService {
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
       maxAge: 30 * 24 * 60 * 60 * 1000, // 30 gün
-      path: '/api/auth',
+      path: '/',
     });
 
     return { user: this.sanitizeUser(user), accessToken };
@@ -102,7 +102,7 @@ export class AuthService {
         data: { revokedAt: new Date() },
       });
     }
-    res.clearCookie('refreshToken', { path: '/api/auth' });
+    res.clearCookie('refreshToken', { path: '/' });
     return { message: 'Çıkış yapıldı' };
   }
 
@@ -111,7 +111,7 @@ export class AuthService {
       where: { userId, revokedAt: null },
       data: { revokedAt: new Date() },
     });
-    res.clearCookie('refreshToken', { path: '/api/auth' });
+    res.clearCookie('refreshToken', { path: '/' });
     return { message: 'Tüm cihazlardan çıkış yapıldı' };
   }
 

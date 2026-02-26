@@ -15,6 +15,7 @@ export const useAuthStore = defineStore('auth', {
   state: () => ({
     user: null as User | null,
     token: localStorage.getItem('token') || null,
+    _interceptorsSet: false,
   }),
 
   getters: {
@@ -49,7 +50,18 @@ export const useAuthStore = defineStore('auth', {
       }
     },
 
+    init() {
+      this.setupAxiosInterceptor();
+    },
+
     setupAxiosInterceptor() {
+      // Already set up
+      if (this._interceptorsSet) return;
+      this._interceptorsSet = true;
+
+      // Axios default config — credentials aç (cookie gönder)
+      axios.defaults.withCredentials = true;
+
       // Request interceptor — accessToken ekle
       axios.interceptors.request.use((config) => {
         if (this.token) {
