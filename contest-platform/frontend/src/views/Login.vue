@@ -3,12 +3,14 @@ import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import { useTheme } from '@/stores/theme';
+import { useI18n } from 'vue-i18n';
 import { showToast } from '@/composables/useToast';
 import { Eye, EyeOff, Mail, Lock, Trophy, Users, Award, Sparkles } from 'lucide-vue-next';
 
 const router = useRouter();
 const authStore = useAuthStore();
 const { theme } = useTheme();
+const { t } = useI18n();
 
 const form = ref({
   email: '',
@@ -23,15 +25,15 @@ const validateForm = () => {
   errors.value = {};
   
   if (!form.value.email) {
-    errors.value.email = 'Email is required';
+    errors.value.email = t('auth.email_required');
   } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.value.email)) {
-    errors.value.email = 'Invalid email format';
+    errors.value.email = t('auth.invalid_email');
   }
   
   if (!form.value.password) {
-    errors.value.password = 'Password is required';
+    errors.value.password = t('auth.password_required');
   } else if (form.value.password.length < 6) {
-    errors.value.password = 'Password must be at least 6 characters';
+    errors.value.password = t('auth.password_short');
   }
   
   return Object.keys(errors.value).length === 0;
@@ -47,10 +49,10 @@ const handleLogin = async () => {
       form.value.password
     );
     
-    showToast('Welcome back!', 'success');
+    showToast(t('auth.success_login'), 'success');
     router.push('/');
   } catch (error: any) {
-    showToast(error.response?.data?.message || 'Login failed', 'error');
+    showToast(error.response?.data?.message || t('auth.error_login'), 'error');
   } finally {
     loading.value = false;
   }
@@ -88,14 +90,14 @@ const handleLogin = async () => {
         <!-- Form Card -->
         <div class="auth-card">
           <div class="auth-header">
-            <h1 class="auth-title">Welcome Back</h1>
-            <p class="auth-subtitle">Sign in to continue to JamContest</p>
+            <h1 class="auth-title">{{ t('auth.welcome_back') }}</h1>
+            <p class="auth-subtitle">{{ t('auth.sign_in_to_continue') }}</p>
           </div>
 
           <form @submit.prevent="handleLogin" class="auth-form">
             <!-- Email -->
             <div class="form-group">
-              <label class="form-label">Email</label>
+              <label class="form-label">{{ t('auth.email') }}</label>
               <div class="input-wrapper">
                 <Mail class="input-icon" />
                 <input
@@ -103,7 +105,7 @@ const handleLogin = async () => {
                   type="email"
                   class="form-input"
                   :class="{ 'input-error': errors.email }"
-                  placeholder="your@email.com"
+                  :placeholder="t('auth.email')"
                   autocomplete="email"
                 />
               </div>
@@ -112,7 +114,7 @@ const handleLogin = async () => {
 
             <!-- Password -->
             <div class="form-group">
-              <label class="form-label">Password</label>
+              <label class="form-label">{{ t('auth.password') }}</label>
               <div class="input-wrapper">
                 <Lock class="input-icon" />
                 <input
@@ -120,7 +122,7 @@ const handleLogin = async () => {
                   :type="showPassword ? 'text' : 'password'"
                   class="form-input"
                   :class="{ 'input-error': errors.password }"
-                  placeholder="Enter your password"
+                  :placeholder="t('auth.password')"
                   autocomplete="current-password"
                 />
                 <button
@@ -134,21 +136,21 @@ const handleLogin = async () => {
               </div>
               <p v-if="errors.password" class="error-message">{{ errors.password }}</p>
               <router-link to="/forgot-password" class="text-sm text-purple-400 hover:text-purple-300 font-medium">
-                Şifremi Unuttum?
+                {{ t('auth.forgot_password') }}
               </router-link>
             </div>
 
             <!-- Submit Button -->
             <button type="submit" class="submit-btn" :disabled="loading">
-              <span v-if="loading">Signing in...</span>
-              <span v-else>Sign In</span>
+              <span v-if="loading">{{ t('loading.submitting') }}</span>
+              <span v-else>{{ t('auth.login_button') }}</span>
             </button>
 
             <!-- Register Link -->
             <div class="auth-footer">
               <p class="footer-text">
-                Don't have an account?
-                <router-link to="/register" class="footer-link">Sign up</router-link>
+                {{ t('auth.no_account') }}
+                <router-link to="/register" class="footer-link">{{ t('auth.register_button') }}</router-link>
               </p>
             </div>
           </form>
@@ -160,7 +162,7 @@ const handleLogin = async () => {
         <div class="hero-content">
           <div class="hero-badge">
             <Sparkles class="w-4 h-4" />
-            <span>Join the Creative Revolution</span>
+            <span>{{ t('home.hero_badge') }}</span>
           </div>
 
           <h2 class="hero-title">

@@ -390,7 +390,7 @@ onMounted(async () => {
   @apply mt-3 p-3 bg-gray-50 dark:bg-gray-700;
   @apply rounded-lg text-gray-800 dark:text-gray-200;
   @apply whitespace-pre-wrap break-words;
-  @apply animate-in fade-in duration-200;
+  @apply transition-opacity duration-200;
 }
 
 .review-footer {

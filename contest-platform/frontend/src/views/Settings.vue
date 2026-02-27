@@ -3,12 +3,14 @@ import { ref, onMounted } from 'vue';
 import axios from 'axios';
 import { useAuthStore } from '@/stores/auth';
 import { useRouter } from 'vue-router';
+import { useI18n } from 'vue-i18n';
 import { useToast } from '@/composables/useToast';
 import { Lock, Mail, Bell, Shield, Smartphone, Trash2, LogOut, Eye, EyeOff, Monitor, Clock } from 'lucide-vue-next';
 
 const authStore = useAuthStore();
 const router = useRouter();
 const { showToast } = useToast();
+const { t } = useI18n();
 
 const activeTab = ref<'account' | 'security' | 'notifications' | 'danger'>('account');
 
@@ -19,10 +21,10 @@ const showPw = ref({ current: false, next: false, confirm: false });
 
 async function changePassword() {
   if (pwForm.value.next !== pwForm.value.confirm) {
-    showToast('Şifreler eşleşmiyor', 'error'); return;
+    showToast(t('auth.password_mismatch'), 'error'); return;
   }
   if (pwForm.value.next.length < 8) {
-    showToast('Şifre en az 8 karakter olmalı', 'error'); return;
+    showToast(t('settings.password_hint'), 'error'); return;
   }
   pwLoading.value = true;
   try {
@@ -30,7 +32,7 @@ async function changePassword() {
       currentPassword: pwForm.value.current,
       newPassword: pwForm.value.next,
     });
-    showToast('Şifre güncellendi', 'success');
+    showToast(t('settings.password_success'), 'success');
     pwForm.value = { current: '', next: '', confirm: '' };
   } catch (e: any) {
     showToast(e.response?.data?.message || 'Hata', 'error');
@@ -45,7 +47,7 @@ const emailLoading = ref(false);
 
 async function changeEmail() {
   if (!emailForm.value.newEmail || !emailForm.value.password) {
-    showToast('Tüm alanları doldurun', 'error'); return;
+    showToast(t('forms.required'), 'error'); return;
   }
   emailLoading.value = true;
   try {
@@ -53,7 +55,7 @@ async function changeEmail() {
       currentPassword: emailForm.value.password,
       newEmail: emailForm.value.newEmail,
     });
-    showToast('Email güncellendi, doğrulama maili gönderildi', 'success');
+    showToast(t('settings.email_success'), 'success');
     emailForm.value = { password: '', newEmail: '' };
   } catch (e: any) {
     showToast(e.response?.data?.message || 'Hata', 'error');
@@ -162,8 +164,8 @@ onMounted(() => {
   <div class="settings-page">
     <!-- Header -->
     <div class="page-header">
-      <h1 class="page-title">Ayarlar</h1>
-      <p class="page-subtitle">Hesap ve uygulama tercihlerinizi yönetin</p>
+      <h1 class="page-title">{{ t('settings.title') }}</h1>
+      <p class="page-subtitle">{{ t('navigation.settings') }}</p>
     </div>
 
     <div class="settings-layout">
@@ -171,10 +173,10 @@ onMounted(() => {
       <nav class="settings-nav">
         <button
           v-for="tab in [
-            { key: 'account', icon: Mail, label: 'Hesap' },
-            { key: 'security', icon: Shield, label: 'Güvenlik & Oturumlar' },
-            { key: 'notifications', icon: Bell, label: 'Bildirimler' },
-            { key: 'danger', icon: Trash2, label: 'Tehlike Bölgesi' },
+            { key: 'account', icon: Mail, label: t('settings.account') },
+            { key: 'security', icon: Shield, label: t('settings.security') },
+            { key: 'notifications', icon: Bell, label: t('settings.notifications') },
+            { key: 'danger', icon: Trash2, label: t('settings.danger') },
           ]"
           :key="tab.key"
           @click="activeTab = tab.key as any"

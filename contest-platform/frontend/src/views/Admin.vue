@@ -390,7 +390,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import axios from 'axios';
 import { useAuthStore } from '@/stores/auth';
@@ -471,6 +471,10 @@ onMounted(async () => {
   if (tabParam) activeTab.value = tabParam;
   
   await Promise.all([loadUsers(), loadContests(), loadRequests(), loadBans()]);
+});
+
+watch(() => route.query.tab, (tab) => {
+  if (tab) activeTab.value = tab as string;
 });
 
 async function loadUsers() {

@@ -43,6 +43,13 @@ export class ContestsController {
     return this.contestsService.getMyJuryInvitations(req.user.id);
   }
 
+  // GET /api/contests/my-jury-contests — Jüri olarak atandığım yarışmalar
+  @Get('my-jury-contests')
+  @UseGuards(JwtAuthGuard)
+  async getMyJuryContests(@Req() req: any) {
+    return this.contestsService.getMyJuryContests(req.user.id);
+  }
+
   // GET /api/contests/admin/edit-requests — Admin: pending edit requests
   @Get('admin/edit-requests')
   @UseGuards(JwtAuthGuard, RolesGuard)

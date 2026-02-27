@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
+import { useI18n } from 'vue-i18n';
 import axios from 'axios';
 import { Heart, Trophy, Users, Calendar, ArrowRight, Search, X } from 'lucide-vue-next';
 
 const router = useRouter();
+const { t } = useI18n();
 
 interface Contest {
   id: string;
@@ -62,16 +64,16 @@ async function remove(contestId: string, e: Event) {
 
 function statusConfig(status: string) {
   const m: Record<string, { label: string; color: string }> = {
-    APPLICATIONS:      { label: 'Başvuru Açık',    color: '#3b82f6' },
-    ACTIVE:            { label: 'Aktif',            color: '#8b5cf6' },
-    SUBMISSION_CLOSED: { label: 'Gönderim Kapandı', color: '#f59e0b' },
-    JUDGING:           { label: 'Değerlendirme',    color: '#ec4899' },
-    FINALIZED:         { label: 'Sonuçlandı',       color: '#10b981' },
-    COMPLETED:         { label: 'Tamamlandı',       color: '#6b7280' },
-    DRAFT:             { label: 'Taslak',           color: '#6b7280' },
-    PENDING_APPROVAL:  { label: 'Onay Bekliyor',    color: '#f59e0b' },
-    APPROVED:          { label: 'Onaylandı',        color: '#10b981' },
-    CANCELLED:         { label: 'İptal',            color: '#ef4444' },
+    APPLICATIONS:      { label: t('favorites.status_applications'), color: '#3b82f6' },
+    ACTIVE:            { label: t('favorites.status_active'), color: '#8b5cf6' },
+    SUBMISSION_CLOSED: { label: t('favorites.status_closed'), color: '#f59e0b' },
+    JUDGING:           { label: t('favorites.status_judging'), color: '#ec4899' },
+    FINALIZED:         { label: t('favorites.status_finalized'), color: '#10b981' },
+    COMPLETED:         { label: t('favorites.status_completed'), color: '#6b7280' },
+    DRAFT:             { label: t('submissions.status_draft'), color: '#6b7280' },
+    PENDING_APPROVAL:  { label: t('submissions.status_pending'), color: '#f59e0b' },
+    APPROVED:          { label: t('submissions.status_approved'), color: '#10b981' },
+    CANCELLED:         { label: t('favorites.status_cancelled'), color: '#ef4444' },
   };
   return m[status] ?? { label: status, color: '#6b7280' };
 }
@@ -94,8 +96,8 @@ onMounted(load);
     <!-- Header -->
     <div class="page-header">
       <div>
-        <h1 class="page-title">Favorilerim</h1>
-        <p class="page-subtitle">Kaydettiğiniz yarışmalar</p>
+        <h1 class="page-title">{{ t('favorites.title') }}</h1>
+        <p class="page-subtitle">{{ t('favorites.subtitle') }}</p>
       </div>
       <span v-if="favorites.length" class="count-badge">{{ favorites.length }}</span>
     </div>
@@ -103,7 +105,7 @@ onMounted(load);
     <!-- Search -->
     <div v-if="favorites.length" class="search-box">
       <Search class="search-icon" />
-      <input v-model="search" type="text" placeholder="Yarışma ara..." class="search-input" />
+      <input v-model="search" type="text" :placeholder="t('favorites.search_placeholder')" class="search-input" />
       <button v-if="search" @click="search = ''" class="clear-btn"><X class="w-4 h-4" /></button>
     </div>
 

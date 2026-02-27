@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
+import { useI18n } from 'vue-i18n';
 import axios from 'axios';
 import { FileText, Trophy, Clock, CheckCircle, XCircle, Star, ExternalLink, ChevronDown, ChevronUp } from 'lucide-vue-next';
 
 const router = useRouter();
+const { t } = useI18n();
 
 interface Score {
   score: number;
@@ -50,21 +52,23 @@ function isFinalized(s: Submission) {
   return ['FINALIZED', 'COMPLETED'].includes(s.contest.status);
 }
 
-function statusConfig(status: string) {
-  const map: Record<string, { label: string; color: string }> = {
-    DRAFT:              { label: 'Taslak',        color: '#6b7280' },
-    PENDING_APPROVAL:   { label: 'Onay Bekliyor', color: '#f59e0b' },
-    APPROVED:           { label: 'Onaylandı',     color: '#10b981' },
-    APPLICATIONS:       { label: 'Başvuru',        color: '#3b82f6' },
-    ACTIVE:             { label: 'Aktif',          color: '#8b5cf6' },
-    SUBMISSION_CLOSED:  { label: 'Kapandı',        color: '#f59e0b' },
-    JUDGING:            { label: 'Değerlendirme',  color: '#ec4899' },
-    FINALIZED:          { label: 'Sonuçlandı',     color: '#10b981' },
-    COMPLETED:          { label: 'Tamamlandı',     color: '#6b7280' },
-    CANCELLED:          { label: 'İptal',          color: '#ef4444' },
+const statusConfig = computed(() => {
+  return (status: string) => {
+    const map: Record<string, { label: string; color: string }> = {
+      DRAFT:              { label: t('submissions.status_draft'), color: '#6b7280' },
+      PENDING_APPROVAL:   { label: t('submissions.status_pending'), color: '#f59e0b' },
+      APPROVED:           { label: t('submissions.status_approved'), color: '#10b981' },
+      APPLICATIONS:       { label: t('submissions.status_applications'), color: '#3b82f6' },
+      ACTIVE:             { label: t('submissions.status_active'), color: '#8b5cf6' },
+      SUBMISSION_CLOSED:  { label: t('submissions.status_closed'), color: '#f59e0b' },
+      JUDGING:            { label: t('submissions.status_judging'), color: '#ec4899' },
+      FINALIZED:          { label: t('submissions.status_finalized'), color: '#10b981' },
+      COMPLETED:          { label: t('submissions.status_completed'), color: '#6b7280' },
+      CANCELLED:          { label: t('submissions.status_cancelled'), color: '#ef4444' },
+    };
+    return map[status] ?? { label: status, color: '#6b7280' };
   };
-  return map[status] ?? { label: status, color: '#6b7280' };
-}
+});
 
 function categoryLabel(cat: string) {
   const m: Record<string, string> = { game_jam: '🎮 Game Jam', art_contest: '🎨 Art', music_contest: '🎵 Müzik', hackathon: '💻 Hackathon', design: '✏️ Tasarım', other: '📦 Diğer' };
@@ -96,8 +100,8 @@ onMounted(async () => {
     <!-- Header -->
     <div class="page-header">
       <div>
-        <h1 class="page-title">Gönderilerim</h1>
-        <p class="page-subtitle">Yarışmalara gönderdiğiniz tüm eserler</p>
+        <h1 class="page-title">{{ t('submissions.title') }}</h1>
+        <p class="page-subtitle">{{ t('submissions.subtitle') }}</p>
       </div>
       <div class="header-stat">
         <span class="stat-num">{{ submissions.length }}</span>
@@ -108,9 +112,9 @@ onMounted(async () => {
     <!-- Filters -->
     <div class="filter-tabs">
       <button v-for="f in [
-        { key: 'all',       label: 'Tümü' },
-        { key: 'active',    label: 'Devam Eden' },
-        { key: 'finalized', label: 'Sonuçlananlar' },
+        { key: 'all',       label: t('submissions.filter_all') },
+        { key: 'active',    label: t('submissions.filter_active') },
+        { key: 'finalized', label: t('submissions.filter_finalized') },
       ]" :key="f.key"
         :class="['tab', filter === f.key && 'tab--active']"
         @click="filter = f.key as any"

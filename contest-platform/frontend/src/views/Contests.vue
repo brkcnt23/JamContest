@@ -3,12 +3,12 @@
     <!-- Page Header -->
     <div class="page-header">
       <div>
-        <h1 class="page-title">Yarışmalar</h1>
-        <p class="page-subtitle">Aktif yarışmalara göz at ve katıl</p>
+        <h1 class="page-title">{{ t('contests.title') }}</h1>
+        <p class="page-subtitle">{{ t('contests.browse') }}</p>
       </div>
       <router-link to="/contests/create" class="btn-create" v-if="authStore.isAuthenticated">
         <PlusCircle :size="18" />
-        Yarışma Oluştur
+        {{ t('contests.create') }}
       </router-link>
     </div>
 
@@ -37,21 +37,21 @@
       <!-- Search -->
       <div class="search-box">
         <Search :size="16" />
-        <input v-model="searchQuery" type="text" placeholder="Yarışma ara..." class="search-input" />
+        <input v-model="searchQuery" type="text" :placeholder="t('forms.search')" class="search-input" />
       </div>
     </div>
 
     <!-- Loading -->
     <div v-if="loading" class="loading-state">
       <div class="spinner"></div>
-      <p>Yarışmalar yükleniyor...</p>
+      <p>{{ t('contests.loading') }}</p>
     </div>
 
     <!-- Empty -->
     <div v-else-if="filteredContests.length === 0" class="empty-state">
       <Trophy :size="56" />
-      <h3>Yarışma bulunamadı</h3>
-      <p>Filtreleri değiştirmeyi deneyin veya yeni bir yarışma oluşturun</p>
+      <h3>{{ t('contests.empty') }}</h3>
+      <p>{{ t('contests.empty_hint') }}</p>
     </div>
 
     <!-- Contest Grid -->
@@ -84,7 +84,7 @@
             </div>
             <div class="meta-item" v-if="contest._count?.applications">
               <Users :size="14" />
-              <span>{{ contest._count.applications }} başvuru</span>
+              <span>{{ contest._count.applications }} {{ t('contests.participants') }}</span>
             </div>
           </div>
 
@@ -107,10 +107,12 @@ import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import axios from 'axios';
 import { useAuthStore } from '@/stores/auth';
+import { useI18n } from 'vue-i18n';
 import { Trophy, Search, PlusCircle, Calendar, Users } from 'lucide-vue-next';
 
 const router = useRouter();
 const authStore = useAuthStore();
+const { t } = useI18n();
 
 const contests = ref<any[]>([]);
 const loading = ref(true);
@@ -118,22 +120,22 @@ const searchQuery = ref('');
 const statusFilter = ref('ALL');
 const categoryFilter = ref('ALL');
 
-const statusFilters = [
-  { label: 'Tümü', value: 'ALL' },
-  { label: 'Başvuru Açık', value: 'APPLICATIONS' },
-  { label: 'Aktif', value: 'ACTIVE' },
-  { label: 'Oylama', value: 'JUDGING' },
-  { label: 'Tamamlanan', value: 'COMPLETED' },
-];
+const statusFilters = computed(() => [
+  { label: t('contests.all_label'), value: 'ALL' },
+  { label: t('contests.status_applications'), value: 'APPLICATIONS' },
+  { label: t('contests.active'), value: 'ACTIVE' },
+  { label: t('contests.status_judging'), value: 'JUDGING' },
+  { label: t('contests.status_completed'), value: 'COMPLETED' },
+]);
 
-const categoryFilters = [
-  { label: 'Tümü', value: 'ALL', icon: '' },
+const categoryFilters = computed(() => [
+  { label: t('forms.all'), value: 'ALL', icon: '' },
   { label: 'Game Jam', value: 'game_jam', icon: '🎮' },
   { label: 'Art', value: 'art_contest', icon: '🎨' },
-  { label: 'Müzik', value: 'music_contest', icon: '🎵' },
+  { label: 'Music', value: 'music_contest', icon: '🎵' },
   { label: 'Hackathon', value: 'hackathon', icon: '💻' },
-  { label: 'Tasarım', value: 'design', icon: '✏️' },
-];
+  { label: 'Design', value: 'design', icon: '✏️' },
+]);
 
 onMounted(async () => {
   try {
@@ -189,11 +191,11 @@ function getPhase(contest: any): string {
 function getPhaseLabel(contest: any): string {
   const phase = getPhase(contest);
   const map: Record<string, string> = {
-    open: '📋 Başvuru Açık',
-    active: '🔥 Aktif',
-    judging: '⚖️ Oylama',
-    completed: '🏆 Tamamlandı',
-    upcoming: '⏳ Yakında',
+    open: '📋 ' + t('contests.status_applications'),
+    active: '🔥 ' + t('contests.active'),
+    judging: '⚖️ ' + t('contests.status_judging'),
+    completed: '🏆 ' + t('contests.status_completed'),
+    upcoming: '⏳ ' + t('contests.upcoming'),
   };
   return map[phase] || contest.status;
 }

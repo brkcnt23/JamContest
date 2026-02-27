@@ -3,17 +3,29 @@ import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import { useTheme } from '@/stores/theme';
-import { Search, Bell, Settings, User, LogOut, Circle, Sun, Moon } from 'lucide-vue-next';
+import { useI18n } from 'vue-i18n';
+import { Search, Bell, Settings, User, LogOut, Circle, Sun, Moon, Globe } from 'lucide-vue-next';
 
 const authStore = useAuthStore();
 const router = useRouter();
 const { theme, toggleTheme } = useTheme();
+const { locale } = useI18n({ useScope: 'global' });
 
 const searchQuery = ref('');
 const showDropdown = ref(false);
+const showLanguageMenu = ref(false);
 const userStatus = ref<'online' | 'offline' | 'away'>('online');
 
 const notificationCount = ref(3);
+
+const languages = [
+  { code: 'tr', name: 'Türkçe', flag: '🇹🇷' },
+  { code: 'en', name: 'English', flag: '🇬🇧' },
+];
+
+const currentLanguage = computed(() => {
+  return languages.find(l => l.code === locale.value) || languages[0];
+});
 
 const handleSearch = () => {
   if (searchQuery.value.trim()) {
@@ -21,6 +33,15 @@ const handleSearch = () => {
   }
 };
 
+const toggleLanguageMenu = () => {
+  showLanguageMenu.value = !showLanguageMenu.value;
+};
+
+const changeLanguage = (code: string) => {
+  locale.value = code;
+  localStorage.setItem('locale', code);
+  showLanguageMenu.value = false;
+};
 
 const toggleDropdown = () => {
   showDropdown.value = !showDropdown.value;
@@ -66,8 +87,31 @@ const statusLabel = computed(() => {
       <input v-model="searchQuery" type="text" placeholder="Search contests, artists, works..." class="search-input"
         @keyup.enter="handleSearch" />
     </div>
-    <!-- Right Section - Theme + Notifications + Avatar -->
+    <!-- Right Section - Theme + Language + Notifications + Avatar -->
     <div class="header-right">
+      <!-- Language Selector -->
+      <div class="language-container">
+        <button @click="toggleLanguageMenu" class="icon-btn" :aria-label="`Current language: ${currentLanguage.name}`">
+          <span class="lang-flag">{{ currentLanguage.flag }}</span>
+        </button>
+
+        <!-- Language Menu -->
+        <transition name="dropdown">
+          <div v-if="showLanguageMenu" class="language-menu" @click.stop>
+            <button
+              v-for="lang in languages"
+              :key="lang.code"
+              @click="changeLanguage(lang.code)"
+              :class="['language-item', locale === lang.code && 'active']"
+            >
+              <span class="lang-flag">{{ lang.flag }}</span>
+              <span class="lang-name">{{ lang.name }}</span>
+              <span v-if="locale === lang.code" class="checkmark">✓</span>
+            </button>
+          </div>
+        </transition>
+      </div>
+
       <!-- Theme Toggle -->
       <button @click="toggleTheme" class="icon-btn" aria-label="Toggle theme">
         <Sun v-if="theme === 'light'" class="w-5 h-5" />
@@ -145,13 +189,13 @@ const statusLabel = computed(() => {
     </div>
 
     <!-- Click Outside to Close -->
-    <div v-if="showDropdown" class="dropdown-overlay" @click="closeDropdown"></div>
+    <div v-if="showDropdown || showLanguageMenu" class="dropdown-overlay" @click="showDropdown = false; showLanguageMenu = false;"></div>
   </header>
 </template>
 
 <style scoped>
 .top-header {
-  height: 64px;
+  height: 88px;
   background: hsl(var(--background));
   border-bottom: 1px solid hsl(var(--border));
   display: flex;
@@ -373,6 +417,64 @@ const statusLabel = computed(() => {
   height: 1px;
   background: hsl(var(--border));
   margin: 0.5rem 0;
+}
+
+/* Language Selector */
+.language-container {
+  position: relative;
+}
+
+.lang-flag {
+  font-size: 1.2rem;
+  display: inline-flex;
+}
+
+.language-menu {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  width: 200px;
+  background: hsl(var(--background));
+  border: 1px solid hsl(var(--border));
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  z-index: 91;
+  overflow: hidden;
+  padding: 0.5rem;
+}
+
+.language-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  border-radius: 6px;
+  background: none;
+  border: none;
+  color: hsl(var(--foreground));
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.9rem;
+}
+
+.language-item:hover {
+  background: hsl(var(--muted));
+}
+
+.language-item.active {
+  background: hsl(var(--brand) / 0.1);
+  color: hsl(var(--brand));
+  font-weight: 600;
+}
+
+.lang-name {
+  flex: 1;
+}
+
+.checkmark {
+  color: hsl(var(--brand));
+  font-weight: 700;
 }
 
 .dropdown-item {

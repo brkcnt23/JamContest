@@ -20,6 +20,22 @@
         <h2 class="section-title">Temel Bilgiler</h2>
 
         <div class="form-group">
+          <label class="form-label">Yarışma Dili *</label>
+          <div class="language-selection">
+            <button type="button" 
+              :class="['lang-btn', form.language === 'tr' && 'lang-btn--active']"
+              @click="form.language = 'tr'">
+              🇹🇷 Türkçe
+            </button>
+            <button type="button" 
+              :class="['lang-btn', form.language === 'en' && 'lang-btn--active']"
+              @click="form.language = 'en'">
+              🇬🇧 English
+            </button>
+          </div>
+        </div>
+
+        <div class="form-group">
           <label class="form-label">Yarışma Adı *</label>
           <input v-model="form.title" type="text" class="form-input" placeholder="Örn: Pixel Art Challenge 2026" required />
         </div>
@@ -302,6 +318,7 @@ const form = ref({
   title: '',
   description: '',
   category: 'art_contest',
+  language: 'tr', // Default Turkish
   coverImage: '',
   applicationStart: '',
   applicationEnd: '',
@@ -708,6 +725,22 @@ function formatDateShort(d: string) {
   border: 1px solid hsl(var(--brand) / 0.2); border-radius: 8px;
   color: hsl(var(--foreground)); font-size: 0.85rem;
 }
+
+/* Language Selection */
+.language-selection {
+  display: flex; gap: 0.75rem;
+}
+
+.lang-btn {
+  flex: 1; padding: 0.75rem 1rem;
+  border: 2px solid hsl(var(--border)); border-radius: 8px;
+  background: hsl(var(--background)); color: hsl(var(--foreground));
+  font-size: 0.9rem; font-weight: 600; cursor: pointer;
+  transition: all 0.2s;
+}
+
+.lang-btn:hover { border-color: hsl(var(--brand)); }
+.lang-btn--active { border-color: hsl(var(--brand)); background: hsl(var(--brand) / 0.1); color: hsl(var(--brand)); }
 
 /* Navigation */
 .form-nav {

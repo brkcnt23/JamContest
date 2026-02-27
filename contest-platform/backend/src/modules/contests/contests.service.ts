@@ -1011,6 +1011,34 @@ export class ContestsService {
     });
   }
 
+  async getMyJuryContests(userId: string) {
+    const memberships = await this.prisma.contestMember.findMany({
+      where: { userId, role: 'JURY' },
+      include: {
+        contest: {
+          select: { id: true, title: true, slug: true, status: true, category: true },
+        },
+      },
+    });
+
+    return Promise.all(
+      memberships.map(async (m) => {
+        const totalSubmissions = await this.prisma.submission.count({
+          where: { contestId: m.contestId },
+        });
+        const scoredCount = await this.prisma.juryScore.count({
+          where: { submission: { contestId: m.contestId }, juryId: userId, archivedAt: null },
+        });
+        return {
+          contestId: m.contestId,
+          contest: m.contest,
+          totalSubmissions,
+          scoredCount,
+        };
+      }),
+    );
+  }
+
   async getContestScores(contestId: string, includeArchived = false) {
     const where: any = { submission: { contestId } };
     if (!includeArchived) {

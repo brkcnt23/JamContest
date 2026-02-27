@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
+import { useI18n } from 'vue-i18n';
 import ParticleBackground from '@/components/ui/ParticleBackground.vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
@@ -8,6 +9,7 @@ import { Trophy, Users, Award, FileText, TrendingUp, ArrowRight, Sparkles, Calen
 
 const router = useRouter();
 const authStore = useAuthStore();
+const { t } = useI18n({ useScope: 'global' });
 
 interface Contest {
   id: string;
@@ -33,9 +35,9 @@ const categoryIcon: Record<string, string> = {
 };
 
 const statusConfig: Record<string, { label: string; color: string }> = {
-  APPLICATIONS:      { label: 'Başvuru Açık',  color: '#3b82f6' },
-  ACTIVE:            { label: 'Aktif',          color: '#8b5cf6' },
-  SUBMISSION_CLOSED: { label: 'Gönderim Kapandı', color: '#f59e0b' },
+  APPLICATIONS:      { label: t('contests.active'),  color: '#3b82f6' },
+  ACTIVE:            { label: t('contests.active'),  color: '#8b5cf6' },
+  SUBMISSION_CLOSED: { label: t('contests.closed'), color: '#f59e0b' },
   JUDGING:           { label: 'Değerlendirme',  color: '#ec4899' },
   APPROVED:          { label: 'Onaylandı',      color: '#10b981' },
 };
@@ -47,10 +49,10 @@ function formatDate(d?: string) {
 
 function deadlineText(contest: Contest): string | null {
   if (['APPLICATIONS'].includes(contest.status) && contest.applicationEnd) {
-    return `Başvuru: ${formatDate(contest.applicationEnd)}`;
+    return `${t('contests.deadline')}: ${formatDate(contest.applicationEnd)}`;
   }
   if (['ACTIVE', 'SUBMISSION_CLOSED'].includes(contest.status) && contest.submissionEnd) {
-    return `Son gönderim: ${formatDate(contest.submissionEnd)}`;
+    return `${t('contests.deadline')}: ${formatDate(contest.submissionEnd)}`;
   }
   return null;
 }
@@ -64,7 +66,6 @@ onMounted(async () => {
 
     if (contestsRes.status === 'fulfilled') {
       const all: Contest[] = contestsRes.value.data;
-      // featured = active/applications contests, max 6
       featuredContests.value = all
         .filter(c => ['APPLICATIONS', 'ACTIVE', 'JUDGING', 'SUBMISSION_CLOSED'].includes(c.status))
         .slice(0, 6);
@@ -100,28 +101,27 @@ onMounted(async () => {
       <div class="hero-content">
         <div class="hero-badge">
           <Sparkles class="w-4 h-4" />
-          <span>Yaratıcılığını yarışmaya taşı</span>
+          <span>{{ t('home.hero_badge') }}</span>
         </div>
 
         <h1 class="hero-title">
-          Yarış. Yarat. <span class="hero-title-gradient">Kazan.</span>
+          {{ t('home.hero_title') || 'Creativity Meets Fairness' }}
         </h1>
 
         <p class="hero-description">
-          JamContest'te sanatçılar, geliştiriciler ve tasarımcılar
-          birbirinin en iyi işini görür, jüriler değerlendirir, kazananlar parlar.
+          {{ t('home.hero_description') }}
         </p>
 
         <div class="hero-actions">
           <button @click="router.push('/contests')" class="btn-primary">
-            Yarışmalara Göz At <ArrowRight class="w-5 h-5" />
+            {{ t('home.cta_primary') }} <ArrowRight class="w-5 h-5" />
           </button>
           <button
             v-if="!authStore.isAuthenticated"
             @click="router.push('/register')"
             class="btn-secondary"
           >
-            Ücretsiz Kayıt Ol
+            {{ t('common.register') }}
           </button>
           <button v-else @click="router.push('/social')" class="btn-secondary">
             Feed'e Git
@@ -134,28 +134,28 @@ onMounted(async () => {
             <Trophy class="stat-icon" />
             <div>
               <p class="stat-number">{{ stats.totalContests }}</p>
-              <p class="stat-label">Toplam Yarışma</p>
+              <p class="stat-label">{{ t('home.stats_contests') }}</p>
             </div>
           </div>
           <div class="stat-item">
             <TrendingUp class="stat-icon" />
             <div>
               <p class="stat-number">{{ stats.activeContests }}</p>
-              <p class="stat-label">Aktif Yarışma</p>
+              <p class="stat-label">{{ t('home.stats_contests') }}</p>
             </div>
           </div>
           <div class="stat-item">
             <Users class="stat-icon" />
             <div>
               <p class="stat-number">{{ stats.totalUsers.toLocaleString() }}</p>
-              <p class="stat-label">Sanatçı</p>
+              <p class="stat-label">{{ t('home.stats_participants') }}</p>
             </div>
           </div>
           <div class="stat-item">
             <FileText class="stat-icon" />
             <div>
               <p class="stat-number">{{ stats.totalSubmissions.toLocaleString() }}</p>
-              <p class="stat-label">Gönderim</p>
+              <p class="stat-label">{{ t('home.stats_submissions') }}</p>
             </div>
           </div>
         </div>
@@ -166,11 +166,11 @@ onMounted(async () => {
     <section class="contests-section">
       <div class="section-header">
         <div>
-          <h2 class="section-title">Aktif Yarışmalar</h2>
-          <p class="section-subtitle">Şu an katılabileceğiniz yaratıcı meydan okumalar</p>
+          <h2 class="section-title">{{ t('home.featured_title') }}</h2>
+          <p class="section-subtitle">{{ t('home.cta_secondary') }}</p>
         </div>
         <button @click="router.push('/contests')" class="view-all-btn">
-          Tümünü Gör <ArrowRight class="w-4 h-4" />
+          {{ t('home.all_contests') }} <ArrowRight class="w-4 h-4" />
         </button>
       </div>
 
@@ -182,8 +182,8 @@ onMounted(async () => {
       <!-- Empty -->
       <div v-else-if="featuredContests.length === 0" class="no-contests">
         <Trophy class="w-12 h-12" />
-        <p>Henüz aktif yarışma yok</p>
-        <button @click="router.push('/contests')" class="btn-primary btn-sm">Tüm Yarışmalar</button>
+        <p>{{ t('home.no_contests') }}</p>
+        <button @click="router.push('/contests')" class="btn-primary btn-sm">{{ t('contests.all') }}</button>
       </div>
 
       <!-- Grid -->
@@ -218,10 +218,10 @@ onMounted(async () => {
 
             <div class="contest-meta">
               <span class="meta-item">
-                <Users class="w-3.5 h-3.5" /> {{ contest._count.applications }} başvuru
+                <Users class="w-3.5 h-3.5" /> {{ contest._count.applications }} {{ t('contests.participants') }}
               </span>
               <span class="meta-item">
-                <Award class="w-3.5 h-3.5" /> {{ contest._count.submissions }} eser
+                <Award class="w-3.5 h-3.5" /> {{ contest._count.submissions }} {{ t('contests.submissions') }}
               </span>
             </div>
 
@@ -238,26 +238,26 @@ onMounted(async () => {
 
     <!-- ── HOW IT WORKS ── -->
     <section class="how-section">
-      <h2 class="section-title center">Nasıl Çalışır?</h2>
-      <p class="section-subtitle center">3 adımda yaratıcı yolculuğuna başla</p>
+      <h2 class="section-title center">{{ t('home.how_works_title') }}</h2>
+      <p class="section-subtitle center">{{ t('home.cta_secondary') }}</p>
 
       <div class="steps-grid">
         <div class="step-card">
           <div class="step-number">1</div>
-          <h3 class="step-title">Yarışma Seç</h3>
-          <p class="step-desc">Farklı kategorilerdeki yaratıcı meydan okumaları incele ve ilgini çekeni seç.</p>
+          <h3 class="step-title">{{ t('home.step1_title') }}</h3>
+          <p class="step-desc">{{ t('home.step1_desc') }}</p>
         </div>
         <div class="step-divider"><ChevronRight class="w-6 h-6" /></div>
         <div class="step-card">
           <div class="step-number">2</div>
-          <h3 class="step-title">Eserini Gönder</h3>
-          <p class="step-desc">Yaratıcılığını ortaya koy ve son teslim tarihinden önce eserini gönder.</p>
+          <h3 class="step-title">{{ t('home.step2_title') }}</h3>
+          <p class="step-desc">{{ t('home.step2_desc') }}</p>
         </div>
         <div class="step-divider"><ChevronRight class="w-6 h-6" /></div>
         <div class="step-card">
           <div class="step-number">3</div>
-          <h3 class="step-title">Ödül Kazan</h3>
-          <p class="step-desc">Profesyoneller tarafından değerlendiril, ödüller ve tanınırlık kazan.</p>
+          <h3 class="step-title">{{ t('home.step3_title') }}</h3>
+          <p class="step-desc">{{ t('home.step3_desc') }}</p>
         </div>
       </div>
     </section>
@@ -294,10 +294,29 @@ onMounted(async () => {
   margin-bottom: 2rem; border: 1px solid hsl(var(--border));
 }
 
-.hero-title { font-size: clamp(2.5rem, 8vw, 5rem); font-weight: 900; line-height: 1.1; margin-bottom: 1.5rem; color: hsl(var(--foreground)); }
+.hero-title { 
+  font-size: clamp(2.5rem, 8vw, 5rem); 
+  font-weight: 900; 
+  line-height: 1.2; 
+  margin-bottom: 1.5rem; 
+  color: hsl(var(--foreground)); 
+  text-align: center;
+  max-width: 900px;
+  margin-left: auto;
+  margin-right: auto;
+  letter-spacing: -0.02em;
+  background: linear-gradient(135deg, hsl(271 91% 65%), hsl(14 100% 62%), hsl(174 100% 63%));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
 .hero-title-gradient {
   background: linear-gradient(135deg, hsl(var(--accent-purple)), hsl(var(--accent-coral)), hsl(var(--accent-teal)));
-  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  -webkit-background-clip: text; 
+  -webkit-text-fill-color: transparent; 
+  background-clip: text;
+  display: inline;
+  color: hsl(var(--accent-purple));
 }
 
 .hero-description { font-size: clamp(1rem, 2vw, 1.2rem); color: hsl(var(--muted-foreground)); margin-bottom: 2.5rem; max-width: 600px; margin-left: auto; margin-right: auto; line-height: 1.6; }

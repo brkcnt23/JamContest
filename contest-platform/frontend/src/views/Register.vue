@@ -3,12 +3,14 @@ import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import { useTheme } from '@/stores/theme';
+import { useI18n } from 'vue-i18n';
 import { showToast } from '@/composables/useToast';
 import { Eye, EyeOff, Mail, Lock, User, Trophy, Users, Award, Sparkles } from 'lucide-vue-next';
 
 const router = useRouter();
 const authStore = useAuthStore();
 const { theme } = useTheme();
+const { t } = useI18n();
 
 const form = ref({
   username: '',
@@ -26,29 +28,29 @@ const validateForm = () => {
   errors.value = {};
 
   if (!form.value.username) {
-    errors.value.username = 'Username is required';
+    errors.value.username = t('auth.username_required');
   } else if (form.value.username.length < 3) {
-    errors.value.username = 'Username must be at least 3 characters';
+    errors.value.username = t('auth.username_required');
   } else if (!/^[a-zA-Z0-9_]+$/.test(form.value.username)) {
-    errors.value.username = 'Username can only contain letters, numbers, and underscores';
+    errors.value.username = t('auth.invalid_username');
   }
 
   if (!form.value.email) {
-    errors.value.email = 'Email is required';
+    errors.value.email = t('auth.email_required');
   } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.value.email)) {
-    errors.value.email = 'Invalid email format';
+    errors.value.email = t('auth.invalid_email');
   }
 
   if (!form.value.password) {
-    errors.value.password = 'Password is required';
+    errors.value.password = t('auth.password_required');
   } else if (form.value.password.length < 6) {
-    errors.value.password = 'Password must be at least 6 characters';
+    errors.value.password = t('auth.password_short');
   }
 
   if (!form.value.confirmPassword) {
-    errors.value.confirmPassword = 'Please confirm your password';
+    errors.value.confirmPassword = t('auth.password_required');
   } else if (form.value.password !== form.value.confirmPassword) {
-    errors.value.confirmPassword = 'Passwords do not match';
+    errors.value.confirmPassword = t('auth.password_mismatch');
   }
 
   return Object.keys(errors.value).length === 0;
@@ -65,10 +67,10 @@ const handleRegister = async () => {
       form.value.username
     );
 
-    showToast('Kayıt başarılı! Email adresinizi doğrulayın.', 'success');
+    showToast(t('auth.success_register'), 'success');
     router.push('/login');
   } catch (error: any) {
-    showToast(error.response?.data?.message || 'Kayıt başarısız', 'error');
+    showToast(error.response?.data?.message || t('auth.error_register'), 'error');
   } finally {
     loading.value = false;
   }
@@ -97,40 +99,40 @@ const handleRegister = async () => {
         <!-- Form Card -->
         <div class="auth-card">
           <div class="auth-header">
-            <h1 class="auth-title">Create Account</h1>
-            <p class="auth-subtitle">Join JamContest and start competing</p>
+            <h1 class="auth-title">{{ t('auth.create_your_account') }}</h1>
+            <p class="auth-subtitle">{{ t('auth.join_community') }}</p>
           </div>
 
           <form @submit.prevent="handleRegister" class="auth-form">
             <!-- Username -->
             <div class="form-group">
-              <label class="form-label">Username</label>
+              <label class="form-label">{{ t('auth.username') }}</label>
               <div class="input-wrapper">
                 <User class="input-icon" />
                 <input v-model="form.username" type="text" class="form-input"
-                  :class="{ 'input-error': errors.username }" placeholder="Choose a username" autocomplete="username" />
+                  :class="{ 'input-error': errors.username }" :placeholder="t('auth.username')" autocomplete="username" />
               </div>
               <p v-if="errors.username" class="error-message">{{ errors.username }}</p>
             </div>
 
             <!-- Email -->
             <div class="form-group">
-              <label class="form-label">Email</label>
+              <label class="form-label">{{ t('auth.email') }}</label>
               <div class="input-wrapper">
                 <Mail class="input-icon" />
                 <input v-model="form.email" type="email" class="form-input" :class="{ 'input-error': errors.email }"
-                  placeholder="your@email.com" autocomplete="email" />
+                  :placeholder="t('auth.email')" autocomplete="email" />
               </div>
               <p v-if="errors.email" class="error-message">{{ errors.email }}</p>
             </div>
 
             <!-- Password -->
             <div class="form-group">
-              <label class="form-label">Password</label>
+              <label class="form-label">{{ t('auth.password') }}</label>
               <div class="input-wrapper">
                 <Lock class="input-icon" />
                 <input v-model="form.password" :type="showPassword ? 'text' : 'password'" class="form-input"
-                  :class="{ 'input-error': errors.password }" placeholder="Create a password"
+                  :class="{ 'input-error': errors.password }" :placeholder="t('auth.password')"
                   autocomplete="new-password" />
                 <button type="button" @click="showPassword = !showPassword" class="password-toggle">
                   <EyeOff v-if="showPassword" class="w-5 h-5" />
@@ -142,12 +144,12 @@ const handleRegister = async () => {
 
             <!-- Confirm Password -->
             <div class="form-group">
-              <label class="form-label">Confirm Password</label>
+              <label class="form-label">{{ t('auth.password_confirm') }}</label>
               <div class="input-wrapper">
                 <Lock class="input-icon" />
                 <input v-model="form.confirmPassword" :type="showConfirmPassword ? 'text' : 'password'"
                   class="form-input" :class="{ 'input-error': errors.confirmPassword }"
-                  placeholder="Confirm your password" autocomplete="new-password" />
+                  :placeholder="t('auth.password_confirm')" autocomplete="new-password" />
                 <button type="button" @click="showConfirmPassword = !showConfirmPassword" class="password-toggle">
                   <EyeOff v-if="showConfirmPassword" class="w-5 h-5" />
                   <Eye v-else class="w-5 h-5" />
@@ -158,15 +160,15 @@ const handleRegister = async () => {
 
             <!-- Submit Button -->
             <button type="submit" class="submit-btn" :disabled="loading">
-              <span v-if="loading">Creating account...</span>
-              <span v-else>Create Account</span>
+              <span v-if="loading">{{ t('loading.submitting') }}</span>
+              <span v-else>{{ t('auth.register_button') }}</span>
             </button>
 
             <!-- Login Link -->
             <div class="auth-footer">
               <p class="footer-text">
-                Already have an account?
-                <router-link to="/login" class="footer-link">Sign in</router-link>
+                {{ t('auth.have_account') }}
+                <router-link to="/login" class="footer-link">{{ t('auth.login_button') }}</router-link>
               </p>
             </div>
           </form>

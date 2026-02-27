@@ -2,6 +2,7 @@
 import { ref, computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
+import { useI18n } from 'vue-i18n';
 import {
   Home, Trophy, Share2, Image, MessageSquare,
   Bell, FileText, Heart, Settings, Sun, Moon,
@@ -15,6 +16,7 @@ const router = useRouter();
 const route = useRoute();
 const authStore = useAuthStore();
 const { theme, toggleTheme } = useTheme();
+const { t } = useI18n();
 
 const isCollapsed = ref(false);
 
@@ -48,43 +50,43 @@ const isJury = computed(() => isAdmin.value || hasContestRole('JURY'));
 // ==========================================
 
 const majorLinks = computed(() => [
-  { name: 'Home', icon: Home, path: '/' },
-  { name: 'Contests', icon: Trophy, path: '/contests' },
-  { name: 'Social', icon: Share2, path: '/social' },
-  { name: 'Portfolio', icon: Image, path: authStore.user?.id ? `/user/${authStore.user.id}` : '/portfolio' },
-  { name: 'Messages', icon: MessageSquare, path: '/messages' },
+  { name: t('navigation.home'), icon: Home, path: '/' },
+  { name: t('navigation.contests'), icon: Trophy, path: '/contests' },
+  { name: t('navigation.social'), icon: Share2, path: '/social' },
+  { name: t('navigation.profile'), icon: Image, path: authStore.user?.id ? `/user/${authStore.user.id}` : '/portfolio' },
+  { name: t('navigation.messages'), icon: MessageSquare, path: '/messages' },
 ]);
 
-const minorLinks = [
-  { name: 'Notifications', icon: Bell, path: '/notifications' },
-  { name: 'Submissions', icon: FileText, path: '/submissions' },
-  { name: 'Favorites', icon: Heart, path: '/favorites' },
-  { name: 'Settings', icon: Settings, path: '/settings' },
-];
+const minorLinks = computed(() => [
+  { name: t('navigation.notifications'), icon: Bell, path: '/notifications' },
+  { name: t('navigation.favorites'), icon: Heart, path: '/favorites' },
+  { name: t('submissions.my_submissions'), icon: FileText, path: '/submissions' },
+  { name: t('navigation.settings'), icon: Settings, path: '/settings' },
+]);
 
-const organizerLinks = [
-  { name: 'Yarışma Oluştur', icon: PlusCircle, path: '/contests/create' },
-  { name: 'Yarışmalarım', icon: Trophy, path: '/organizer/contests' },
-];
+const organizerLinks = computed(() => [
+  { name: t('contests.create'), icon: PlusCircle, path: '/contests/create' },
+  { name: t('navigation.organizer'), icon: Trophy, path: '/organizer/contests' },
+]);
 
-const juryLinks = [
-  { name: 'Davetlerim', icon: Bell, path: '/jury-invitations' },
-  { name: 'Jury Panel', icon: Gavel, path: '/jury' },
-  { name: 'Assigned', icon: ClipboardList, path: '/jury/assigned' },
-  { name: 'Reviews', icon: Award, path: '/jury/reviews' },
-];
+const juryLinks = computed(() => [
+  { name: t('jury.invitations'), icon: Bell, path: '/jury-invitations' },
+  { name: t('navigation.jury'), icon: Gavel, path: '/jury' },
+  { name: t('jury.assigned'), icon: ClipboardList, path: '/jury/assigned' },
+  { name: t('jury.submitted_review'), icon: Award, path: '/jury/reviews' },
+]);
 
-const adminLinks = [
-  { name: 'Dashboard', icon: LayoutDashboard, path: '/admin' },
-  { name: 'Contests', icon: Trophy, path: '/admin/contests' },
-  { name: 'Users', icon: Users, path: '/admin/users' },
-  { name: 'Settings', icon: Cog, path: '/admin/settings' },
-];
+const adminLinks = computed(() => [
+  { name: t('admin.panel'), icon: LayoutDashboard, path: '/admin' },
+  { name: t('admin.contests'), icon: Trophy, path: '/admin/contests' },
+  { name: t('admin.users'), icon: Users, path: '/admin/users' },
+  { name: t('admin.settings'), icon: Cog, path: '/admin/settings' },
+]);
 
-const bottomLinks = [
-  { name: 'Help', icon: HelpCircle, path: '/help' },
-  { name: 'Docs', icon: BookOpen, path: '/docs' },
-];
+const bottomLinks = computed(() => [
+  { name: t('navigation.help'), icon: HelpCircle, path: '/help' },
+  { name: t('navigation.docs'), icon: BookOpen, path: '/docs' },
+]);
 
 const isActive = (path: string) => route.path === path;
 const navigateTo = (path: string) => router.push(path);
@@ -95,8 +97,13 @@ const navigateTo = (path: string) => router.push(path);
     <!-- Logo -->
     <div class="logo-section">
       <router-link to="/" class="logo-link">
-        <img :src="theme === 'dark' ? '/images/jamcontest_logo_white_for_dark.png' : '/images/logo-JC.png'"
-          alt="JamContest" :class="['logo', isCollapsed && 'logo-small']" />
+        <img 
+          :src="isCollapsed 
+            ? (theme === 'dark' ? '/images/white-logo-for-dark-only-logo.png' : '/images/dark-logo-for-light-only-logo.png')
+            : (theme === 'dark' ? '/images/jamcontest_logo_white_for_dark-rectangle.png' : '/images/logo-JCrectangle-black.png')"
+          alt="JamContest" 
+          :class="['logo', isCollapsed && 'logo-small']" 
+        />
       </router-link>
     </div>
 
@@ -187,7 +194,7 @@ const navigateTo = (path: string) => router.push(path);
 .sidebar.collapsed { width: 72px; }
 
 .logo-section {
-  padding: 1rem;
+  padding: 1rem 0.75rem;
   border-bottom: 1px solid hsl(var(--border));
   display: flex;
   align-items: center;
@@ -200,21 +207,21 @@ const navigateTo = (path: string) => router.push(path);
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 100%;
   transition: none;
 }
 
 .logo {
   height: 56px;
   width: auto;
+  max-width: 100%;
   object-fit: contain;
   transition: none;
-  transform: scale(1.4);
-  transform-origin: center;
 }
 
 .sidebar.collapsed .logo {
-  height: 56px;
-  transform: scale(1.4);
+  height: 48px;
+  max-width: 48px;
 }
 
 .collapse-btn {

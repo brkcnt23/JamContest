@@ -114,7 +114,7 @@ function groupedMessages() {
 // ── API ───────────────────────────────────────────────
 async function loadConversations() {
   try {
-    const { data } = await axios.get('/api/messages');
+    const { data } = await axios.get('/api/messages/conversations');
     conversations.value = data;
   } catch { /* silent */ }
   finally { convLoading.value = false; }
@@ -128,9 +128,9 @@ async function openConversation(convId: string) {
   messages.value = [];
   msgLoading.value = true;
   try {
-    const { data } = await axios.get(`/api/messages/${convId}`);
+    const { data } = await axios.get(`/api/messages/conversations/${convId}/messages`);
     messages.value = data;
-    await axios.put(`/api/messages/${convId}/read`);
+    await axios.put(`/api/messages/conversations/${convId}/read`);
     // mark local as read
     const conv = conversations.value.find(c => c.id === convId);
     if (conv) {
@@ -149,7 +149,7 @@ async function startConversation(user: User) {
   searchQuery.value = '';
   searchResults.value = [];
   try {
-    const { data } = await axios.post('/api/messages/conversation', { otherUserId: user.id });
+    const { data } = await axios.post('/api/messages/conversations', { otherUserId: user.id });
     // check if already in list
     const exists = conversations.value.find(c => c.id === data.conversationId);
     if (!exists) await loadConversations();
@@ -219,7 +219,7 @@ onMounted(async () => {
   const withUserId = route.query.with as string;
   if (withUserId) {
     try {
-      const { data } = await axios.post('/api/messages/conversation', { otherUserId: withUserId });
+      const { data } = await axios.post('/api/messages/conversations', { otherUserId: withUserId });
       if (!conversations.value.find(c => c.id === data.conversationId)) await loadConversations();
       await openConversation(data.conversationId);
     } catch { /* silent */ }
