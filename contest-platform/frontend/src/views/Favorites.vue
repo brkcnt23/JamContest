@@ -117,18 +117,18 @@ onMounted(load);
     <!-- Empty — no favorites at all -->
     <div v-else-if="favorites.length === 0" class="empty-state">
       <Heart class="empty-icon" />
-      <p class="empty-title">Henüz favori eklemediniz</p>
-      <p class="empty-sub">Yarışmaları favorilere ekleyerek buradan takip edebilirsiniz.</p>
+      <p class="empty-title">{{ t('favorites.no_favorites') }}</p>
+      <p class="empty-sub">{{ t('favorites.no_favorites_subtitle') }}</p>
       <button @click="router.push('/contests')" class="btn btn--primary">
-        Yarışmalara Göz At <ArrowRight class="w-4 h-4" />
+        {{ t('favorites.browse_contests') }} <ArrowRight class="w-4 h-4" />
       </button>
     </div>
 
     <!-- Empty — search no match -->
     <div v-else-if="filtered.length === 0" class="empty-state">
       <Search class="empty-icon" />
-      <p class="empty-title">Sonuç bulunamadı</p>
-      <button @click="search = ''" class="btn btn--ghost">Aramayı Temizle</button>
+      <p class="empty-title">{{ t('favorites.no_results') }}</p>
+      <button @click="search = ''" class="btn btn--ghost">{{ t('favorites.clear_search') }}</button>
     </div>
 
     <!-- Grid -->

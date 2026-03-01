@@ -2,6 +2,7 @@
 import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
+import { useI18n } from 'vue-i18n';
 import { useSocket } from '@/composables/useSocket';
 import axios from 'axios';
 import { Send, Search, MessageSquare, X, ArrowLeft, MoreVertical } from 'lucide-vue-next';
@@ -9,6 +10,7 @@ import { Send, Search, MessageSquare, X, ArrowLeft, MoreVertical } from 'lucide-
 const authStore = useAuthStore();
 const router = useRouter();
 const route = useRoute();
+const { t } = useI18n();
 const { connect, disconnect, joinConversation, leaveConversation, sendMessage: socketSend, on, off } = useSocket();
 
 // ── Types ─────────────────────────────────────────────
@@ -241,8 +243,8 @@ watch(searchQuery, searchUsers);
   <div class="messages-page">
     <div class="conv-sidebar">
       <div class="sidebar-header">
-        <h2 class="sidebar-title">Mesajlar</h2>
-        <button class="icon-btn" @click="showSearch = !showSearch" title="Yeni konuşma">
+        <h2 class="sidebar-title">{{ t('messages.title') }}</h2>
+        <button class="icon-btn" @click="showSearch = !showSearch" :title="t('messages.new_message')">
           <Search class="w-4 h-4" />
         </button>
       </div>
@@ -254,7 +256,7 @@ watch(searchQuery, searchUsers);
           <input
             v-model="searchQuery"
             type="text"
-            placeholder="Kullanıcı ara..."
+            :placeholder="t('messages.search_users')"
             class="search-input"
             autofocus
           />
@@ -262,7 +264,7 @@ watch(searchQuery, searchUsers);
             <X class="w-4 h-4" />
           </button>
         </div>
-        <div v-if="searchLoading" class="search-hint">Aranıyor...</div>
+        <div v-if="searchLoading" class="search-hint">{{ t('forms.loading') }}</div>
         <div v-else-if="searchResults.length" class="search-results">
           <button
             v-for="u in searchResults"
@@ -277,7 +279,7 @@ watch(searchQuery, searchUsers);
             </div>
           </button>
         </div>
-        <div v-else-if="searchQuery.length >= 2" class="search-hint">Kullanıcı bulunamadı</div>
+        <div v-else-if="searchQuery.length >= 2" class="search-hint">{{ t('messages.no_users_found') }}</div>
       </div>
 
       <!-- Loading -->
@@ -288,8 +290,8 @@ watch(searchQuery, searchUsers);
       <!-- Empty -->
       <div v-else-if="conversations.length === 0 && !showSearch" class="conv-empty">
         <MessageSquare class="empty-icon" />
-        <p>Henüz mesajınız yok</p>
-        <small>Kullanıcı araması yaparak konuşma başlatın</small>
+        <p>{{ t('messages.no_messages_yet') }}</p>
+        <small>{{ t('messages.start_conversation_hint') }}</small>
       </div>
 
       <!-- List -->
@@ -325,8 +327,8 @@ watch(searchQuery, searchUsers);
       <!-- No conversation selected -->
       <div v-if="!activeConvId" class="no-conv">
         <MessageSquare class="no-conv-icon" />
-        <p>Bir konuşma seçin</p>
-        <small>ya da yeni bir konuşma başlatın</small>
+        <p>{{ t('messages.select_conversation') }}</p>
+        <small>{{ t('messages.or_start_new') }}</small>
       </div>
 
       <template v-else>
@@ -344,7 +346,7 @@ watch(searchQuery, searchUsers);
             v-if="otherUser"
             class="icon-btn ml-auto"
             @click="router.push(`/user/${otherUser.id}`)"
-            title="Profile git"
+            :title="t('messages.view_profile')"
           >
             <MoreVertical class="w-4 h-4" />
           </button>
@@ -357,7 +359,7 @@ watch(searchQuery, searchUsers);
           </div>
 
           <div v-else-if="messages.length === 0" class="msg-empty">
-            Konuşmayı başlatmak için mesaj gönderin
+            {{ t('messages.start_conversation') }}
           </div>
 
           <template v-else>
@@ -391,7 +393,7 @@ watch(searchQuery, searchUsers);
         <div class="msg-input-bar">
           <textarea
             v-model="newMessage"
-            placeholder="Mesaj yaz..."
+            :placeholder="t('messages.type_message')"
             class="msg-textarea"
             rows="1"
             @keydown="handleKeydown"

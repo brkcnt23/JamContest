@@ -138,17 +138,18 @@ const deleteLoading = ref(false);
 const showDeleteConfirm = ref(false);
 
 async function deleteAccount() {
-  if (deleteForm.value.confirm !== 'HESABIMI SİL') {
-    showToast('Onay metnini doğru girin', 'error'); return;
+  const confirmCode = t('settings.delete_account_confirm_code');
+  if (deleteForm.value.confirm !== confirmCode) {
+    showToast(t('settings.delete_account_confirm_error') || 'Invalid confirmation text', 'error'); return;
   }
   deleteLoading.value = true;
   try {
     await axios.delete('/api/auth/account', { data: { password: deleteForm.value.password } });
     authStore.logout();
     router.push('/');
-    showToast('Hesabınız silindi', 'success');
+    showToast(t('settings.delete_account_success') || 'Account deleted', 'success');
   } catch (e: any) {
-    showToast(e.response?.data?.message || 'Hata', 'error');
+    showToast(e.response?.data?.message || 'Error', 'error');
   } finally {
     deleteLoading.value = false;
   }
@@ -197,24 +198,24 @@ onMounted(() => {
             <div class="card-header">
               <Mail class="card-icon" />
               <div>
-                <h2 class="card-title">Email Adresi</h2>
-                <p class="card-desc">Mevcut: <strong>{{ authStore.user?.email }}</strong></p>
+                <h2 class="card-title">{{ t('settings.email_change') }}</h2>
+                <p class="card-desc">{{ t('settings.current_email') }}: <strong>{{ authStore.user?.email }}</strong></p>
               </div>
             </div>
             <div class="form-grid">
               <div class="form-group">
-                <label class="form-label">Yeni Email</label>
-                <input v-model="emailForm.newEmail" type="email" class="form-input" placeholder="yeni@email.com" />
+                <label class="form-label">{{ t('settings.new_email') }}</label>
+                <input v-model="emailForm.newEmail" type="email" class="form-input" placeholder="new@email.com" />
               </div>
               <div class="form-group">
-                <label class="form-label">Mevcut Şifre</label>
+                <label class="form-label">{{ t('settings.current_password') }}</label>
                 <input v-model="emailForm.password" type="password" class="form-input" placeholder="••••••••" />
               </div>
             </div>
             <div class="card-footer">
-              <p class="hint-text">Email değişikliği doğrulama maili gönderir.</p>
+              <p class="hint-text">{{ t('settings.email_desc') }}</p>
               <button @click="changeEmail" :disabled="emailLoading" class="btn btn--primary">
-                {{ emailLoading ? 'Güncelleniyor...' : 'Email Güncelle' }}
+                {{ emailLoading ? t('forms.loading') : t('settings.email_change_btn') }}
               </button>
             </div>
           </div>
@@ -224,13 +225,13 @@ onMounted(() => {
             <div class="card-header">
               <Lock class="card-icon" />
               <div>
-                <h2 class="card-title">Şifre Değiştir</h2>
-                <p class="card-desc">Güçlü, benzersiz bir şifre kullanın.</p>
+                <h2 class="card-title">{{ t('settings.password_change') }}</h2>
+                <p class="card-desc">{{ t('settings.password_desc') }}</p>
               </div>
             </div>
             <div class="form-stack">
               <div class="form-group">
-                <label class="form-label">Mevcut Şifre</label>
+                <label class="form-label">{{ t('settings.current_password') }}</label>
                 <div class="input-wrapper">
                   <input v-model="pwForm.current" :type="showPw.current ? 'text' : 'password'" class="form-input" placeholder="••••••••" />
                   <button type="button" class="eye-btn" @click="showPw.current = !showPw.current">
@@ -240,9 +241,9 @@ onMounted(() => {
                 </div>
               </div>
               <div class="form-group">
-                <label class="form-label">Yeni Şifre</label>
+                <label class="form-label">{{ t('settings.new_password') }}</label>
                 <div class="input-wrapper">
-                  <input v-model="pwForm.next" :type="showPw.next ? 'text' : 'password'" class="form-input" placeholder="En az 8 karakter" />
+                  <input v-model="pwForm.next" :type="showPw.next ? 'text' : 'password'" class="form-input" :placeholder="t('settings.password_hint')" />
                   <button type="button" class="eye-btn" @click="showPw.next = !showPw.next">
                     <EyeOff v-if="showPw.next" class="w-4 h-4" />
                     <Eye v-else class="w-4 h-4" />
@@ -250,7 +251,7 @@ onMounted(() => {
                 </div>
               </div>
               <div class="form-group">
-                <label class="form-label">Yeni Şifre (Tekrar)</label>
+                <label class="form-label">{{ t('settings.confirm_password') }}</label>
                 <div class="input-wrapper">
                   <input v-model="pwForm.confirm" :type="showPw.confirm ? 'text' : 'password'" class="form-input" placeholder="••••••••" />
                   <button type="button" class="eye-btn" @click="showPw.confirm = !showPw.confirm">
@@ -261,9 +262,9 @@ onMounted(() => {
               </div>
             </div>
             <div class="card-footer">
-              <p class="hint-text">Şifre değişikliği tüm oturumları sonlandırır.</p>
+              <p class="hint-text">{{ t('settings.password_warning') }}</p>
               <button @click="changePassword" :disabled="pwLoading" class="btn btn--primary">
-                {{ pwLoading ? 'Güncelleniyor...' : 'Şifreyi Güncelle' }}
+                {{ pwLoading ? t('forms.loading') : t('settings.change_password') }}
               </button>
             </div>
           </div>
@@ -275,16 +276,16 @@ onMounted(() => {
             <div class="card-header">
               <Smartphone class="card-icon" />
               <div>
-                <h2 class="card-title">Aktif Oturumlar</h2>
-                <p class="card-desc">{{ sessions.length }} aktif oturum</p>
+                <h2 class="card-title">{{ t('settings.active_sessions') }}</h2>
+                <p class="card-desc">{{ sessions.length }} {{ t('settings.sessions_count_label') }}</p>
               </div>
               <button @click="revokeAll" class="btn btn--danger btn--sm ml-auto">
                 <LogOut class="w-4 h-4" />
-                Tümünü Sonlandır
+                {{ t('settings.end_all_sessions') }}
               </button>
             </div>
 
-            <div v-if="sessionsLoading" class="loading-mini">Yükleniyor...</div>
+            <div v-if="sessionsLoading" class="loading-mini">{{ t('forms.loading') }}</div>
 
             <div v-else class="session-list">
               <div v-for="session in sessions" :key="session.id" class="session-item">
@@ -303,11 +304,11 @@ onMounted(() => {
                   :disabled="revokingId === session.id"
                   class="btn btn--ghost btn--sm"
                 >
-                  {{ revokingId === session.id ? '...' : 'Sonlandır' }}
+                  {{ revokingId === session.id ? '...' : t('settings.end_session') }}
                 </button>
               </div>
 
-              <div v-if="sessions.length === 0" class="empty-mini">Aktif oturum bulunamadı</div>
+              <div v-if="sessions.length === 0" class="empty-mini">{{ t('settings.no_active_sessions') }}</div>
             </div>
           </div>
         </div>
@@ -318,18 +319,18 @@ onMounted(() => {
             <div class="card-header">
               <Bell class="card-icon" />
               <div>
-                <h2 class="card-title">Bildirim Tercihleri</h2>
-                <p class="card-desc">Hangi bildirimleri almak istediğinizi seçin.</p>
+                <h2 class="card-title">{{ t('settings.notification_preferences') }}</h2>
+                <p class="card-desc">{{ t('settings.which_notifications') }}</p>
               </div>
             </div>
 
             <div class="notif-list">
               <div v-for="(item, key) in [
-                { key: 'juryInvitation', label: 'Jüri Davetleri', desc: 'Bir yarışmaya jüri olarak davet edildiğinizde' },
-                { key: 'contestApproval', label: 'Yarışma Onayları', desc: 'Yarışmanız onaylandığında veya reddedildiğinde' },
-                { key: 'submissionResult', label: 'Sonuçlar', desc: 'Katıldığınız yarışma sonuçlandığında' },
-                { key: 'newMessage', label: 'Yeni Mesajlar', desc: 'Birisi size mesaj gönderdiğinde' },
-                { key: 'systemAnnouncements', label: 'Sistem Duyuruları', desc: 'Platform güncellemeleri ve önemli haberler' },
+                { key: 'juryInvitation', label: t('settings.jury_invitations'), desc: t('settings.jury_invitations_desc') },
+                { key: 'contestApproval', label: t('settings.contest_updates'), desc: t('settings.contest_updates_desc') },
+                { key: 'submissionResult', label: t('settings.submission_feedback'), desc: t('settings.submission_feedback_desc') },
+                { key: 'newMessage', label: t('settings.new_messages'), desc: t('settings.new_messages_desc') },
+                { key: 'systemAnnouncements', label: t('settings.platform_news'), desc: t('settings.platform_news_desc') },
               ]" :key="item.key" class="notif-item">
                 <div class="notif-text">
                   <p class="notif-label">{{ item.label }}</p>
@@ -346,7 +347,7 @@ onMounted(() => {
 
             <div class="card-footer">
               <span />
-              <button @click="saveNotifPrefs" class="btn btn--primary">Kaydet</button>
+              <button @click="saveNotifPrefs" class="btn btn--primary">{{ t('common.save') }}</button>
             </div>
           </div>
         </div>
@@ -357,32 +358,32 @@ onMounted(() => {
             <div class="card-header">
               <Trash2 class="card-icon card-icon--danger" />
               <div>
-                <h2 class="card-title danger-title">Hesabı Sil</h2>
-                <p class="card-desc">Bu işlem geri alınamaz. Tüm verileriniz kalıcı olarak silinir.</p>
+                <h2 class="card-title danger-title">{{ t('settings.delete_account') }}</h2>
+                <p class="card-desc">{{ t('settings.delete_account_warning') }}</p>
               </div>
             </div>
 
             <div v-if="!showDeleteConfirm" class="card-footer">
               <span />
-              <button @click="showDeleteConfirm = true" class="btn btn--danger">Hesabımı Sil</button>
+              <button @click="showDeleteConfirm = true" class="btn btn--danger">{{ t('settings.delete_account_button') }}</button>
             </div>
 
             <div v-else class="form-stack">
               <div class="danger-warning">
-                ⚠️ Tüm yarışma geçmişiniz, gönderileriniz ve profiliniz silinecek.
+                ⚠️ {{ t('settings.delete_account_confirm_text') }}
               </div>
               <div class="form-group">
-                <label class="form-label">Mevcut Şifreniz</label>
+                <label class="form-label">{{ t('settings.current_password') }}</label>
                 <input v-model="deleteForm.password" type="password" class="form-input" placeholder="••••••••" />
               </div>
               <div class="form-group">
-                <label class="form-label">Onaylamak için <code>HESABIMI SİL</code> yazın</label>
-                <input v-model="deleteForm.confirm" type="text" class="form-input form-input--danger" placeholder="HESABIMI SİL" />
+                <label class="form-label">{{ t('settings.delete_account_confirm_label') }} <code>{{ t('settings.delete_account_confirm_code') }}</code> {{ t('settings.delete_account_confirm_write') }}</label>
+                <input v-model="deleteForm.confirm" type="text" class="form-input form-input--danger" :placeholder="t('settings.delete_account_confirm_code')" />
               </div>
               <div class="card-footer">
-                <button @click="showDeleteConfirm = false" class="btn btn--ghost">İptal</button>
-                <button @click="deleteAccount" :disabled="deleteLoading || deleteForm.confirm !== 'HESABIMI SİL'" class="btn btn--danger">
-                  {{ deleteLoading ? 'Siliniyor...' : 'Kalıcı Olarak Sil' }}
+                <button @click="showDeleteConfirm = false" class="btn btn--ghost">{{ t('common.cancel') }}</button>
+                <button @click="deleteAccount" :disabled="deleteLoading || deleteForm.confirm !== t('settings.delete_account_confirm_code')" class="btn btn--danger">
+                  {{ deleteLoading ? t('forms.loading') : t('settings.delete_account_permanently') }}
                 </button>
               </div>
             </div>

@@ -158,7 +158,9 @@
     "filter": "Filter",
     "sort": "Sort",
     "clear": "Clear",
-    "apply": "Apply"
+    "apply": "Apply",
+    "loading": "Loading...",
+    "all": "All"
   },
 
   "users": {
@@ -182,38 +184,18 @@
     "report": "Report"
   },
 
-  "notifications": {
-    "title": "Notifications",
-    "no_notifications": "No notifications yet",
-    "mark_all_read": "Mark all as read",
-    "clear_all": "Clear all",
-    "new_message": "New message from {user}",
-    "contest_update": "Contest update: {contest}",
-    "jury_invitation": "Jury invitation for {contest}",
-    "submission_reviewed": "Your submission was reviewed",
-    "application_approved": "Your application was approved",
-    "application_rejected": "Your application was rejected"
-  },
-
-  "messages": {
-    "title": "Messages",
-    "new_message": "New Message",
-    "no_conversations": "No conversations yet",
-    "no_messages": "No messages",
-    "type_message": "Type a message...",
-    "send": "Send",
-    "search_user": "Search for a user",
-    "start_conversation": "Start conversation",
-    "today": "Today",
-    "yesterday": "Yesterday",
-    "search_conversations": "Search conversations"
-  },
-
   "submissions": {
     "my_submissions": "My Submissions",
-    "title": "Submissions",
+    "title": "My Submissions",
+    "subtitle": "Your contest submissions and scores",
     "submit_work": "Submit Your Work",
     "no_submissions": "No submissions yet",
+    "no_submissions_category": "No submissions in this category",
+    "browse_contests": "Browse Contests",
+    "total_works": "total works",
+    "filter_all": "All",
+    "filter_active": "Active",
+    "filter_finalized": "Finalized",
     "submitted": "Submitted",
     "status": "Status",
     "score": "Score",
@@ -224,7 +206,10 @@
     "edit": "Edit Submission",
     "view": "View Submission",
     "submitted_on": "Submitted on {date}",
-    "reviewed": "Reviewed by {count} jury members"
+    "reviewed": "Reviewed by {count} jury members",
+    "status_submitted": "Submitted",
+    "status_active": "Active",
+    "status_finalized": "Finalized"
   },
 
   "jury": {
@@ -391,18 +376,6 @@
     "success": "Contest created! Waiting for admin approval.",
     "error": "Failed to create contest",
     "error_required_fields": "Contest name and description are required"
-  },
-
-  "footer": {
-    "copyright": "© 2026 JamContest. All rights reserved.",
-    "about": "About",
-    "terms": "Terms",
-    "privacy": "Privacy",
-    "contact": "Contact",
-    "language": "Language",
-    "coc": "Code of Conduct",
-    "governance": "Governance",
-    "transparency": "Transparency Report"
   },
 
   "home_stats": {
@@ -683,39 +656,16 @@
     }
   },
 
-  "submissions": {
-    "title": "My Submissions",
-    "subtitle": "Your contest entries and feedback",
-    "loading": "Loading submissions...",
-    "empty": "No submissions yet",
-    "empty_hint": "Join a contest and submit your work",
-    "filter_all": "All",
-    "filter_active": "Active",
-    "filter_finalized": "Finalized",
-    "contest": "Contest",
-    "status": "Status",
-    "date": "Date",
-    "scores": "Scores",
-    "avg_score": "Average",
-    "feedback": "Feedback",
-    "no_scores": "No scores yet",
-    "status_draft": "Draft",
-    "status_pending": "Pending Approval",
-    "status_approved": "Approved",
-    "status_applications": "Applications",
-    "status_active": "Active",
-    "status_closed": "Closed",
-    "status_judging": "Judging",
-    "status_finalized": "Finalized",
-    "status_completed": "Completed",
-    "status_cancelled": "Cancelled"
-  },
-
   "favorites": {
     "title": "Favorites",
     "subtitle": "Your bookmarked contests",
     "loading": "Loading favorites...",
     "empty": "No favorites yet",
+    "no_favorites": "You haven't added any favorites yet",
+    "no_favorites_subtitle": "Bookmark contests to track them from here",
+    "browse_contests": "Browse Contests",
+    "no_results": "No results found",
+    "clear_search": "Clear Search",
     "empty_hint": "Add contests to your favorites",
     "search_placeholder": "Search favorites...",
     "remove": "Remove from Favorites",
@@ -730,23 +680,34 @@
 
   "settings": {
     "title": "Settings",
+    "subtitle": "Manage your account and application preferences",
     "account": "Account",
     "security": "Security",
     "notifications": "Notifications",
     "danger": "Danger Zone",
+    "email_change": "Change Email Address",
+    "current_email": "Current",
+    "new_email": "New Email Address",
+    "email_desc": "Email change will send a verification link",
+    "email_change_btn": "Update Email",
     "password_change": "Change Password",
+    "password_desc": "Use a strong, unique password",
     "current_password": "Current Password",
     "new_password": "New Password",
-    "confirm_password": "Confirm Password",
+    "confirm_password": "Confirm New Password",
     "password_hint": "Minimum 8 characters",
-    "change_password": "Change Password",
+    "password_warning": "Password change will end all your sessions",
+    "change_password": "Update Password",
     "password_success": "Password changed successfully",
     "password_error": "Failed to change password",
-    "email_change": "Change Email",
-    "new_email": "New Email Address",
     "email_success": "Email changed. Check your inbox for verification.",
     "email_error": "Failed to change email",
-    "sessions": "Active Sessions",
+    "active_sessions": "Active Sessions",
+    "sessions_count_label": "active sessions",
+    "no_active_sessions": "No active sessions found",
+    "unknown_device": "Unknown Device",
+    "end_session": "End Session",
+    "end_all_sessions": "End All Sessions",
     "current_session": "Current Session",
     "revoke": "Sign Out",
     "revoke_all": "Sign Out All Devices",
@@ -759,13 +720,29 @@
     "two_factor_enable": "Enable 2FA",
     "two_factor_disable": "Disable 2FA",
     "delete_account": "Delete Account",
-    "delete_account_warning": "This action is permanent and cannot be undone",
+    "delete_account_warning": "This action is permanent. All your data will be permanently deleted.",
     "delete_account_button": "Delete My Account",
+    "delete_account_confirm_text": "All your contest history, submissions, and profile will be deleted.",
+    "delete_account_confirm_label": "Type",
+    "delete_account_confirm_code": "DELETE MY ACCOUNT",
+    "delete_account_confirm_write": "to confirm",
+    "delete_account_permanently": "Delete Permanently",
     "email_notifications": "Email Notifications",
-    "submission_feedback": "Submission Feedback",
     "jury_updates": "Jury Updates",
+    "jury_invitations": "Jury Invitations",
+    "jury_invitations_desc": "When you are invited as a jury member",
     "contest_updates": "Contest Updates",
-    "platform_news": "Platform News"
+    "contest_updates_desc": "When contests you follow are updated",
+    "submission_feedback": "Submission Feedback",
+    "submission_feedback_desc": "When you receive feedback on your submissions",
+    "new_messages": "New Messages",
+    "new_messages_desc": "When someone sends you a message",
+    "platform_news": "Platform News",
+    "platform_news_desc": "Platform updates and important announcements",
+    "notification_preferences": "Notification Preferences",
+    "which_notifications": "Choose which notifications you want to receive",
+    "danger_zone_title": "Danger Zone",
+    "danger_zone_desc": "Irreversible and dangerous actions"
   },
 
   "messages": {
@@ -774,12 +751,19 @@
     "loading": "Loading messages...",
     "empty": "No messages yet",
     "empty_hint": "Start a conversation with someone",
+    "no_messages_yet": "You have no messages yet",
+    "start_conversation": "Send a message to start the conversation",
+    "start_conversation_hint": "Start a conversation by searching for users",
+    "no_users_found": "No users found",
     "search_placeholder": "Search conversations...",
     "new_message": "New Message",
     "search_users": "Search users...",
     "send": "Send",
     "type_message": "Type a message...",
-    "no_messages": "No messages in this conversation"
+    "no_messages": "No messages in this conversation",
+    "select_conversation": "Select a conversation",
+    "or_start_new": "or start a new one",
+    "view_profile": "View Profile"
   },
 
   "notifications": {

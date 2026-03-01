@@ -248,10 +248,6 @@ onMounted(async () => {
   @apply dark:bg-blue-600 dark:hover:bg-blue-700;
 }
 
-.mt-4 {
-  @apply mt-4;
-}
-
 /* Stats Grid */
 .stats-grid {
   @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8;

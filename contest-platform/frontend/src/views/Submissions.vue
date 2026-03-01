@@ -105,7 +105,7 @@ onMounted(async () => {
       </div>
       <div class="header-stat">
         <span class="stat-num">{{ submissions.length }}</span>
-        <span class="stat-lbl">toplam eser</span>
+        <span class="stat-lbl">{{ t('submissions.total_works') }}</span>
       </div>
     </div>
 
@@ -130,9 +130,9 @@ onMounted(async () => {
     <div v-else-if="filtered.length === 0" class="empty-state">
       <FileText class="empty-icon" />
       <p class="empty-title">
-        {{ filter === 'all' ? 'Henüz gönderiniz yok' : 'Bu kategoride gönderim yok' }}
+        {{ filter === 'all' ? t('submissions.no_submissions') : t('submissions.no_submissions_category') }}
       </p>
-      <button @click="router.push('/contests')" class="btn btn--primary">Yarışmalara Göz At</button>
+      <button @click="router.push('/contests')" class="btn btn--primary">{{ t('submissions.browse_contests') }}</button>
     </div>
 
     <!-- List -->
