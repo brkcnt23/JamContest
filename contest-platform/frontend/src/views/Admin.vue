@@ -78,6 +78,8 @@
                   <div class="action-buttons">
                     <select :value="user.globalRole" @change="changeRole(user, ($event.target as HTMLSelectElement).value)" :disabled="!canEditRole(user)" class="role-select">
                       <option value="USER">USER</option>
+                      <option value="JURY">JURY</option>
+                      <option value="ORGANIZER">ORGANIZER</option>
                       <option value="ADMIN">ADMIN</option>
                       <option v-if="authStore.isSuperAdmin" value="SUPER_ADMIN">SUPER_ADMIN</option>
                     </select>

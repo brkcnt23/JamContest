@@ -223,22 +223,22 @@ const router = createRouter({
     { 
       path: '/jury/reviews', 
       name: 'JuryReviews', 
-      component: () => import('@/views/JuryReviews.vue'),
+      component: () => import('@/views/JuryDashboard.vue'),
       meta: { layout: 'dashboard', requiresAuth: true }
     },
     
     // ADMIN
     { 
-      path: '/admin/contests', 
-      redirect: { path: '/admin', query: { tab: 'contests' } }
+      path: '/admin/applications', 
+      name: 'AdminApplications', 
+      component: () => import('@/views/AdminApplications.vue'),
+      meta: { layout: 'dashboard', requiresAuth: true, requiresAdmin: true }
     },
     { 
-      path: '/admin/users', 
-      redirect: { path: '/admin', query: { tab: 'users' } }
-    },
-    { 
-      path: '/admin/settings', 
-      redirect: { path: '/admin', query: { tab: 'settings' } }
+      path: '/admin/bans', 
+      name: 'AdminUserBans', 
+      component: () => import('@/views/AdminUserBans.vue'),
+      meta: { layout: 'dashboard', requiresAuth: true, requiresAdmin: true }
     },
     { 
       path: '/admin', 

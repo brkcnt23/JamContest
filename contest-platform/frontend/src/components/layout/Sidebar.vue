@@ -8,7 +8,8 @@ import {
   Bell, FileText, Heart, Settings, Sun, Moon,
   Gavel, ClipboardList, Award,
   LayoutDashboard, Users, Cog, PlusCircle,
-  HelpCircle, BookOpen, ChevronLeft, ChevronRight
+  HelpCircle, BookOpen, ChevronLeft, ChevronRight,
+  FileCheck, Ban
 } from 'lucide-vue-next';
 import { useTheme } from '@/stores/theme';
 
@@ -78,9 +79,8 @@ const juryLinks = computed(() => [
 
 const adminLinks = computed(() => [
   { name: t('admin.panel'), icon: LayoutDashboard, path: '/admin' },
-  { name: t('admin.contests'), icon: Trophy, path: '/admin/contests' },
-  { name: t('admin.users'), icon: Users, path: '/admin/users' },
-  { name: t('admin.settings'), icon: Cog, path: '/admin/settings' },
+  { name: 'Applications', icon: FileCheck, path: '/admin/applications' },
+  { name: 'User Bans', icon: Ban, path: '/admin/bans' },
 ]);
 
 const bottomLinks = computed(() => [

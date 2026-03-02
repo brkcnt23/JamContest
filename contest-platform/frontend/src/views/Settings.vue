@@ -6,6 +6,7 @@ import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { useToast } from '@/composables/useToast';
 import { Lock, Mail, Bell, Shield, Smartphone, Trash2, LogOut, Eye, EyeOff, Monitor, Clock } from 'lucide-vue-next';
+import ApplicationModal from '@/components/ApplicationModal.vue';
 
 const authStore = useAuthStore();
 const router = useRouter();
@@ -13,6 +14,47 @@ const { showToast } = useToast();
 const { t } = useI18n();
 
 const activeTab = ref<'account' | 'security' | 'notifications' | 'danger'>('account');
+
+// ── Applications ──────────────────────────────────────
+interface ApplicationStatus {
+  jury?: { status: string; reason?: string } | null;
+  organizer?: { status: string; reason?: string } | null;
+}
+
+const applicationStatus = ref<ApplicationStatus>({});
+const showJuryModal = ref(false);
+const showOrganizerModal = ref(false);
+
+async function loadApplicationStatus() {
+  try {
+    // Fetch fresh user data to get updated globalRole
+    const [statusRes, userRes] = await Promise.all([
+      axios.get('/api/applications/my-status'),
+      axios.get('/api/auth/me'),
+    ]);
+    applicationStatus.value = statusRes.data;
+    
+    // Update auth store with fresh user data
+    if (userRes.data) {
+      authStore.user = userRes.data;
+    }
+  } catch (error) {
+    console.error('Failed to load application status:', error);
+  }
+}
+
+function getApplicationStatusColor(status?: string) {
+  switch (status) {
+    case 'APPROVED':
+      return '#10b981';
+    case 'PENDING':
+      return '#f59e0b';
+    case 'REJECTED':
+      return '#ef4444';
+    default:
+      return '#6b7280';
+  }
+}
 
 // ── Password ──────────────────────────────────────────
 const pwForm = ref({ current: '', next: '', confirm: '' });
@@ -159,6 +201,7 @@ async function deleteAccount() {
 onMounted(() => {
   loadSessions();
   loadNotifPrefs();
+  loadApplicationStatus();
 });
 </script>
 
@@ -218,6 +261,68 @@ onMounted(() => {
               <button @click="changeEmail" :disabled="emailLoading" class="btn btn--primary">
                 {{ emailLoading ? t('forms.loading') : t('settings.email_change_btn') }}
               </button>
+            </div>
+          </div>
+
+          <!-- Applications (Jury & Organizer) -->
+          <div class="settings-card">
+            <div class="card-header">
+              <Shield class="card-icon" />
+              <div>
+                <h2 class="card-title">Apply for Roles</h2>
+                <p class="card-desc">Become a jury member or contest organizer</p>
+              </div>
+            </div>
+            <div class="applications-grid">
+              <!-- Jury Application -->
+              <div class="application-item">
+                <div class="app-header">
+                  <h3 class="app-title">Jury Member</h3>
+                  <div
+                    v-if="applicationStatus.jury?.status"
+                    class="status-badge"
+                    :style="{ backgroundColor: getApplicationStatusColor(applicationStatus.jury.status) }"
+                  >
+                    {{ applicationStatus.jury.status }}
+                  </div>
+                </div>
+                <p class="app-desc">Help evaluate and judge contest submissions</p>
+                <button
+                  @click="showJuryModal = true"
+                  :disabled="applicationStatus.jury?.status === 'PENDING' || authStore.user?.globalRole === 'JURY'"
+                  class="btn btn--secondary btn-full"
+                >
+                  {{ authStore.user?.globalRole === 'JURY' ? '✓ Approved' : applicationStatus.jury?.status === 'APPROVED' ? '✓ Approved' : applicationStatus.jury?.status === 'PENDING' ? 'Pending...' : 'Apply Now' }}
+                </button>
+                <p v-if="applicationStatus.jury?.status === 'REJECTED'" class="rejection-reason">
+                  ❌ Rejection reason: {{ applicationStatus.jury.reason || 'Not specified' }}
+                </p>
+              </div>
+
+              <!-- Organizer Application -->
+              <div class="application-item">
+                <div class="app-header">
+                  <h3 class="app-title">Organizer</h3>
+                  <div
+                    v-if="applicationStatus.organizer?.status"
+                    class="status-badge"
+                    :style="{ backgroundColor: getApplicationStatusColor(applicationStatus.organizer.status) }"
+                  >
+                    {{ applicationStatus.organizer.status }}
+                  </div>
+                </div>
+                <p class="app-desc">Create and manage your own contests</p>
+                <button
+                  @click="showOrganizerModal = true"
+                  :disabled="applicationStatus.organizer?.status === 'PENDING' || authStore.user?.globalRole === 'ORGANIZER'"
+                  class="btn btn--secondary btn-full"
+                >
+                  {{ authStore.user?.globalRole === 'ORGANIZER' ? '✓ Approved' : applicationStatus.organizer?.status === 'APPROVED' ? '✓ Approved' : applicationStatus.organizer?.status === 'PENDING' ? 'Pending...' : 'Apply Now' }}
+                </button>
+                <p v-if="applicationStatus.organizer?.status === 'REJECTED'" class="rejection-reason">
+                  ❌ Rejection reason: {{ applicationStatus.organizer.reason || 'Not specified' }}
+                </p>
+              </div>
             </div>
           </div>
 
@@ -394,6 +499,18 @@ onMounted(() => {
       </div>
     </div>
   </div>
+
+  <!-- Application Modals -->
+  <ApplicationModal
+    :is-open="showJuryModal"
+    type="jury"
+    @close="() => { showJuryModal = false; loadApplicationStatus(); }"
+  />
+  <ApplicationModal
+    :is-open="showOrganizerModal"
+    type="organizer"
+    @close="() => { showOrganizerModal = false; loadApplicationStatus(); }"
+  />
 </template>
 
 <style scoped>
@@ -498,6 +615,24 @@ onMounted(() => {
 .session-device { font-size: 0.875rem; font-weight: 500; color: hsl(var(--foreground)); }
 .session-meta { font-size: 0.75rem; color: hsl(var(--muted-foreground)); margin-top: 0.1rem; display: flex; align-items: center; gap: 0.25rem; }
 .empty-mini { padding: 2rem 1.5rem; text-align: center; color: hsl(var(--muted-foreground)); font-size: 0.875rem; }
+
+/* Applications */
+.applications-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; padding: 1.25rem 1.5rem; }
+.application-item {
+  padding: 1rem; background: hsl(var(--muted) / 0.3); border-radius: 10px;
+  border: 1px solid hsl(var(--border));
+}
+.app-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem; }
+.app-title { font-size: 0.95rem; font-weight: 600; color: hsl(var(--foreground)); margin: 0; }
+.status-badge {
+  padding: 0.25rem 0.75rem; border-radius: 9999px;
+  color: white; font-size: 0.75rem; font-weight: 600;
+}
+.app-desc { font-size: 0.8rem; color: hsl(var(--muted-foreground)); margin: 0.5rem 0 1rem; }
+.btn-full { width: 100%; justify-content: center; margin-bottom: 0.75rem; }
+.btn--secondary { background: hsl(var(--muted)); color: hsl(var(--foreground)); border: 1px solid hsl(var(--border)); }
+.btn--secondary:hover:not(:disabled) { background: hsl(var(--muted) / 0.8); }
+.rejection-reason { font-size: 0.75rem; color: hsl(0 72% 51%); margin: 0; }
 
 /* Notifications */
 .notif-list { display: flex; flex-direction: column; }

@@ -25,6 +25,13 @@ export class UsersService {
             contest: { select: { id: true, title: true } },
           },
         },
+        userBans: {
+          select: {
+            id: true,
+            reason: true,
+            createdAt: true,
+          },
+        },
       },
       orderBy: { createdAt: 'desc' },
     });

@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import axios from 'axios';
 import { FileText, Trophy, Clock, CheckCircle, XCircle, Star, ExternalLink, ChevronDown, ChevronUp } from 'lucide-vue-next';
+import SubmissionDetailModal from '@/components/common/SubmissionDetailModal.vue';
 
 const router = useRouter();
 const { t } = useI18n();
@@ -20,6 +21,12 @@ interface Submission {
   description?: string;
   link?: string;
   createdAt: string;
+  userId: string;
+  user?: {
+    id: string;
+    username: string;
+    displayName?: string;
+  };
   contest: {
     id: string;
     title: string;
@@ -36,6 +43,8 @@ const loading = ref(true);
 const submissions = ref<Submission[]>([]);
 const expandedId = ref<string | null>(null);
 const filter = ref<'all' | 'active' | 'finalized'>('all');
+const detailModalOpen = ref(false);
+const selectedSubmission = ref<Submission | null>(null);
 
 const filtered = computed(() => {
   if (filter.value === 'active') return submissions.value.filter(s => !['FINALIZED','COMPLETED'].includes(s.contest.status));
@@ -78,7 +87,6 @@ function categoryLabel(cat: string) {
 function formatDate(d: string) {
   return new Date(d).toLocaleDateString('tr-TR', { day: '2-digit', month: 'short', year: 'numeric' });
 }
-
 function toggleExpand(id: string) {
   expandedId.value = expandedId.value === id ? null : id;
 }
@@ -93,6 +101,11 @@ onMounted(async () => {
     loading.value = false;
   }
 });
+
+function openDetail(submission: Submission) {
+  selectedSubmission.value = submission;
+  detailModalOpen.value = true;
+}
 </script>
 
 <template>
@@ -192,6 +205,12 @@ onMounted(async () => {
               <Trophy class="w-3.5 h-3.5" /> Yarışmaya Git
             </button>
             <button
+              @click="openDetail(s)"
+              class="btn btn--ghost btn--sm"
+            >
+              <FileText class="w-3.5 h-3.5" /> Details
+            </button>
+            <button
               v-if="isFinalized(s) && s.scores.length"
               @click="toggleExpand(s.id)"
               class="btn btn--ghost btn--sm ml-auto"
@@ -219,7 +238,14 @@ onMounted(async () => {
         </div>
       </div>
     </div>
-  </div>
+
+    <!-- Submission Detail Modal -->
+    <SubmissionDetailModal
+      :is-open="detailModalOpen"
+      :submission="selectedSubmission"
+      @close="detailModalOpen = false"
+    />
+  </div>>
 </template>
 
 <style scoped>

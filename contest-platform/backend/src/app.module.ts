@@ -9,6 +9,8 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
 import { MessagesModule } from './modules/messages/messages.module';
 import { SocialModule } from './modules/social/social.module';
 import { UploadsModule } from './modules/uploads/uploads.module';
+import { ApplicationsModule } from './modules/applications/applications.module';
+import { JuryModule } from './modules/jury/jury.module';
 import { AppController } from './app.controller';
 import { TimeController } from './modules/time/time.controller';
 
@@ -24,6 +26,8 @@ import { TimeController } from './modules/time/time.controller';
     MessagesModule,
     SocialModule,
     UploadsModule,
+    ApplicationsModule,
+    JuryModule,
   ],
   controllers: [AppController, TimeController],
   providers: [],
