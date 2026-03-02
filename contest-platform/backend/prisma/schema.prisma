@@ -87,6 +87,7 @@ model User {
   contactArtStation String?
 
   globalRole    GlobalRole @default(USER)
+  language      String     @default("tr")
   emailVerified Boolean    @default(false)
 
   createdAt     DateTime   @default(now())
@@ -113,6 +114,8 @@ model User {
   favorites          ContestFavorite[]
   conversations      ConversationParticipant[]
   sentMessages       Message[]
+  juryApplications   JuryApplication[]     @relation("JuryApplicationUser")
+  organizerApplications OrganizerApplication[] @relation("OrganizerApplicationUser")
 
   @@index([username])
   @@index([email])

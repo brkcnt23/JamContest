@@ -6,11 +6,8 @@ const theme = ref<Theme>((localStorage.getItem('theme') as Theme) || 'light');
 
 export function useTheme() {
   const setTheme = (newTheme: Theme) => {
-    console.log('[theme.ts] setTheme called with:', newTheme);
     theme.value = newTheme;
     localStorage.setItem('theme', newTheme);
-    
-    console.log('[theme.ts] theme.value:', theme.value, 'html class:', document.documentElement.className);
     
     // Update DOM
     if (newTheme === 'dark') {

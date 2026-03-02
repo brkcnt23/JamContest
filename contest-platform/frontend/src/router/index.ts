@@ -252,20 +252,32 @@ const router = createRouter({
 router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore();
 
-  // Eğer token var ama user yüklenmemişse bekle
-  if (authStore.isAuthenticated && !authStore.user) {
+  // Initialize auth state on first route and await it
+  if (!authStore._initialized) {
+    await authStore.initAuth();
+  }
+
+  // If token exists but user not loaded, fetch user
+  if (authStore.token && !authStore.user) {
     await authStore.fetchUser();
   }
 
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {
     next('/login');
-  } else if (to.meta.requiresJury && !authStore.isJury) {
-    next('/');
-  } else if (to.meta.requiresAdmin && !authStore.isAdmin) {
-    next('/');
-  } else {
-    next();
+    return;
   }
+  
+  if (to.meta.requiresJury && !authStore.isJury) {
+    next('/');
+    return;
+  }
+  
+  if (to.meta.requiresAdmin && !authStore.isAdmin) {
+    next('/');
+    return;
+  }
+  
+  next();
 });
 
 export default router;

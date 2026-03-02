@@ -56,14 +56,17 @@ const navigateTo = (path: string) => {
   closeDropdown();
 };
 
-const handleLogout = () => {
-  authStore.logout();
+const handleLogout = async () => {
+  const { showToast } = await import('@/composables/useToast');
+  await authStore.logout();
+  showToast('Logged out successfully', 'success', 3000);
   router.push('/');
   closeDropdown();
 };
 
 const setStatus = (status: 'online' | 'offline' | 'away') => {
   userStatus.value = status;
+  closeDropdown();
 };
 
 const statusColor = computed(() => {

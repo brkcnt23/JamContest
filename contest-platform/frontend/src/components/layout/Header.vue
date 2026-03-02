@@ -77,14 +77,17 @@
 import { useAuthStore } from '@/stores/auth';
 import { useRouter } from 'vue-router';
 import { useTheme } from '@/stores/theme';
+import { useToast } from '@/composables/useToast';
 import { Sun, Moon } from 'lucide-vue-next';
 
 const authStore = useAuthStore();
 const router = useRouter();
 const { theme, toggleTheme } = useTheme();
+const { showToast } = useToast();
 
-const handleLogout = () => {
-  authStore.logout();
+const handleLogout = async () => {
+  await authStore.logout();
+  showToast('Logged out successfully', 'success', 3000);
   router.push('/');
 };
 

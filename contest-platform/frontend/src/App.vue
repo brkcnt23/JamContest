@@ -61,10 +61,9 @@ const moveCursor = (e: MouseEvent) => {
   }
 };
 
-onMounted(() => {
-  if (authStore.token) {
-    authStore.fetchUser();
-  }
+onMounted(async () => {
+  // Initialize auth state from localStorage
+  await authStore.initAuth();
 
   // Sync server time
   syncTime();

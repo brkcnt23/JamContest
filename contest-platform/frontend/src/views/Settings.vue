@@ -95,7 +95,8 @@ async function revokeSession(id: string) {
 async function revokeAll() {
   try {
     await axios.post('/api/auth/logout-all');
-    authStore.logout();
+    await authStore.logout();
+    showToast('Logged out successfully', 'success', 3000);
     router.push('/login');
   } catch (e: any) {
     showToast(e.response?.data?.message || 'Hata', 'error');
@@ -146,8 +147,8 @@ async function deleteAccount() {
   try {
     await axios.delete('/api/auth/account', { data: { password: deleteForm.value.password } });
     authStore.logout();
-    router.push('/');
     showToast(t('settings.delete_account_success') || 'Account deleted', 'success');
+    router.push('/');
   } catch (e: any) {
     showToast(e.response?.data?.message || 'Error', 'error');
   } finally {

@@ -16,12 +16,13 @@ export const useAuthStore = defineStore('auth', {
     user: null as User | null,
     token: localStorage.getItem('token') || null,
     _interceptorsSet: false,
+    _initialized: false,
   }),
 
   getters: {
-    isAuthenticated: (state) => !!state.token,
-    isAdmin: (state) => ['ADMIN', 'SUPER_ADMIN'].includes(state.user?.globalRole || ''),
-    isJury: (state) => ['JURY', 'ADMIN', 'SUPER_ADMIN'].includes(state.user?.globalRole || ''),
+    isAuthenticated: (state) => !!state.token && !!state.user,
+    isAdmin: (state) => state.user?.globalRole === 'ADMIN' || state.user?.globalRole === 'SUPER_ADMIN',
+    isJury: (state) => state.user?.globalRole === 'JURY' || state.user?.globalRole === 'ADMIN' || state.user?.globalRole === 'SUPER_ADMIN',
     isSuperAdmin: (state) => state.user?.globalRole === 'SUPER_ADMIN',
   },
 
@@ -34,24 +35,52 @@ export const useAuthStore = defineStore('auth', {
 
     async login(email: string, password: string) {
       const { data } = await axios.post('/api/auth/login', { email, password });
-      this.token = data.token;
+      this.token = data.accessToken;
       this.user = data.user;
-      localStorage.setItem('token', data.token);
+      localStorage.setItem('token', data.accessToken);
+      localStorage.setItem('user', JSON.stringify(data.user));
+      axios.defaults.headers.common['Authorization'] = `Bearer ${data.accessToken}`;
       this.setupAxiosInterceptor();
+      return { success: true };
     },
 
     async fetchUser() {
       if (!this.token) return;
       try {
         const { data } = await axios.get('/api/auth/me');
-        this.user = data;
+        this.user = data.user || data;
+        localStorage.setItem('user', JSON.stringify(this.user));
       } catch (error) {
-        this.logout();
+        throw error;
       }
     },
 
     init() {
       this.setupAxiosInterceptor();
+      this.initAuth();
+    },
+
+    async initAuth() {
+      if (this._initialized) return;
+
+      const token = localStorage.getItem('token');
+      const userStr = localStorage.getItem('user');
+
+      if (token) {
+        this.token = token;
+        this.user = userStr ? JSON.parse(userStr) : null;
+        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        this.setupAxiosInterceptor();
+        
+        // Verify token is still valid
+        try {
+          await this.fetchUser();
+        } catch {
+          this.logout();
+        }
+      }
+      
+      this._initialized = true;
     },
 
     setupAxiosInterceptor() {
@@ -101,7 +130,10 @@ export const useAuthStore = defineStore('auth', {
       } catch {}
       this.token = null;
       this.user = null;
+      this._initialized = false;
       localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      delete axios.defaults.headers.common['Authorization'];
     },
   },
 });
