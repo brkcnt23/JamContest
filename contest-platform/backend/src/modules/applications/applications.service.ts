@@ -99,10 +99,6 @@ export class ApplicationsService {
 
     return { success: true, application };
   }
-    }
-
-    return { success: true, application };
-  }
 
   /**
    * Get user's application status
@@ -196,7 +192,7 @@ export class ApplicationsService {
     if (dto.approved) {
       await this.prisma.user.update({
         where: { id: application.userId },
-        data: { globalRole: 'JURY' },
+        data: { globalRole: { set: 'JURY' } },
       });
 
       // Send approval email
@@ -251,7 +247,7 @@ export class ApplicationsService {
     if (dto.approved) {
       await this.prisma.user.update({
         where: { id: application.userId },
-        data: { globalRole: 'ORGANIZER' },
+        data: { globalRole: { set: 'ORGANIZER' } },
       });
 
       // Send approval email

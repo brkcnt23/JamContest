@@ -3,10 +3,23 @@
   "version": "0.0.1",
   "scripts": {
     "start": "nest start",
-    "start:dev": "nest start --watch",
+    "start:dev": "dotenv -e .env.local -- nest start --watch",
+    "build": "nest build",
+    "type-check": "tsc --noEmit",
+    "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "prisma:migrate": "prisma migrate dev",
+    "prisma:migrate:deploy": "prisma migrate deploy",
     "prisma:generate": "prisma generate",
-    "prisma:seed": "node prisma/seed.js"  
+    "prisma:seed": "node prisma/seed.js",
+    "prisma:studio": "prisma studio",
+    "prisma:reset": "prisma migrate reset --force",
+    "local:migrate": "dotenv -e .env.local -- prisma migrate dev",
+    "local:generate": "dotenv -e .env.local -- prisma generate",
+    "local:seed:build": "tsc -p tsconfig.seed.json",
+    "local:seed": "dotenv -e .env.local -- node prisma/seed.js",
+    "local:studio": "dotenv -e .env.local -- prisma studio",
+    "local:reset": "dotenv -e .env.local -- prisma migrate reset --force",
+    "local:setup": "pnpm local:migrate && pnpm local:generate && pnpm local:seed:build && pnpm local:seed"
   },
   "dependencies": {
     "@nestjs/common": "^10.3.0",
@@ -41,6 +54,7 @@
     "@types/multer": "^1.4.11",
     "@types/node": "^20.11.0",
     "@types/passport-jwt": "^4.0.0",
+    "dotenv-cli": "^7.4.2",
     "prisma": "^5.22.0",
     "typescript": "^5.3.3"
   }

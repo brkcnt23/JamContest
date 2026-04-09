@@ -12,6 +12,10 @@ const app = createApp(App)
 const pinia = createPinia()
 app.use(pinia)
 
+// Configure axios base URL
+const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3071'
+axios.defaults.baseURL = apiUrl
+
 // Initialize auth store and setup interceptors before router
 const authStore = useAuthStore()
 authStore.init()

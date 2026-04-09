@@ -52,15 +52,15 @@ enum ApprovalMode {
 }
 
 enum BadgeType {
-  EARLY_ADOPTER       // İlk 100 user
-  ORGANIZER           // Organizatör olmuş
-  JURY_MEMBER         // Jüri olmuş
-  FIRST_WIN           // İlk yarışma kazanma
-  FIRST_SUBMISSION    // İlk eser teslimi
-  SOCIAL_SHARER       // Sosyal medya paylaşımı
-  TOP_3               // İlk 3'e girme
-  VETERAN             // 5+ yarışmaya katılım
-  CONTEST_CREATOR     // İlk yarışma oluşturma
+  EARLY_ADOPTER
+  ORGANIZER
+  JURY_MEMBER
+  FIRST_WIN
+  FIRST_SUBMISSION
+  SOCIAL_SHARER
+  TOP_3
+  VETERAN
+  CONTEST_CREATOR
 }
 
 // ==========================================
@@ -130,7 +130,7 @@ model User {
 }
 
 // ==========================================
-// CONTEST (Yarışma / Game Jam / Organizasyon)
+// CONTEST
 // ==========================================
 
 model Contest {
@@ -140,37 +140,31 @@ model Contest {
   slug              String        @unique
   coverImage        String?
 
-  // Yarışmayı oluşturan kişi
   createdById       String
   createdBy         User          @relation("ContestCreator", fields: [createdById], references: [id])
 
-  // Tarihler
   applicationStart  DateTime?
   applicationEnd    DateTime?
   topicRevealAt     DateTime?
   submissionStart   DateTime?
   submissionEnd     DateTime?
-  judgingStart       DateTime?
-  judgingEnd         DateTime?
+  judgingStart      DateTime?
+  judgingEnd        DateTime?
 
-  // İçerik
   topic             String?       @db.Text
   rules             String?       @db.Text
   prizes            String?       @db.Text
-  category          String?       // "game_jam", "contest", "hackathon" vs.
+  category          String?
 
-  // Ayarlar
   maxParticipants   Int?
-  approvalMode      ApprovalMode  @default(MANUAL)  // Katılımcı onay modu
+  approvalMode      ApprovalMode  @default(MANUAL)
   maxFileSize       Int           @default(209715200)
   allowedFormats    String[]
 
-  // Durum
   status            ContestStatus @default(DRAFT)
-  reviewStatus      String        @default("DRAFT") // DRAFT, REVIEW_PENDING, APPROVED, CANCELLED
+  reviewStatus      String        @default("DRAFT")
 
-  // Admin onay süreci
-  adminApprovalNote String?       @db.Text  // Red sebebi vs.
+  adminApprovalNote String?       @db.Text
 
   createdAt         DateTime      @default(now())
   updatedAt         DateTime      @updatedAt
@@ -191,10 +185,8 @@ model Contest {
 }
 
 // ==========================================
-// CONTEST MEMBER (Yarışma bazlı roller)
+// CONTEST MEMBER
 // ==========================================
-// Bir user aynı anda farklı yarışmalarda farklı rollere sahip olabilir.
-// X yarışmasında JURY, Y yarışmasında PARTICIPANT, Z yarışmasında ORGANIZER
 
 model ContestMember {
   id          String      @id @default(cuid())
@@ -203,7 +195,7 @@ model ContestMember {
   role        ContestRole
 
   assignedAt  DateTime    @default(now())
-  assignedBy  String?     // Kim atadı
+  assignedBy  String?
 
   user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   contest     Contest     @relation(fields: [contestId], references: [id], onDelete: Cascade)
@@ -214,14 +206,14 @@ model ContestMember {
 }
 
 // ==========================================
-// CONTEST APPROVAL (Admin onay süreci)
+// CONTEST APPROVAL
 // ==========================================
 
 model ContestApproval {
   id          String   @id @default(cuid())
   contestId   String
-  reviewerId  String   // Onaylayan/reddeden admin
-  decision    String   // "APPROVED" | "REJECTED"
+  reviewerId  String
+  decision    String
   note        String?  @db.Text
 
   createdAt   DateTime @default(now())
@@ -233,7 +225,7 @@ model ContestApproval {
 }
 
 // ==========================================
-// CONTEST APPLICATION (Katılım başvurusu)
+// CONTEST APPLICATION
 // ==========================================
 
 model ContestApplication {
@@ -254,7 +246,7 @@ model ContestApplication {
 }
 
 // ==========================================
-// SUBMISSION (Eser teslimi)
+// SUBMISSION
 // ==========================================
 
 model Submission {
@@ -264,7 +256,7 @@ model Submission {
 
   title       String
   description String?  @db.Text
-  link        String?  // Drive/Wetransfer linki
+  link        String?
 
   files       SubmissionFile[]
   scores      JuryScore[]
@@ -302,12 +294,8 @@ model SubmissionFile {
 }
 
 // ==========================================
-// JURY SCORE (Jüri oylama - izole & gizli)
+// JURY SCORE
 // ==========================================
-// - Her jüri sadece kendi oyunu verir, başkasının oyunu göremez
-// - Oy verdikten sonra tekrar göremez/değiştiremez
-// - Katılımcılar sadece toplam skoru görür, kimin ne verdiğini değil
-// - Sadece SUPER_ADMIN tüm detayı görebilir
 
 model JuryScore {
   id           String   @id @default(cuid())
@@ -316,7 +304,7 @@ model JuryScore {
 
   score        Float
   comment      String?  @db.Text
-  isLocked     Boolean  @default(true)  // Oy verildikten sonra kilitlenir
+  isLocked     Boolean  @default(true)
   archivedAt   DateTime?
   archivedBy   String?
 
@@ -330,7 +318,7 @@ model JuryScore {
 }
 
 // ==========================================
-// BADGE SİSTEMİ
+// BADGE SYSTEM
 // ==========================================
 
 model Badge {
@@ -338,8 +326,8 @@ model Badge {
   type        BadgeType @unique
   name        String
   description String
-  icon        String?   // emoji veya icon path
-  color       String?   // hex renk
+  icon        String?
+  color       String?
 
   users       UserBadge[]
 }
@@ -349,7 +337,7 @@ model UserBadge {
   userId    String
   badgeId   String
   earnedAt  DateTime @default(now())
-  metadata  Json?    // ek bilgi: hangi yarışma, kaçıncı user vs.
+  metadata  Json?
 
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   badge     Badge    @relation(fields: [badgeId], references: [id], onDelete: Cascade)
@@ -359,13 +347,13 @@ model UserBadge {
 }
 
 // ==========================================
-// SOCIAL SHARE (Paylaşım takibi - badge için)
+// SOCIAL SHARE
 // ==========================================
 
 model SocialShare {
   id        String   @id @default(cuid())
   userId    String
-  platform  String   // "twitter", "instagram", "linkedin" vs.
+  platform  String
   url       String?
   contestId String?
 
@@ -385,7 +373,7 @@ model UserBan {
   userId        String
   bannedBy      String
   reason        String   @db.Text
-  restrictions  String[] // ["APPLY", "POST", "SUBMIT", "CREATE_CONTEST"]
+  restrictions  String[]
   active        Boolean  @default(true)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
@@ -406,7 +394,7 @@ model JuryInvitation {
   contestId   String
   userId      String
   invitedBy   String
-  status      String    @default("PENDING") // PENDING, ACCEPTED, REJECTED, CANCELLED
+  status      String    @default("PENDING")
   cancelledAt DateTime?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
@@ -428,8 +416,8 @@ model ContestEditRequest {
   id          String   @id @default(cuid())
   contestId   String
   requestedBy String
-  changes     Json     // hangi alanlar değişecek
-  status      String   @default("PENDING") // PENDING, APPROVED, REJECTED
+  changes     Json
+  status      String   @default("PENDING")
   adminNote   String?  @db.Text
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -450,7 +438,7 @@ model ContestCancelRequest {
   contestId   String   @unique
   requestedBy String
   reason      String   @db.Text
-  status      String   @default("PENDING") // PENDING, APPROVED, REJECTED
+  status      String   @default("PENDING")
   adminNote   String?  @db.Text
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -501,10 +489,10 @@ model EmailVerification {
 model Notification {
   id        String   @id @default(cuid())
   userId    String
-  type      String   // JURY_INVITATION | CONTEST_APPROVED | CONTEST_REJECTED | SUBMISSION_RESULT | SYSTEM
+  type      String
   title     String
   body      String
-  link      String?  // frontend route
+  link      String?
   read      Boolean  @default(false)
   createdAt DateTime @default(now())
 
@@ -575,7 +563,7 @@ model Message {
 }
 
 // ==========================================
-// APPLICATIONS (Jury & Organizer)
+// APPLICATIONS
 // ==========================================
 
 model JuryApplication {
@@ -584,8 +572,8 @@ model JuryApplication {
   user      User     @relation("JuryApplicationUser", fields: [userId], references: [id], onDelete: Cascade)
   
   motivation String  @db.Text
-  status    String   @default("PENDING") // PENDING, APPROVED, REJECTED
-  reason    String?  @db.Text // Rejection reason
+  status    String   @default("PENDING")
+  reason    String?  @db.Text
   
   appliedAt    DateTime @default(now())
   reviewedAt   DateTime?
@@ -604,8 +592,8 @@ model OrganizerApplication {
   user      User     @relation("OrganizerApplicationUser", fields: [userId], references: [id], onDelete: Cascade)
   
   motivation String  @db.Text
-  status    String   @default("PENDING") // PENDING, APPROVED, REJECTED
-  reason    String?  @db.Text // Rejection reason
+  status    String   @default("PENDING")
+  reason    String?  @db.Text
   
   appliedAt    DateTime @default(now())
   reviewedAt   DateTime?
@@ -626,9 +614,9 @@ model JuryReview {
   juryId       String
   jury         User     @relation("juryReviews", fields: [juryId], references: [id], onDelete: Cascade)
   
-  score        Int      @default(0) // 0-100
+  score        Int      @default(0)
   comment      String?  @db.Text
-  status       String   @default("DRAFT") // DRAFT | SUBMITTED
+  status       String   @default("DRAFT")
   
   submittedAt  DateTime?
   createdAt    DateTime @default(now())
@@ -639,6 +627,10 @@ model JuryReview {
   @@index([submissionId])
   @@index([juryId])
 }
+
+// ==========================================
+// SOCIAL FEATURES
+// ==========================================
 
 model Follow {
   id          String   @id @default(cuid())

@@ -1,5 +1,38 @@
 {
-	"devDependencies": {
-		"concurrently": "^9.2.1"
-	}
+  "name": "jamcontest-monorepo",
+  "version": "1.0.0",
+  "description": "JamContest - Contest Platform Monorepo",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
+  },
+  "scripts": {
+    "install-all": "pnpm install -r",
+    "dev": "concurrently \"pnpm --filter backend run start:dev\" \"pnpm --filter frontend run dev\"",
+    "dev:backend": "pnpm --filter backend run start:dev",
+    "dev:frontend": "pnpm --filter frontend run dev",
+    "build": "pnpm --filter backend run build && pnpm --filter frontend run build",
+    "build:backend": "pnpm --filter backend run build",
+    "build:frontend": "pnpm --filter frontend run build",
+    "preview": "pnpm --filter frontend run preview",
+    "db:migrate": "pnpm --filter backend run prisma:migrate",
+    "db:migrate:deploy": "pnpm --filter backend run prisma:migrate:deploy",
+    "db:generate": "pnpm --filter backend run prisma:generate",
+    "db:seed": "pnpm --filter backend run prisma:seed",
+    "db:studio": "pnpm --filter backend run prisma:studio",
+    "db:reset": "pnpm --filter backend run prisma:reset",
+    "clean": "pnpm -r exec rm -rf node_modules dist .output 2>/dev/null ; rm -rf node_modules",
+    "lint": "pnpm --filter backend run lint || true",
+    "type-check": "pnpm --filter backend run type-check || true && pnpm --filter frontend run type-check || true",
+    "start:prod": "node contest-platform/backend/dist/main.js"
+  },
+  "workspaces": [
+    "contest-platform/backend",
+    "contest-platform/frontend"
+  ],
+  "devDependencies": {
+    "concurrently": "^9.0.0"
+  }
 }
