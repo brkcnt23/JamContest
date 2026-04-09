@@ -1,5 +1,23 @@
 {
   "home": {
+        "member_since": "Member Since",
+        "follow": "Follow",
+        "unfollow": "Unfollow",
+        "edit_profile": "Edit Profile",
+        "no_submissions": "No submissions yet",
+      "portfolio_page": {
+        "edit_profile": "Edit Profile",
+        "loading": "Loading profile...",
+        "portfolio": "Portfolio",
+        "about": "About",
+        "get_in_touch": "Get in Touch",
+        "email": "Email",
+        "instagram": "Instagram",
+        "twitter": "Twitter",
+        "behance": "Behance",
+        "artstation": "ArtStation"
+      },
+
     "hero_badge": "Welcome to JamContest",
     "hero_title": "Creativity Meets Fairness",
     "hero_description": "A transparent, non-profit platform for independent creators to showcase their work and compete fairly.",

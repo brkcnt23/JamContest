@@ -2,13 +2,15 @@
 import { ref, onMounted, computed } from 'vue';
 import { useRoute } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
+import { useI18n } from 'vue-i18n';
 import axios from 'axios';
 import ArtistHero from '@/components/ui/ArtistHero.vue';
 import FeaturedWorks from '@/components/ui/FeaturedWorks.vue';
-import ImageLightbox from '@/components/ui/ImageLightbox.vue'; // YENİ
+import ImageLightbox from '@/components/ui/ImageLightbox.vue';
 
 const route = useRoute();
 const authStore = useAuthStore();
+const { t } = useI18n();
 
 const userId = computed(() => String(route.params.id));
 
@@ -25,7 +27,7 @@ interface Profile {
   about: string;
   profileImageUrl: string;
   portfolioLink: string;
-  galleryArtworks: GalleryArtwork[]; // YENİ
+  galleryArtworks: GalleryArtwork[];
   contactEmail?: string;
   contactInstagram?: string;
   contactTwitter?: string;
@@ -65,7 +67,6 @@ onMounted(async () => {
   loading.value = true;
   try {
     const { data } = await axios.get(`/api/users/${userId.value}/profile`);
-    
     profile.value = {
       ...data,
       socialLinks: {
@@ -74,10 +75,10 @@ onMounted(async () => {
         behance: data.contactBehance,
         artstation: data.contactArtStation,
       },
-      works: [], // Mock - gerçekte API'den gelecek
+      works: [],
     };
   } catch (err: any) {
-    error.value = err.response?.data?.message || 'Failed to load profile';
+    error.value = err.response?.data?.message || t('errors.something_went_wrong');
   } finally {
     loading.value = false;
   }
@@ -87,7 +88,7 @@ onMounted(async () => {
 <template>
   <div class="user-profile-blank-layout">
     <div v-if="loading" class="min-h-screen flex items-center justify-center bg-[hsl(var(--background))]">
-      <p class="text-[hsl(var(--muted-foreground))]">Loading profile...</p>
+      <p class="text-[hsl(var(--muted-foreground))]">{{ t('portfolio_page.loading') }}</p>
     </div>
 
     <div v-else-if="error" class="min-h-screen flex items-center justify-center bg-[hsl(var(--background))]">
@@ -96,12 +97,15 @@ onMounted(async () => {
 
     <div v-else-if="profile" class="bg-[hsl(var(--background))]">
       <!-- Edit Button -->
-      <div class="max-w-screen-2xl mx-auto px-4 pt-8 flex justify-end" v-if="authStore.user && authStore.user.id === profile.userId">
+      <div
+        v-if="authStore.user && authStore.user.id === profile.userId"
+        class="max-w-screen-2xl mx-auto px-4 pt-8 flex justify-end"
+      >
         <button
           class="px-4 py-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-[hsl(var(--foreground))] hover:bg-[hsl(var(--muted))] transition-colors font-semibold"
           @click="$router.push(`/user/${profile.userId}/edit`)"
         >
-          Edit Profile
+          {{ t('portfolio_page.edit_profile') }}
         </button>
       </div>
 
@@ -111,26 +115,26 @@ onMounted(async () => {
         :tagline="profile.tagline"
         :description="profile.bio"
         :profile-image="profile.profileImageUrl"
-        :gallery-images="profile.galleryArtworks.map(a => a.url)" 
+        :gallery-images="profile.galleryArtworks.map(a => a.url)"
         :social-links="profile.socialLinks || {}"
         :portfolio-link="profile.portfolioLink"
         :profile-user-id="profile.userId"
       />
 
-      <!-- Portfolio Grid - WITH LIGHTBOX -->
+      <!-- Portfolio Grid -->
       <section id="portfolio" class="py-24 px-6 bg-[hsl(var(--background))] scroll-mt-20">
         <div class="max-w-screen-2xl mx-auto">
-          <h2 class="text-4xl font-bold mb-12 text-center">Portfolio</h2>
-          
+          <h2 class="text-4xl font-bold mb-12 text-center">{{ t('portfolio_page.portfolio') }}</h2>
+
           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div 
-              v-for="(artwork, idx) in profile.galleryArtworks" 
+            <div
+              v-for="(artwork, idx) in profile.galleryArtworks"
               :key="idx"
               class="portfolio-item"
               @click="openLightbox(artwork)"
             >
-              <img 
-                :src="artwork.url" 
+              <img
+                :src="artwork.url"
                 :alt="artwork.title"
                 class="portfolio-image"
               />
@@ -143,13 +147,13 @@ onMounted(async () => {
       </section>
 
       <!-- About Section -->
-      <section 
-        v-if="profile.about" 
-        id="about" 
+      <section
+        v-if="profile.about"
+        id="about"
         class="py-24 px-6 bg-[hsl(var(--muted))] scroll-mt-20"
       >
         <div class="max-w-4xl mx-auto">
-          <h2 class="text-4xl font-bold mb-8 text-center">About</h2>
+          <h2 class="text-4xl font-bold mb-8 text-center">{{ t('portfolio_page.about') }}</h2>
           <div class="prose prose-lg max-w-none text-[hsl(var(--foreground))]">
             <p class="whitespace-pre-line">{{ profile.about }}</p>
           </div>
@@ -157,52 +161,52 @@ onMounted(async () => {
       </section>
 
       <!-- Contact Section -->
-      <section 
-        id="contact" 
+      <section
+        id="contact"
         class="py-24 px-6 bg-[hsl(var(--background))] scroll-mt-20"
       >
         <div class="max-w-4xl mx-auto text-center">
-          <h2 class="text-4xl font-bold mb-8">Get in Touch</h2>
-          
+          <h2 class="text-4xl font-bold mb-8">{{ t('portfolio_page.get_in_touch') }}</h2>
+
           <div class="flex flex-wrap justify-center gap-6 mt-8">
-            <a 
+            <a
               v-if="profile.contactEmail"
               :href="`mailto:${profile.contactEmail}`"
               class="contact-link"
             >
-              Email
+              {{ t('portfolio_page.email') }}
             </a>
-            <a 
+            <a
               v-if="profile.contactInstagram"
               :href="`https://instagram.com/${profile.contactInstagram.replace('@', '')}`"
               target="_blank"
               class="contact-link"
             >
-              Instagram
+              {{ t('portfolio_page.instagram') }}
             </a>
-            <a 
+            <a
               v-if="profile.contactTwitter"
               :href="`https://twitter.com/${profile.contactTwitter.replace('@', '')}`"
               target="_blank"
               class="contact-link"
             >
-              Twitter
+              {{ t('portfolio_page.twitter') }}
             </a>
-            <a 
+            <a
               v-if="profile.contactBehance"
               :href="profile.contactBehance"
               target="_blank"
               class="contact-link"
             >
-              Behance
+              {{ t('portfolio_page.behance') }}
             </a>
-            <a 
+            <a
               v-if="profile.contactArtStation"
               :href="profile.contactArtStation"
               target="_blank"
               class="contact-link"
             >
-              ArtStation
+              {{ t('portfolio_page.artstation') }}
             </a>
           </div>
         </div>

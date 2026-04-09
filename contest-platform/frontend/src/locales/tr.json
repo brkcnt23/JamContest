@@ -1,5 +1,24 @@
 {
   "home": {
+      "website": "Website",
+      "member_since": "Üye Olduğu Tarih",
+      "follow": "Takip Et",
+      "unfollow": "Takipten Çık",
+      "edit_profile": "Profili Düzenle",
+      "no_submissions": "Henüz gönderim yok",
+      "no_contests": "Henüz yarışma oluşturulmadı"
+    },
+    "portfolio_page": {
+      "edit_profile": "Profili Düzenle",
+      "loading": "Profil yükleniyor...",
+      "portfolio": "Portföy",
+      "about": "Hakkında",
+      "get_in_touch": "İletişime Geç",
+      "email": "E-posta",
+      "instagram": "Instagram",
+      "twitter": "Twitter",
+      "behance": "Behance",
+      "artstation": "ArtStation",
     "hero_badge": "JamContest'e Hoş Geldin",
     "hero_title": "Şeffaf, Adil, Bağımsız",
     "hero_description": "Bağımsız yaratıcıların çalışmalarını sergilemesi ve adil şekilde rekabet etmesi için tasarlanmış şeffaf, kâr amacı gütmeyen bir platform.",
@@ -328,19 +347,6 @@
     "governance": "Yönetim",
     "transparency": "Şeffaflık Raporu"
   },
-
-  "footer": {
-    "copyright": "© 2026 JamContest. Tüm hakları saklıdır.",
-    "about": "Hakkında",
-    "terms": "Şartlar",
-    "privacy": "Gizlilik",
-    "contact": "İletişim",
-    "language": "Dil",
-    "coc": "Davranış Kuralları",
-    "governance": "Yönetim",
-    "transparency": "Şeffaflık Raporu"
-  },
-
   "about": {
     "title": "JamContest Hakkında",
     "subtitle": "Yaratıcılar İçin Adil Bir Oyun Alanı",
@@ -586,8 +592,6 @@
     "jury_invitations_desc": "Bir yarışmaya jüri olarak davet edildiğinizde",
     "contest_updates": "Yarışma Güncellemeleri",
     "contest_updates_desc": "Takip ettiğiniz yarışmalar güncellendiğinde",
-    "submission_feedback": "Gönderim Geri Bildirimi",
-    "submission_feedback_desc": "Gönderimlerinize geri bildirim aldığınızda",
     "new_messages": "Yeni Mesajlar",
     "new_messages_desc": "Birisi size mesaj gönderdiğinde",
     "platform_news": "Platform Haberleri",

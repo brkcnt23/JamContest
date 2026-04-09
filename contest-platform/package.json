@@ -3,7 +3,7 @@
   "private": true,
   "version": "1.0.0",
   "scripts": {
-    "dev": "concurrently \"pnpm --filter frontend run dev\" \"pnpm --filter backend run start:dev\"",
+    "dev": "concurrently -n BACKEND,FRONTEND -c bgBlue,bgGreen \"pnpm --filter backend run start:dev\" \"pnpm --filter frontend run dev\"",
     "build": "pnpm --filter frontend run build && pnpm --filter backend run build"
   },
   "dependencies": {
@@ -11,5 +11,8 @@
     "@vueuse/motion": "^3.0.3",
     "lucide-vue-next": "^0.563.0",
     "sharp": "^0.34.5"
+  },
+  "devDependencies": {
+    "concurrently": "^9.0.0"
   }
 }

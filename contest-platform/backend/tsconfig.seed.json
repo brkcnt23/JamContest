@@ -12,5 +12,6 @@
     "sourceMap": true,
     "declaration": true
   },
-  "include": ["prisma/seed.ts"]
+  "files": ["prisma/seed.ts", "prisma/seed.social.ts"],
+  "exclude": []
 }

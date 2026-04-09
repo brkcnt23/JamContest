@@ -17,6 +17,7 @@
     "local:generate": "dotenv -e .env.local -- prisma generate",
     "local:seed:build": "tsc -p tsconfig.seed.json",
     "local:seed": "dotenv -e .env.local -- node prisma/seed.js",
+    "local:seed:social": "dotenv -e .env.local -- node prisma/seed.social.js",
     "local:studio": "dotenv -e .env.local -- prisma studio",
     "local:reset": "dotenv -e .env.local -- prisma migrate reset --force",
     "local:setup": "pnpm local:migrate && pnpm local:generate && pnpm local:seed:build && pnpm local:seed"
