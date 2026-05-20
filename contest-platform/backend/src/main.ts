@@ -2,11 +2,15 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
+import { createWinstonLogger } from './modules/logging/logger.config';
 import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, {
+    logger: createWinstonLogger(),
+    bufferLogs: true,
+  });
   app.setGlobalPrefix('api');
 
   const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';

@@ -20,6 +20,7 @@ import { ProjectsModule } from './modules/projects/projects.module';
 import { BadgesModule } from './modules/badges/badges.module';
 import { AppController } from './app.controller';
 import { TimeController } from './modules/time/time.controller';
+import { HealthController } from './modules/logging/health.controller';
 
 @Module({
   imports: [
@@ -58,7 +59,7 @@ import { TimeController } from './modules/time/time.controller';
     ProjectsModule,
     BadgesModule,
   ],
-  controllers: [AppController, TimeController],
+  controllers: [AppController, TimeController, HealthController],
   providers: [
     {
       provide: APP_GUARD,
