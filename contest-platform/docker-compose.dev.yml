@@ -1,0 +1,58 @@
+version: "3.8"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: contest-postgres-dev
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: contest
+      POSTGRES_PASSWORD: contest
+      POSTGRES_DB: contest_db
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata_dev:/var/lib/postgresql/data
+
+  backend:
+    image: node:20-alpine
+    container_name: contest-backend-dev
+    working_dir: /app
+    command: sh -c "corepack enable && pnpm install --filter backend && cd backend && npx dotenv -e .env.local -- nest start --watch"
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/backend/node_modules
+    environment:
+      DATABASE_URL: postgresql://contest:contest@postgres:5432/contest_db?schema=public
+      JWT_SECRET: dev-secret
+      PORT: 8000
+      NODE_ENV: development
+      FRONTEND_URL: http://localhost:5173
+      MAIL_HOST: sandbox.smtp.mailtrap.io
+      MAIL_PORT: 2525
+      MAIL_USER: dev
+      MAIL_PASS: dev
+      MAIL_FROM: noreply@jamcontest.com
+      UPLOAD_PATH: ./uploads
+    depends_on:
+      - postgres
+
+  frontend:
+    image: node:20-alpine
+    container_name: contest-frontend-dev
+    working_dir: /app
+    command: sh -c "corepack enable && pnpm install --filter frontend && cd frontend && npx vite --host 0.0.0.0"
+    ports:
+      - "5173:5173"
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/frontend/node_modules
+    depends_on:
+      - backend
+
+volumes:
+  pgdata_dev:
