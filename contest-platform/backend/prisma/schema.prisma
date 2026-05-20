@@ -17,6 +17,7 @@ enum GlobalRole {
   SUPER_ADMIN
   JURY
   ORGANIZER
+  COMPANY
 }
 
 enum ContestRole {

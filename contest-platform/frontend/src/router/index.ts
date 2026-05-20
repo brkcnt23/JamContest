@@ -58,6 +58,7 @@ const router = createRouter({
 
     // MONETIZATION
     { path: '/subscription', name: 'Subscription', component: () => import('@/views/Subscription.vue'), meta: { layout: 'dashboard', requiresAuth: true } },
+    { path: '/company', name: 'CompanyDashboard', component: () => import('@/views/CompanyDashboard.vue'), meta: { layout: 'dashboard', requiresAuth: true } },
     { path: '/jobs', name: 'Jobs', component: () => import('@/views/Jobs.vue'), meta: { layout: 'dashboard' } },
     { path: '/jobs/create', name: 'JobCreate', component: () => import('@/views/JobCreate.vue'), meta: { layout: 'dashboard', requiresAuth: true } },
     { path: '/projects', name: 'Projects', component: () => import('@/views/Projects.vue'), meta: { layout: 'dashboard' } },

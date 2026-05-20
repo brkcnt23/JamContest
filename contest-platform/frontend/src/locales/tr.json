@@ -196,6 +196,23 @@
     "create": "İlan Ver",
     "create_title": "İş İlanı Oluştur",
     "empty": "Henüz iş ilanı yok",
+    "apply": "Başvur",
+    "applications": "Başvurular",
+    "my_applications": "Başvurularım",
+    "no_applications": "Henüz başvuru yok",
+    "application_sent": "Başvurunuz gönderildi",
+    "apply_modal_title": "İşe Başvur",
+    "apply_message": "Başvuru Mesajı",
+    "apply_message_placeholder": "Kendinizi tanıtın, neden bu işe uygun olduğunuzu anlatın...",
+    "portfolio_link": "Portföy Linki",
+    "portfolio_link_placeholder": "https://...",
+    "view_applications": "Başvuruları Gör",
+    "questions": "Sorular",
+    "add_question": "Soru Ekle",
+    "status_PENDING": "Beklemede",
+    "status_REVIEWED": "İncelendi",
+    "status_ACCEPTED": "Kabul Edildi",
+    "status_REJECTED": "Reddedildi",
     "form": {
       "title": "Pozisyon",
       "title_placeholder": "örn. Kıdemli UI Tasarımcısı",
@@ -232,7 +249,22 @@
   },
 
   "social": {
-    "write_comment": "Yorum yaz..."
+    "write_comment": "Yorum yaz...",
+    "feed": "Sosyal",
+    "subtitle": "Topluluktan paylaşımlar",
+    "today": "Bugün",
+    "past": "Geçmiş",
+    "no_posts": "Henüz gönderi yok",
+    "first_post": "İlk paylaşımı sen yap!",
+    "create_post": "Gönderi Oluştur",
+    "create_post_title": "Yeni Gönderi",
+    "post_content_placeholder": "Ne paylaşmak istiyorsun?",
+    "post_image_placeholder": "Görsel URL'si (isteğe bağlı)",
+    "post_created": "Gönderiniz yayınlandı",
+    "remaining_posts": "kalan",
+    "unlimited": "Sınırsız",
+    "publish": "Paylaş",
+    "publishing": "Paylaşılıyor..."
   },
 
   "time": {
@@ -266,7 +298,12 @@
     "clear": "Temizle",
     "apply": "Uygula",
     "loading": "Yükleniyor...",
-    "all": "Tümü"
+    "all": "Tümü",
+    "send": "Gönder",
+    "sending": "Gönderiliyor...",
+    "add": "Ekle",
+    "select": "Seçiniz",
+    "filter": "Filtrele"
   },
 
   "users": {
@@ -343,7 +380,7 @@
     "panel": "Yönetici Paneli",
     "users": "Kullanıcılar",
     "contests": "Yarışmalar",
-    "submissions": "Gönderi",
+    "submissions": "Gönderiler",
     "reports": "Raporlar",
     "settings": "Ayarlar",
     "manage": "Yönet",
@@ -357,7 +394,35 @@
     "suspending": "Askıya alınıyor...",
     "pending_approval": "Onay Beklemede",
     "approved": "Onaylandı",
-    "rejected": "Reddedildi"
+    "rejected": "Reddedildi",
+    "applications": "Başvurular",
+    "user_bans": "Kullanıcı Yasakları",
+    "badges": "Rozetler"
+  },
+
+  "company": {
+    "section": "Şirket Paneli",
+    "marketplace": "Pazar",
+    "title": "Şirket Paneli",
+    "subtitle": "İş ilanlarınızı, projelerinizi ve başvuruları yönetin",
+    "my_jobs": "İş İlanlarım",
+    "my_projects": "Projelerim",
+    "my_sponsorships": "Sponsorluklarım",
+    "no_jobs": "Henüz iş ilanı oluşturmadınız",
+    "no_projects": "Henüz proje oluşturmadınız",
+    "applications_count": "başvuru",
+    "messages_count": "mesaj",
+    "view_applications": "Başvuruları Gör",
+    "view_messages": "Mesajları Gör",
+    "applications_for": "Başvuru:",
+    "messages_for": "Mesaj:",
+    "no_applications_yet": "Henüz başvuru yok",
+    "no_messages_yet": "Henüz mesaj yok",
+    "portfolio": "Portföy"
+  },
+
+  "sidebar": {
+    "more": "Daha Fazla"
   },
 
   "errors": {

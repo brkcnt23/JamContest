@@ -186,6 +186,23 @@
     "create": "Post a Job",
     "create_title": "Create Job Listing",
     "empty": "No job listings yet",
+    "apply": "Apply",
+    "applications": "Applications",
+    "my_applications": "My Applications",
+    "no_applications": "No applications yet",
+    "application_sent": "Application submitted",
+    "apply_modal_title": "Apply for Job",
+    "apply_message": "Application Message",
+    "apply_message_placeholder": "Introduce yourself, explain why you're a good fit...",
+    "portfolio_link": "Portfolio Link",
+    "portfolio_link_placeholder": "https://...",
+    "view_applications": "View Applications",
+    "questions": "Questions",
+    "add_question": "Add Question",
+    "status_PENDING": "Pending",
+    "status_REVIEWED": "Reviewed",
+    "status_ACCEPTED": "Accepted",
+    "status_REJECTED": "Rejected",
     "form": {
       "title": "Position",
       "title_placeholder": "e.g. Senior UI Designer",
@@ -222,7 +239,22 @@
   },
 
   "social": {
-    "write_comment": "Write a comment..."
+    "write_comment": "Write a comment...",
+    "feed": "Feed",
+    "subtitle": "Posts from the community",
+    "today": "Today",
+    "past": "Past",
+    "no_posts": "No posts yet",
+    "first_post": "Be the first to share!",
+    "create_post": "Create Post",
+    "create_post_title": "New Post",
+    "post_content_placeholder": "What do you want to share?",
+    "post_image_placeholder": "Image URL (optional)",
+    "post_created": "Your post has been published",
+    "remaining_posts": "remaining",
+    "unlimited": "Unlimited",
+    "publish": "Publish",
+    "publishing": "Publishing..."
   },
 
   "time": {
@@ -256,7 +288,12 @@
     "clear": "Clear",
     "apply": "Apply",
     "loading": "Loading...",
-    "all": "All"
+    "all": "All",
+    "send": "Send",
+    "sending": "Sending...",
+    "add": "Add",
+    "select": "Select",
+    "filter": "Filter"
   },
 
   "users": {
@@ -347,7 +384,35 @@
     "suspending": "Suspending...",
     "pending_approval": "Pending Approval",
     "approved": "Approved",
-    "rejected": "Rejected"
+    "rejected": "Rejected",
+    "applications": "Applications",
+    "user_bans": "User Bans",
+    "badges": "Badges"
+  },
+
+  "company": {
+    "section": "Company Panel",
+    "marketplace": "Marketplace",
+    "title": "Company Panel",
+    "subtitle": "Manage your job listings, projects, and applications",
+    "my_jobs": "My Job Listings",
+    "my_projects": "My Projects",
+    "my_sponsorships": "My Sponsorships",
+    "no_jobs": "No job listings yet",
+    "no_projects": "No projects yet",
+    "applications_count": "applications",
+    "messages_count": "messages",
+    "view_applications": "View Applications",
+    "view_messages": "View Messages",
+    "applications_for": "Applications:",
+    "messages_for": "Messages:",
+    "no_applications_yet": "No applications yet",
+    "no_messages_yet": "No messages yet",
+    "portfolio": "Portfolio"
+  },
+
+  "sidebar": {
+    "more": "More"
   },
 
   "errors": {

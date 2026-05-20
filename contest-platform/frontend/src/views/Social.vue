@@ -60,7 +60,7 @@ async function createPost() {
     showCreateModal.value = false;
     await checkCanPost();
     await loadFeed();
-    showToast('Gönderiniz yayınlandı', 'success');
+    showToast($t('social.post_created'), 'success');
   } catch (e: any) { showToast(e.response?.data?.message || 'Hata', 'error'); }
   finally { creatingPost.value = false; }
 }
@@ -173,22 +173,22 @@ onMounted(() => { load(); checkCanPost(); });
     <!-- Header -->
     <div class="page-header">
       <div>
-        <h1 class="page-title">Feed</h1>
-        <p class="page-subtitle">Topluluktan paylaşımlar</p>
+        <h1 class="page-title">{{ $t('social.feed') }}</h1>
+        <p class="page-subtitle">{{ $t('social.subtitle') }}</p>
       </div>
       <div class="flex items-center gap-3">
         <button v-if="authStore.isAuthenticated" class="px-4 py-2 rounded-lg bg-[hsl(var(--brand))] text-white font-semibold text-sm hover:opacity-90 transition-opacity flex items-center gap-1.5"
           :disabled="canPostState && !canPostState.allowed" @click="showCreateModal = true">
-          <span>+</span> Gönderi Oluştur
+          <span>+</span> {{ $t('social.create_post') }}
         </button>
         <span v-if="canPostState && canPostState.remaining !== -1" class="text-xs text-[hsl(var(--muted-foreground))]">
-          {{ canPostState.remaining }} kalan
+          {{ canPostState.remaining }} {{ $t('social.remaining_posts') }}
         </span>
-        <span v-else-if="canPostState && canPostState.remaining === -1" class="text-xs text-green-400">Sınırsız</span>
+        <span v-else-if="canPostState && canPostState.remaining === -1" class="text-xs text-green-400">{{ $t('social.unlimited') }}</span>
       </div>
       <div class="tab-switcher">
-        <button :class="['tab-btn', tab === 'today' && 'tab-btn--active']" @click="switchTab('today')">Bugün</button>
-        <button :class="['tab-btn', tab === 'past' && 'tab-btn--active']" @click="switchTab('past')">Geçmiş</button>
+        <button :class="['tab-btn', tab === 'today' && 'tab-btn--active']" @click="switchTab('today')">{{ $t('social.today') }}</button>
+        <button :class="['tab-btn', tab === 'past' && 'tab-btn--active']" @click="switchTab('past')">{{ $t('social.past') }}</button>
       </div>
     </div>
 
@@ -199,8 +199,8 @@ onMounted(() => { load(); checkCanPost(); });
 
     <!-- Empty -->
     <div v-else-if="feed.length === 0" class="empty-state">
-      <p class="empty-title">Henüz gönderi yok</p>
-      <p class="empty-sub">İlk paylaşımı sen yap!</p>
+      <p class="empty-title">{{ $t('social.no_posts') }}</p>
+      <p class="empty-sub">{{ $t('social.first_post') }}</p>
     </div>
 
     <!-- Feed -->
@@ -317,26 +317,26 @@ onMounted(() => { load(); checkCanPost(); });
       <div v-if="showCreateModal" class="fixed inset-0 z-[300] flex items-center justify-center">
         <div class="absolute inset-0 bg-black/50" @click="showCreateModal = false"></div>
         <div class="relative bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-2xl w-full max-w-lg mx-4 p-6">
-          <h2 class="text-xl font-bold text-[hsl(var(--foreground))] mb-4">Yeni Gönderi</h2>
+          <h2 class="text-xl font-bold text-[hsl(var(--foreground))] mb-4">{{ $t('social.create_post_title') }}</h2>
           <div class="space-y-4">
             <div>
               <textarea v-model="newPostContent" rows="5" maxlength="2000"
                 class="w-full px-3 py-2 rounded-lg bg-[hsl(var(--background))] border border-[hsl(var(--border))] text-[hsl(var(--foreground))] text-sm resize-y focus:outline-none focus:border-[hsl(var(--brand))]"
-                placeholder="Ne paylaşmak istiyorsun?"></textarea>
+                :placeholder="$t('social.post_content_placeholder')"></textarea>
               <p class="text-xs text-[hsl(var(--muted-foreground))] mt-1 text-right">{{ newPostContent.length }}/2000</p>
             </div>
             <div>
               <input v-model="newPostImage" type="url"
                 class="w-full px-3 py-2 rounded-lg bg-[hsl(var(--background))] border border-[hsl(var(--border))] text-[hsl(var(--foreground))] text-sm focus:outline-none focus:border-[hsl(var(--brand))]"
-                placeholder="Görsel URL'si (isteğe bağlı)" />
+                :placeholder="$t('social.post_image_placeholder')" />
             </div>
           </div>
           <div class="flex items-center gap-3 mt-6">
             <button :disabled="creatingPost || !newPostContent.trim()"
               class="px-5 py-2.5 rounded-lg bg-[hsl(var(--brand))] text-white font-semibold text-sm hover:opacity-90 disabled:opacity-50 transition-opacity"
-              @click="createPost">{{ creatingPost ? 'Paylaşılıyor...' : 'Paylaş' }}</button>
+              @click="createPost">{{ creatingPost ? $t('social.publishing') : $t('social.publish') }}</button>
             <button class="px-5 py-2.5 rounded-lg border border-[hsl(var(--border))] text-[hsl(var(--foreground))] text-sm hover:bg-[hsl(var(--muted))] transition-colors"
-              @click="showCreateModal = false">İptal</button>
+              @click="showCreateModal = false">{{ $t('common.cancel') }}</button>
           </div>
         </div>
       </div>

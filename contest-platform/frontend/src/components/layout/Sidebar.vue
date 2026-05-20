@@ -79,9 +79,13 @@ const juryLinks = computed(() => [
 
 const adminLinks = computed(() => [
   { name: t('admin.panel'), icon: LayoutDashboard, path: '/admin' },
-  { name: 'Applications', icon: FileCheck, path: '/admin/applications' },
-  { name: 'User Bans', icon: Ban, path: '/admin/bans' },
-  { name: 'Badges', icon: Award, path: '/admin/badges' },
+  { name: t('admin.applications'), icon: FileCheck, path: '/admin/applications' },
+  { name: t('admin.user_bans'), icon: Ban, path: '/admin/bans' },
+  { name: t('admin.badges'), icon: Award, path: '/admin/badges' },
+]);
+
+const companyLinks = computed(() => [
+  { name: t('company.title'), icon: LayoutDashboard, path: '/company' },
 ]);
 
 const marketplaceLinks = computed(() => [
@@ -131,9 +135,19 @@ const navigateTo = (path: string) => router.push(path);
         </a>
       </div>
 
+      <!-- COMPANY -->
+      <div v-if="!isCollapsed && authStore.isAuthenticated" class="nav-group">
+        <p class="nav-group-title">{{ t('company.section') }}</p>
+        <a v-for="link in companyLinks" :key="link.path" @click="navigateTo(link.path)"
+          :class="['nav-item small', isActive(link.path) && 'active']">
+          <component :is="link.icon" class="nav-icon" />
+          <span class="nav-label">{{ link.name }}</span>
+        </a>
+      </div>
+
       <!-- MARKETPLACE -->
       <div v-if="!isCollapsed" class="nav-group">
-        <p class="nav-group-title">Marketplace</p>
+        <p class="nav-group-title">{{ t('company.marketplace') }}</p>
         <a v-for="link in marketplaceLinks" :key="link.path" @click="navigateTo(link.path)"
           :class="['nav-item small', isActive(link.path) && 'active']">
           <component :is="link.icon" class="nav-icon" />
@@ -143,7 +157,7 @@ const navigateTo = (path: string) => router.push(path);
 
       <!-- MINOR LINKS -->
       <div v-if="!isCollapsed" class="nav-group">
-        <p class="nav-group-title">More</p>
+        <p class="nav-group-title">{{ t('sidebar.more') }}</p>
         <a v-for="link in minorLinks" :key="link.path" @click="navigateTo(link.path)"
           :class="['nav-item small', isActive(link.path) && 'active']">
           <component :is="link.icon" class="nav-icon" />
@@ -153,7 +167,7 @@ const navigateTo = (path: string) => router.push(path);
 
       <!-- ORGANIZER SECTION — sadece organizatör veya admin -->
       <div v-if="isOrganizer && !isCollapsed" class="nav-group">
-        <p class="nav-group-title">Organizer</p>
+        <p class="nav-group-title">{{ t('navigation.organizer') }}</p>
         <a v-for="link in organizerLinks" :key="link.path" @click="navigateTo(link.path)"
           :class="['nav-item small', isActive(link.path) && 'active']">
           <component :is="link.icon" class="nav-icon" />
@@ -163,7 +177,7 @@ const navigateTo = (path: string) => router.push(path);
 
       <!-- JURY SECTION — sadece jüri veya admin -->
       <div v-if="isJury && !isCollapsed" class="nav-group">
-        <p class="nav-group-title">Jury</p>
+        <p class="nav-group-title">{{ t('navigation.jury') }}</p>
         <a v-for="link in juryLinks" :key="link.path" @click="navigateTo(link.path)"
           :class="['nav-item small', isActive(link.path) && 'active']">
           <component :is="link.icon" class="nav-icon" />
@@ -173,7 +187,7 @@ const navigateTo = (path: string) => router.push(path);
 
       <!-- ADMIN SECTION — sadece admin/super_admin -->
       <div v-if="isAdmin && !isCollapsed" class="nav-group">
-        <p class="nav-group-title">Admin</p>
+        <p class="nav-group-title">{{ t('navigation.admin') }}</p>
         <a v-for="link in adminLinks" :key="link.path" @click="navigateTo(link.path)"
           :class="['nav-item small', isActive(link.path) && 'active']">
           <component :is="link.icon" class="nav-icon" />
