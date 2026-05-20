@@ -71,15 +71,17 @@ export const useAuthStore = defineStore('auth', {
         this.user = userStr ? JSON.parse(userStr) : null;
         axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
         this.setupAxiosInterceptor();
-        
+
         // Verify token is still valid
         try {
           await this.fetchUser();
         } catch {
           this.logout();
+          this._initialized = true;
+          return;
         }
       }
-      
+
       this._initialized = true;
     },
 

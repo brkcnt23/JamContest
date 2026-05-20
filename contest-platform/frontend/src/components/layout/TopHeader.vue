@@ -127,8 +127,18 @@ const statusLabel = computed(() => {
         <span v-if="notificationCount > 0" class="badge">{{ notificationCount }}</span>
       </button>
 
-      <!-- Avatar Dropdown -->
-      <div class="avatar-container">
+      <!-- Login / Register buttons (unauthenticated) -->
+      <div v-if="!authStore.isAuthenticated" class="flex items-center gap-3">
+        <button @click="navigateTo('/login')" class="px-4 py-2 text-sm font-semibold rounded-lg border border-[hsl(var(--border))] text-[hsl(var(--foreground))] hover:bg-[hsl(var(--muted))] transition-colors">
+          Log In
+        </button>
+        <button @click="navigateTo('/register')" class="px-4 py-2 text-sm font-semibold rounded-lg bg-[hsl(var(--brand))] text-white hover:bg-[hsl(var(--brand))]/80 transition-colors">
+          Sign Up
+        </button>
+      </div>
+
+      <!-- Avatar Dropdown (authenticated) -->
+      <div v-else class="avatar-container">
         <button @click="toggleDropdown" class="avatar-btn">
           <div class="avatar-wrapper">
             <img v-if="authStore.user?.avatar" :src="authStore.user.avatar" alt="Avatar" class="avatar-img" />

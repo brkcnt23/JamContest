@@ -7,7 +7,13 @@ async function bootstrap() {
 	app.setGlobalPrefix('api');
 	app.enableCors({ credentials: true, origin: true });
 	app.use(cookieParser());
-	
+
+	// Root → frontend'e yönlendir
+	const httpAdapter = app.getHttpAdapter();
+	httpAdapter.get('/', (_req: any, res: any) => {
+	  res.redirect(process.env.FRONTEND_URL || 'http://localhost:8080');
+	});
+
 	const port = process.env.PORT || 8000;
 	await app.listen(port);
 	console.log(`🚀 Backend running on http://localhost:${port}`);
