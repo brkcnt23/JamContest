@@ -1,0 +1,60 @@
+@startuml GameJam Use Cases
+left to right direction
+skinparam packageStyle rectangle
+
+actor Kullanıcı as User
+actor Admin as Admin
+actor Jüri as Jury
+actor Organizatör as Org
+actor Şirket as Company
+
+rectangle "Game Jam Platform" {
+  usecase "Kayıt Ol / Giriş Yap" as UC1
+  usecase "Email Doğrula" as UC2
+  usecase "Profilini Yönet" as UC3
+
+  usecase "Yarışma Oluştur" as UC4
+  usecase "Yarışmaya Katıl" as UC5
+  usecase "Proje Gönder" as UC6
+
+  usecase "Jüri Başvurusu Yap" as UC7
+  usecase "Başvuruyu Değerlendir" as UC8
+  usecase "Gönderiyi Puanla" as UC9
+
+  usecase "Sosyal Paylaşım Yap" as UC10
+  usecase "Beğen / Yorum Yap" as UC11
+  usecase "Takip Et" as UC12
+
+  usecase "İş İlanı Yayınla" as UC13
+  usecase "İşe Başvur" as UC14
+  usecase "Proje İlanı Oluştur" as UC15
+
+  usecase "Abonelik Satın Al" as UC16
+  usecase "Rozet Kazan" as UC17
+}
+
+User --> UC1
+User --> UC2
+User --> UC3
+User --> UC5
+User --> UC6
+User --> UC7
+User --> UC10
+User --> UC11
+User --> UC12
+User --> UC14
+User --> UC15
+User --> UC16
+
+Admin --> UC8
+
+Jury --> UC9
+
+Org --> UC4
+
+Company --> UC13
+
+UC16 ..> UC14 : "başvuru limitini artırır"
+UC16 ..> UC15 : "proje ilanı hakkı"
+
+@enduml

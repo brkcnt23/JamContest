@@ -1,0 +1,53 @@
+@startuml GameJam Platform
+!theme plain
+
+title Game Jam Platform — System Architecture
+
+actor "Kullanıcı" as User
+actor "Admin" as Admin
+actor "Jüri" as Jury
+actor "Şirket" as Company
+
+package "Frontend (Vue 3 + Vite)" as Frontend {
+  component "SPA\n(Tailwind + Pinia)" as SPA
+}
+
+package "Backend (NestJS)" as Backend {
+  component "Auth\n(JWT + Refresh)" as Auth
+  component "Contests\n(CRUD + Status)" as Contests
+  component "Applications\n(Jury/Organizer)" as Apps
+  component "Jury\n(Review + Score)" as JuryM
+  component "Jobs\n(Listing + Apply)" as Jobs
+  component "Projects\n(Team + Messages)" as Projects
+  component "Social\n(Feed + Likes)" as Social
+  component "Payments\n(Checkout + History)" as Pay
+  component "Subscription\n(Tiers + Limits)" as Sub
+}
+
+database "PostgreSQL 16" as DB {
+  collections "30+ Models" as Models
+}
+
+cloud "Nginx\n(Reverse Proxy)" as Nginx
+cloud "Stripe\n(Payments)" as Stripe
+cloud "SendGrid\n(Email)" as Email
+
+User --> SPA
+Admin --> SPA
+Jury --> SPA
+Company --> SPA
+SPA --> Nginx
+Nginx --> Backend
+Backend --> DB
+Backend --> Stripe
+Backend --> Email
+
+note right of Backend
+  Swagger docs: /api/docs
+  Health check: /api/health
+  Winston logging
+  Rate limiting (Throttler)
+  Helmet security headers
+end note
+
+@enduml
