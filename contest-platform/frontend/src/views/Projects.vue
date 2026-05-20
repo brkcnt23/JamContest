@@ -17,18 +17,20 @@
 
     <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
       <div v-for="project in projects" :key="project.id"
-        class="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] hover:border-[hsl(var(--brand))]/30 transition-colors overflow-hidden">
+        class="flex flex-col rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] hover:border-[hsl(var(--brand))]/30 transition-colors overflow-hidden">
         <div v-if="project.images.length" class="w-full h-40 overflow-hidden bg-[hsl(var(--muted))]">
           <img :src="project.images[0]" class="w-full h-40 object-cover" />
         </div>
-        <div class="p-5">
-          <h3 class="text-lg font-semibold text-[hsl(var(--foreground))] mb-1">{{ project.title }}</h3>
-          <p class="text-sm text-[hsl(var(--muted-foreground))] line-clamp-2 mb-3">{{ project.description }}</p>
-          <div class="flex flex-wrap gap-1.5 mb-3">
-            <span v-for="tag in project.tags" :key="tag"
-              class="px-2 py-0.5 text-xs rounded-full bg-[hsl(var(--brand))]/10 text-[hsl(var(--brand))] border border-[hsl(var(--brand))]/20">{{ tag }}</span>
+        <div class="p-5 flex flex-col flex-1">
+          <div class="flex-1">
+            <h3 class="text-lg font-semibold text-[hsl(var(--foreground))] mb-1">{{ project.title }}</h3>
+            <p class="text-sm text-[hsl(var(--muted-foreground))] line-clamp-2 mb-3">{{ project.description }}</p>
+            <div class="flex flex-wrap gap-1.5 mb-3">
+              <span v-for="tag in project.tags" :key="tag"
+                class="px-2 py-0.5 text-xs rounded-full bg-[hsl(var(--brand))]/10 text-[hsl(var(--brand))] border border-[hsl(var(--brand))]/20">{{ tag }}</span>
+            </div>
           </div>
-          <div class="flex items-center justify-between">
+          <div class="flex items-center justify-between mb-3">
             <span v-if="project.price" class="text-lg font-bold text-[hsl(var(--brand))]">₺{{ project.price }}</span>
             <span v-else class="text-sm text-[hsl(var(--muted-foreground))]">Ücretsiz</span>
             <div class="flex items-center gap-2 text-xs text-[hsl(var(--muted-foreground))]">
@@ -37,10 +39,10 @@
             </div>
           </div>
           <button v-if="authStore.isAuthenticated && authStore.user?.id !== project.userId"
-            class="mt-3 w-full py-2 rounded-lg bg-[hsl(var(--brand))]/10 text-[hsl(var(--brand))] text-sm font-semibold hover:bg-[hsl(var(--brand))]/20 transition-colors"
+            class="w-full py-2 rounded-lg bg-[hsl(var(--brand))]/10 text-[hsl(var(--brand))] text-sm font-semibold hover:bg-[hsl(var(--brand))]/20 transition-colors"
             @click="openContactModal(project)">Mesaj Gönder</button>
           <button v-if="authStore.user?.id === project.userId"
-            class="mt-3 w-full py-2 rounded-lg border border-[hsl(var(--border))] text-[hsl(var(--foreground))] text-sm font-semibold hover:bg-[hsl(var(--muted))] transition-colors"
+            class="w-full py-2 rounded-lg border border-[hsl(var(--border))] text-[hsl(var(--foreground))] text-sm font-semibold hover:bg-[hsl(var(--muted))] transition-colors"
             @click="openMessages(project)">Gelen Mesajlar</button>
         </div>
       </div>
