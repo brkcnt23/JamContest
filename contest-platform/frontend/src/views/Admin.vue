@@ -471,8 +471,10 @@ const filteredUsers = computed(() => {
 onMounted(async () => {
   const tabParam = route.query.tab as string;
   if (tabParam) activeTab.value = tabParam;
-  
-  await Promise.all([loadUsers(), loadContests(), loadRequests(), loadBans()]);
+
+  const loaders = [loadUsers(), loadContests(), loadRequests()];
+  if (authStore.isSuperAdmin) loaders.push(loadBans());
+  await Promise.all(loaders);
 });
 
 watch(() => route.query.tab, (tab) => {
@@ -651,18 +653,14 @@ async function loadRequests() {
     ]);
     editRequests.value = editRes.data;
     cancelRequests.value = cancelRes.data;
-  } catch (e: any) {
-    showToast('Taleptemler yüklenemedi', 'error');
-  }
+  } catch { /* silent */ }
 }
 
 async function loadBans() {
   try {
     const { data } = await axios.get('/api/users/bans/active');
     activeBans.value = data;
-  } catch (e: any) {
-    showToast('Banlar yüklenemedi', 'error');
-  }
+  } catch { /* silent */ }
 }
 
 async function approveEditRequest(requestId: string) {

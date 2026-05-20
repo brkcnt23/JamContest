@@ -168,6 +168,8 @@ model User {
   transactions            Transaction[]
   jobListings             JobListing[]
   projectListings         ProjectListing[]
+  jobApplications         JobApplication[]
+  projectApplications     ProjectApplication[]
   sponsorSponsorships     SponsorSponsorship[]
   juryPayments            JuryPayment[]
 
@@ -914,9 +916,65 @@ model JobListing {
   updatedAt    DateTime @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  questions    JobQuestion[]
+  applications JobApplication[]
 
   @@index([userId])
   @@index([active, createdAt])
+}
+
+// ==========================================
+// JOB APPLICATION SYSTEM
+// ==========================================
+
+model JobQuestion {
+  id           String   @id @default(cuid())
+  jobListingId String
+  text         String   @db.Text
+  type         String   @default("TEXT") // TEXT | NUMBER | CHOICE
+  options      String[] @default([])
+  order        Int      @default(0)
+  createdAt    DateTime @default(now())
+
+  jobListing JobListing           @relation(fields: [jobListingId], references: [id], onDelete: Cascade)
+  answers    JobApplicationAnswer[]
+
+  @@index([jobListingId])
+}
+
+model JobApplication {
+  id            String   @id @default(cuid())
+  jobListingId  String
+  userId        String
+  message       String?  @db.Text
+  portfolioLink String?
+  status        String   @default("PENDING") // PENDING | REVIEWED | ACCEPTED | REJECTED
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  jobListing JobListing            @relation(fields: [jobListingId], references: [id], onDelete: Cascade)
+  user       User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  answers    JobApplicationAnswer[]
+
+  @@unique([jobListingId, userId])
+  @@index([jobListingId])
+  @@index([userId])
+  @@index([status])
+}
+
+model JobApplicationAnswer {
+  id            String         @id @default(cuid())
+  applicationId String
+  questionId    String
+  value         String         @db.Text
+  createdAt     DateTime       @default(now())
+
+  application JobApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  question    JobQuestion    @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@unique([applicationId, questionId])
+  @@index([applicationId])
+  @@index([questionId])
 }
 
 model ProjectListing {
@@ -932,9 +990,30 @@ model ProjectListing {
   updatedAt   DateTime @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  applications ProjectApplication[]
 
   @@index([userId])
   @@index([active, createdAt])
+}
+
+// ==========================================
+// PROJECT APPLICATION SYSTEM
+// ==========================================
+
+model ProjectApplication {
+  id               String   @id @default(cuid())
+  projectListingId String
+  userId           String
+  message          String   @db.Text
+  portfolioLink    String?
+  contactEmail     String?
+  createdAt        DateTime @default(now())
+
+  projectListing ProjectListing @relation(fields: [projectListingId], references: [id], onDelete: Cascade)
+  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([projectListingId])
+  @@index([userId])
 }
 
 // ==========================================

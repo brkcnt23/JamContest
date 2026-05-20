@@ -93,6 +93,53 @@ export class ProjectsService {
       data: { active: false },
     });
   }
+
+  // ==================== CONTACT / MESSAGES ====================
+
+  async contact(userId: string, projectId: string, data: { message: string; portfolioLink?: string; contactEmail?: string }) {
+    if (!data.message?.trim()) throw new BadRequestException('Mesaj boş olamaz');
+
+    const project = await this.prisma.projectListing.findUnique({ where: { id: projectId } });
+    if (!project) throw new NotFoundException('Proje bulunamadı');
+    if (project.userId === userId) throw new ForbiddenException('Kendi projenize mesaj gönderemezsiniz');
+
+    return this.prisma.projectApplication.create({
+      data: {
+        projectListingId: projectId,
+        userId,
+        message: data.message.trim(),
+        portfolioLink: data.portfolioLink || null,
+        contactEmail: data.contactEmail || null,
+      },
+      include: {
+        user: { select: { id: true, username: true, displayName: true, avatar: true } },
+      },
+    });
+  }
+
+  async getMessages(userId: string, projectId: string) {
+    const project = await this.prisma.projectListing.findUnique({ where: { id: projectId } });
+    if (!project) throw new NotFoundException('Proje bulunamadı');
+    if (project.userId !== userId) throw new ForbiddenException('Sadece kendi projenizin mesajlarını görebilirsiniz');
+
+    return this.prisma.projectApplication.findMany({
+      where: { projectListingId: projectId },
+      include: {
+        user: { select: { id: true, username: true, displayName: true, avatar: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  async getMyContacts(userId: string) {
+    return this.prisma.projectApplication.findMany({
+      where: { userId },
+      include: {
+        projectListing: { select: { id: true, title: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
 }
 
 interface CreateProjectDto {

@@ -3,6 +3,7 @@ import { ref, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import { useI18n } from 'vue-i18n';
+import { showToast } from '@/composables/useToast';
 import axios from 'axios';
 import { MessageCircle, ThumbsUp, ThumbsDown, Trash2, Send } from 'lucide-vue-next';
 
@@ -34,6 +35,35 @@ interface Post {
 const feed = ref<Post[]>([]);
 const loading = ref(true);
 const tab = ref<'today' | 'past'>('today');
+
+// Post creation
+const showCreateModal = ref(false);
+const newPostContent = ref('');
+const newPostImage = ref('');
+const creatingPost = ref(false);
+const canPostState = ref<{ allowed: boolean; remaining: number; bannedUntil?: string } | null>(null);
+
+async function checkCanPost() {
+  if (!authStore.isAuthenticated) return;
+  try {
+    const { data } = await axios.get('/api/social/posts/can-post');
+    canPostState.value = data;
+  } catch { canPostState.value = null; }
+}
+
+async function createPost() {
+  if (!newPostContent.value.trim()) return;
+  creatingPost.value = true;
+  try {
+    await axios.post('/api/social/posts', { content: newPostContent.value, imageUrl: newPostImage.value || undefined });
+    newPostContent.value = ''; newPostImage.value = '';
+    showCreateModal.value = false;
+    await checkCanPost();
+    await loadFeed();
+    showToast('Gönderiniz yayınlandı', 'success');
+  } catch (e: any) { showToast(e.response?.data?.message || 'Hata', 'error'); }
+  finally { creatingPost.value = false; }
+}
 
 // Comments state
 const expandedComments = ref<Set<string>>(new Set());
@@ -135,7 +165,7 @@ function switchTab(t: 'today' | 'past') {
   load();
 }
 
-onMounted(() => load());
+onMounted(() => { load(); checkCanPost(); });
 </script>
 
 <template>
@@ -145,6 +175,16 @@ onMounted(() => load());
       <div>
         <h1 class="page-title">Feed</h1>
         <p class="page-subtitle">Topluluktan paylaşımlar</p>
+      </div>
+      <div class="flex items-center gap-3">
+        <button v-if="authStore.isAuthenticated" class="px-4 py-2 rounded-lg bg-[hsl(var(--brand))] text-white font-semibold text-sm hover:opacity-90 transition-opacity flex items-center gap-1.5"
+          :disabled="canPostState && !canPostState.allowed" @click="showCreateModal = true">
+          <span>+</span> Gönderi Oluştur
+        </button>
+        <span v-if="canPostState && canPostState.remaining !== -1" class="text-xs text-[hsl(var(--muted-foreground))]">
+          {{ canPostState.remaining }} kalan
+        </span>
+        <span v-else-if="canPostState && canPostState.remaining === -1" class="text-xs text-green-400">Sınırsız</span>
       </div>
       <div class="tab-switcher">
         <button :class="['tab-btn', tab === 'today' && 'tab-btn--active']" @click="switchTab('today')">Bugün</button>
@@ -269,6 +309,36 @@ onMounted(() => load());
       <div v-if="showLightbox" class="lightbox-backdrop" @click="closeLightbox">
         <img :src="lightboxImage" class="lightbox-img" @click.stop />
         <button class="lightbox-close" @click="closeLightbox">&times;</button>
+      </div>
+    </Teleport>
+
+    <!-- Create Post Modal -->
+    <Teleport to="body">
+      <div v-if="showCreateModal" class="fixed inset-0 z-[300] flex items-center justify-center">
+        <div class="absolute inset-0 bg-black/50" @click="showCreateModal = false"></div>
+        <div class="relative bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-2xl w-full max-w-lg mx-4 p-6">
+          <h2 class="text-xl font-bold text-[hsl(var(--foreground))] mb-4">Yeni Gönderi</h2>
+          <div class="space-y-4">
+            <div>
+              <textarea v-model="newPostContent" rows="5" maxlength="2000"
+                class="w-full px-3 py-2 rounded-lg bg-[hsl(var(--background))] border border-[hsl(var(--border))] text-[hsl(var(--foreground))] text-sm resize-y focus:outline-none focus:border-[hsl(var(--brand))]"
+                placeholder="Ne paylaşmak istiyorsun?"></textarea>
+              <p class="text-xs text-[hsl(var(--muted-foreground))] mt-1 text-right">{{ newPostContent.length }}/2000</p>
+            </div>
+            <div>
+              <input v-model="newPostImage" type="url"
+                class="w-full px-3 py-2 rounded-lg bg-[hsl(var(--background))] border border-[hsl(var(--border))] text-[hsl(var(--foreground))] text-sm focus:outline-none focus:border-[hsl(var(--brand))]"
+                placeholder="Görsel URL'si (isteğe bağlı)" />
+            </div>
+          </div>
+          <div class="flex items-center gap-3 mt-6">
+            <button :disabled="creatingPost || !newPostContent.trim()"
+              class="px-5 py-2.5 rounded-lg bg-[hsl(var(--brand))] text-white font-semibold text-sm hover:opacity-90 disabled:opacity-50 transition-opacity"
+              @click="createPost">{{ creatingPost ? 'Paylaşılıyor...' : 'Paylaş' }}</button>
+            <button class="px-5 py-2.5 rounded-lg border border-[hsl(var(--border))] text-[hsl(var(--foreground))] text-sm hover:bg-[hsl(var(--muted))] transition-colors"
+              @click="showCreateModal = false">İptal</button>
+          </div>
+        </div>
       </div>
     </Teleport>
   </div>

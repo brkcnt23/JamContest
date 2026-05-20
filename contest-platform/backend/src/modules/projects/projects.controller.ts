@@ -26,6 +26,12 @@ export class ProjectsController {
     );
   }
 
+  @Get('my-contacts')
+  @UseGuards(JwtAuthGuard)
+  async getMyContacts(@Request() req: any) {
+    return this.projectsService.getMyContacts(req.user.id);
+  }
+
   @Get(':id')
   async findById(@Param('id') id: string) {
     return this.projectsService.findById(id);
@@ -46,4 +52,23 @@ export class ProjectsController {
   async delete(@Param('id') id: string, @Request() req: any) {
     return this.projectsService.delete(req.user.id, id);
   }
+
+  // ==================== CONTACT / MESSAGES ====================
+
+  @Post(':id/contact')
+  @UseGuards(JwtAuthGuard)
+  async contact(
+    @Param('id') id: string,
+    @Body() body: { message: string; portfolioLink?: string; contactEmail?: string },
+    @Request() req: any,
+  ) {
+    return this.projectsService.contact(req.user.id, id, body);
+  }
+
+  @Get(':id/messages')
+  @UseGuards(JwtAuthGuard)
+  async getMessages(@Param('id') id: string, @Request() req: any) {
+    return this.projectsService.getMessages(req.user.id, id);
+  }
+
 }
