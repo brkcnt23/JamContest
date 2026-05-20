@@ -77,7 +77,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { useToast } from '@/composables/useToast';
 import { Trophy, Users, FileText, Share2, Mail } from 'lucide-vue-next';
 
@@ -96,7 +96,6 @@ interface ContestCardProps {
   };
 }
 
-defineProps<ContestCardProps>();
 const { showToast } = useToast();
 const linkCopied = ref(false);
 
@@ -147,7 +146,6 @@ function shareViaEmail() {
 }
 
 const { contest } = defineProps<ContestCardProps>();
-const { computed } = require('vue');
 </script>
 
 <style scoped>

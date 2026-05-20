@@ -12,6 +12,6 @@
     "sourceMap": true,
     "declaration": true
   },
-  "files": ["prisma/seed.ts", "prisma/seed.social.ts"],
+  "files": ["prisma/seed.ts", "prisma/seed.social.ts", "prisma/reset-passwords.ts", "prisma/seed.sample-data.ts", "prisma/seed.post-comments.ts"],
   "exclude": []
 }

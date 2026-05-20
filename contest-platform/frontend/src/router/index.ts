@@ -56,6 +56,13 @@ const router = createRouter({
     { path: '/help', name: 'Help', component: () => import('@/views/Help.vue'), meta: { layout: 'dashboard' } },
     { path: '/docs', name: 'Docs', component: () => import('@/views/Docs.vue'), meta: { layout: 'dashboard' } },
 
+    // MONETIZATION
+    { path: '/subscription', name: 'Subscription', component: () => import('@/views/Subscription.vue'), meta: { layout: 'dashboard', requiresAuth: true } },
+    { path: '/jobs', name: 'Jobs', component: () => import('@/views/Jobs.vue'), meta: { layout: 'dashboard' } },
+    { path: '/jobs/create', name: 'JobCreate', component: () => import('@/views/JobCreate.vue'), meta: { layout: 'dashboard', requiresAuth: true } },
+    { path: '/projects', name: 'Projects', component: () => import('@/views/Projects.vue'), meta: { layout: 'dashboard' } },
+    { path: '/projects/create', name: 'ProjectCreate', component: () => import('@/views/ProjectCreate.vue'), meta: { layout: 'dashboard', requiresAuth: true } },
+
     // JURY
     { path: '/jury-invitations', name: 'JuryInvitations', component: () => import('@/views/JuryInvitations.vue'), meta: { layout: 'dashboard', requiresAuth: true } },
     { path: '/organizer/contests', name: 'OrganizerDashboard', component: () => import('@/views/OrganizerDashboard.vue'), meta: { layout: 'dashboard', requiresAuth: true } },
@@ -67,6 +74,7 @@ const router = createRouter({
     { path: '/admin/contests', name: 'AdminContests', component: () => import('@/views/AdminContests.vue'), meta: { layout: 'dashboard', requiresAuth: true, requiresAdmin: true } },
     { path: '/admin/applications', name: 'AdminApplications', component: () => import('@/views/AdminApplications.vue'), meta: { layout: 'dashboard', requiresAuth: true, requiresAdmin: true } },
     { path: '/admin/bans', name: 'AdminUserBans', component: () => import('@/views/AdminUserBans.vue'), meta: { layout: 'dashboard', requiresAuth: true, requiresAdmin: true } },
+    { path: '/admin/badges', name: 'AdminBadges', component: () => import('@/views/AdminBadges.vue'), meta: { layout: 'dashboard', requiresAuth: true, requiresAdmin: true } },
     { path: '/admin', name: 'Admin', component: () => import('@/views/Admin.vue'), meta: { layout: 'dashboard', requiresAuth: true, requiresAdmin: true } },
   ],
 });

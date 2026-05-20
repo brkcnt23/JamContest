@@ -1,4 +1,4 @@
-import { PrismaClient, GlobalRole, ContestStatus, ApprovalMode, BadgeType } from '@prisma/client';
+import { PrismaClient, GlobalRole, ContestStatus, ApprovalMode, SubscriptionTier } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
@@ -22,6 +22,12 @@ const avatar = (seed: string) =>
 async function main() {
   console.log('🌱 Seeding database...');
   const hash = await bcrypt.hash(PASS, 10);
+
+  // Var olan tüm seed kullanıcılarının şifresini güncelle (idempotent)
+  await prisma.user.updateMany({
+    where: { email: { contains: '@jamcontest.com' } },
+    data: { passwordHash: hash, emailVerified: true },
+  });
 
   // ─── USERS ────────────────────────────────────────────────────────────────
 
@@ -193,19 +199,19 @@ async function main() {
 
   // ─── BADGES ───────────────────────────────────────────────────────────────
 
-  const badgeDefs: { type: BadgeType; name: string; description: string; icon: string; color: string }[] = [
-    { type: BadgeType.EARLY_ADOPTER,    name: 'Erken Benimseyici',  description: 'Platformun ilk kullanıcılarından biri.',         icon: '🚀', color: '#F59E0B' },
-    { type: BadgeType.ORGANIZER,        name: 'Organizatör',        description: 'En az bir yarışma düzenledi.',                   icon: '🎪', color: '#8B5CF6' },
-    { type: BadgeType.JURY_MEMBER,      name: 'Jüri Üyesi',         description: 'Bir yarışmada jüri olarak görev yaptı.',         icon: '⚖️', color: '#3B82F6' },
-    { type: BadgeType.FIRST_WIN,        name: 'İlk Zafer',          description: 'İlk birinciliğini kazandı.',                     icon: '🥇', color: '#EAB308' },
-    { type: BadgeType.FIRST_SUBMISSION, name: 'İlk Adım',           description: 'İlk başvurusunu tamamladı.',                     icon: '📤', color: '#10B981' },
-    { type: BadgeType.SOCIAL_SHARER,    name: 'Sosyal Paylaşımcı',  description: 'Bir yarışmayı sosyal medyada paylaştı.',         icon: '📢', color: '#EC4899' },
-    { type: BadgeType.TOP_3,            name: 'İlk 3',              description: 'Bir yarışmada ilk 3\'e girdi.',                  icon: '🏆', color: '#F97316' },
-    { type: BadgeType.VETERAN,          name: 'Veteran',            description: '5\'ten fazla yarışmaya katıldı.',                icon: '🎖️', color: '#6366F1' },
-    { type: BadgeType.CONTEST_CREATOR,  name: 'İçerik Üreticisi',   description: '3 veya daha fazla yarışma düzenledi.',           icon: '✨', color: '#14B8A6' },
+  const badgeDefs: { type: string; name: string; description: string; icon: string; color: string }[] = [
+    { type: 'EARLY_ADOPTER',    name: 'Erken Benimseyici',  description: 'Platformun ilk kullanıcılarından biri.',         icon: '🚀', color: '#F59E0B' },
+    { type: 'ORGANIZER',        name: 'Organizatör',        description: 'En az bir yarışma düzenledi.',                   icon: '🎪', color: '#8B5CF6' },
+    { type: 'JURY_MEMBER',      name: 'Jüri Üyesi',         description: 'Bir yarışmada jüri olarak görev yaptı.',         icon: '⚖️', color: '#3B82F6' },
+    { type: 'FIRST_WIN',        name: 'İlk Zafer',          description: 'İlk birinciliğini kazandı.',                     icon: '🥇', color: '#EAB308' },
+    { type: 'FIRST_SUBMISSION', name: 'İlk Adım',           description: 'İlk başvurusunu tamamladı.',                     icon: '📤', color: '#10B981' },
+    { type: 'SOCIAL_SHARER',    name: 'Sosyal Paylaşımcı',  description: 'Bir yarışmayı sosyal medyada paylaştı.',         icon: '📢', color: '#EC4899' },
+    { type: 'TOP_3',            name: 'İlk 3',              description: 'Bir yarışmada ilk 3\'e girdi.',                  icon: '🏆', color: '#F97316' },
+    { type: 'VETERAN',          name: 'Veteran',            description: '5\'ten fazla yarışmaya katıldı.',                icon: '🎖️', color: '#6366F1' },
+    { type: 'CONTENT_CREATOR',  name: 'İçerik Üreticisi',   description: '3 veya daha fazla yarışma düzenledi.',           icon: '✨', color: '#14B8A6' },
   ];
 
-  const badges: Record<BadgeType, any> = {} as any;
+  const badges: Record<string, any> = {} as any;
   for (const b of badgeDefs) {
     badges[b.type] = await prisma.badge.upsert({
       where: { type: b.type },
@@ -215,30 +221,50 @@ async function main() {
   }
   console.log('✅ Badges created');
 
+  // ─── SUBSCRIPTION PLANS ────────────────────────────────────────────────────
+
+  const plans = [
+    { tier: SubscriptionTier.FREE,                   name: 'Free',           price: 0,   dailyPostLimit: 1,   projectListingLimit: 0,  jobListingLimit: 0,  featuredProfile: false, badgeType: null },
+    { tier: SubscriptionTier.CREATOR,                name: 'Creator',        price: 59,  dailyPostLimit: 5,   projectListingLimit: 10, jobListingLimit: 5,  featuredProfile: false, badgeType: 'CREATOR' },
+    { tier: SubscriptionTier.PRO,                    name: 'Pro',            price: 149, dailyPostLimit: -1,  projectListingLimit: 50, jobListingLimit: -1, featuredProfile: true,  badgeType: 'PRO' },
+    { tier: SubscriptionTier.RECRUITER_BASIC,        name: 'Recruiter Basic',     price: 349,  dailyPostLimit: 0,  projectListingLimit: 0,  jobListingLimit: 5,  featuredProfile: false, badgeType: null },
+    { tier: SubscriptionTier.RECRUITER_PRO,          name: 'Recruiter Pro',       price: 799,  dailyPostLimit: 0,  projectListingLimit: 0,  jobListingLimit: 20, featuredProfile: true,  badgeType: null },
+    { tier: SubscriptionTier.RECRUITER_ENTERPRISE,   name: 'Recruiter Enterprise', price: 2499, dailyPostLimit: 0,  projectListingLimit: 0,  jobListingLimit: -1, featuredProfile: true,  badgeType: null },
+  ];
+
+  for (const p of plans) {
+    await prisma.subscriptionPlan.upsert({
+      where: { tier: p.tier },
+      update: {},
+      create: p,
+    });
+  }
+  console.log('✅ Subscription plans created');
+
   // ─── USER BADGES ──────────────────────────────────────────────────────────
 
-  const awardBadge = async (userId: string, type: BadgeType) =>
+  const awardBadge = async (userId: string, type: string) =>
     prisma.userBadge.upsert({
       where: { userId_badgeId: { userId, badgeId: badges[type].id } },
       update: {},
       create: { userId, badgeId: badges[type].id },
     });
 
-  await awardBadge(organizer1.id, BadgeType.EARLY_ADOPTER);
-  await awardBadge(organizer1.id, BadgeType.ORGANIZER);
-  await awardBadge(organizer1.id, BadgeType.CONTEST_CREATOR);
-  await awardBadge(organizer2.id, BadgeType.ORGANIZER);
-  await awardBadge(jury1.id, BadgeType.JURY_MEMBER);
-  await awardBadge(jury2.id, BadgeType.JURY_MEMBER);
-  await awardBadge(jury3.id, BadgeType.JURY_MEMBER);
-  await awardBadge(participants[0].id, BadgeType.FIRST_SUBMISSION);
-  await awardBadge(participants[0].id, BadgeType.TOP_3);
-  await awardBadge(participants[0].id, BadgeType.FIRST_WIN);
-  await awardBadge(participants[1].id, BadgeType.FIRST_SUBMISSION);
-  await awardBadge(participants[1].id, BadgeType.TOP_3);
-  await awardBadge(participants[2].id, BadgeType.FIRST_SUBMISSION);
-  await awardBadge(participants[3].id, BadgeType.FIRST_SUBMISSION);
-  await awardBadge(participants[4].id, BadgeType.VETERAN);
+  await awardBadge(organizer1.id, 'EARLY_ADOPTER');
+  await awardBadge(organizer1.id, 'ORGANIZER');
+  await awardBadge(organizer1.id, 'CONTENT_CREATOR');
+  await awardBadge(organizer2.id, 'ORGANIZER');
+  await awardBadge(jury1.id, 'JURY_MEMBER');
+  await awardBadge(jury2.id, 'JURY_MEMBER');
+  await awardBadge(jury3.id, 'JURY_MEMBER');
+  await awardBadge(participants[0].id, 'FIRST_SUBMISSION');
+  await awardBadge(participants[0].id, 'TOP_3');
+  await awardBadge(participants[0].id, 'FIRST_WIN');
+  await awardBadge(participants[1].id, 'FIRST_SUBMISSION');
+  await awardBadge(participants[1].id, 'TOP_3');
+  await awardBadge(participants[2].id, 'FIRST_SUBMISSION');
+  await awardBadge(participants[3].id, 'FIRST_SUBMISSION');
+  await awardBadge(participants[4].id, 'VETERAN');
 
   console.log('✅ User badges awarded');
 

@@ -47,7 +47,10 @@
     "cancel": "Cancel",
     "delete": "Delete",
     "edit": "Edit",
-    "close": "Close"
+    "close": "Close",
+    "loading": "Loading...",
+    "saving": "Saving...",
+    "load_more": "Load More"
   },
 
   "contests": {
@@ -151,7 +154,82 @@
     "search": "Search",
     "theme": "Theme",
     "language": "Language",
-    "logout": "Sign Out"
+    "logout": "Sign Out",
+    "jobs": "Jobs",
+    "projects": "Projects",
+    "subscription": "Subscription"
+  },
+
+  "subscription": {
+    "title": "Subscription Plans",
+    "subtitle": "Choose the plan that fits your needs",
+    "currentPlan": "Your Current Plan",
+    "free": "Free",
+    "current": "Current Plan",
+    "default": "Default",
+    "upgrade": "Upgrade",
+    "cancel": "Cancel",
+    "active": "Active",
+    "status": "Status",
+    "month": "month",
+    "free_price": "Free",
+    "unlimited": "Unlimited",
+    "posts_per_day": "posts/day",
+    "job_listings": "job listings/mo",
+    "project_listings": "project listings/mo",
+    "featured_profile": "Featured profile"
+  },
+
+  "jobs": {
+    "title": "Job Listings",
+    "subtitle": "Job opportunities for creative talent",
+    "create": "Post a Job",
+    "create_title": "Create Job Listing",
+    "empty": "No job listings yet",
+    "form": {
+      "title": "Position",
+      "title_placeholder": "e.g. Senior UI Designer",
+      "description": "Job Description",
+      "desc_placeholder": "Describe the role, requirements, and responsibilities...",
+      "company": "Company",
+      "location": "Location",
+      "salary": "Salary Range",
+      "contact_email": "Contact Email",
+      "tags": "Tags",
+      "tags_placeholder": "Press Enter to add tags",
+      "remote": "Remote work",
+      "submit": "Publish Listing"
+    }
+  },
+
+  "projects": {
+    "title": "Project Marketplace",
+    "subtitle": "Discover, buy, and sell creative projects",
+    "create": "Add Project",
+    "create_title": "Create Project",
+    "empty": "No projects yet",
+    "free": "Free",
+    "form": {
+      "title": "Project Name",
+      "title_placeholder": "e.g. Pixel Art Character Pack",
+      "description": "Description",
+      "desc_placeholder": "Describe your project details...",
+      "price": "Price (TRY)",
+      "tags": "Tags",
+      "tags_placeholder": "Press Enter to add tags",
+      "submit": "Publish Project"
+    }
+  },
+
+  "social": {
+    "write_comment": "Write a comment..."
+  },
+
+  "time": {
+    "now": "now",
+    "min": "m",
+    "hour": "h",
+    "day": "d"
   },
 
   "forms": {

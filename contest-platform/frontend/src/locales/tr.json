@@ -57,7 +57,10 @@
     "cancel": "İptal",
     "delete": "Sil",
     "edit": "Düzenle",
-    "close": "Kapat"
+    "close": "Kapat",
+    "loading": "Yükleniyor...",
+    "saving": "Kaydediliyor...",
+    "load_more": "Daha Fazla Yükle"
   },
 
   "contests": {
@@ -161,7 +164,82 @@
     "search": "Ara",
     "theme": "Tema",
     "language": "Dil",
-    "logout": "Çıkış Yap"
+    "logout": "Çıkış Yap",
+    "jobs": "İş İlanları",
+    "projects": "Projeler",
+    "subscription": "Abonelik"
+  },
+
+  "subscription": {
+    "title": "Abonelik Planları",
+    "subtitle": "İhtiyacınıza en uygun planı seçin",
+    "currentPlan": "Mevcut Planınız",
+    "free": "Ücretsiz",
+    "current": "Mevcut Plan",
+    "default": "Varsayılan",
+    "upgrade": "Yükselt",
+    "cancel": "İptal Et",
+    "active": "Aktif",
+    "status": "Durum",
+    "month": "ay",
+    "free_price": "Ücretsiz",
+    "unlimited": "Sınırsız",
+    "posts_per_day": "günlük post",
+    "job_listings": "iş ilanı/ay",
+    "project_listings": "proje ilanı/ay",
+    "featured_profile": "Öne çıkan profil"
+  },
+
+  "jobs": {
+    "title": "İş İlanları",
+    "subtitle": "Yaratıcı yetenekler için iş fırsatları",
+    "create": "İlan Ver",
+    "create_title": "İş İlanı Oluştur",
+    "empty": "Henüz iş ilanı yok",
+    "form": {
+      "title": "Pozisyon",
+      "title_placeholder": "örn. Kıdemli UI Tasarımcısı",
+      "description": "İş Tanımı",
+      "desc_placeholder": "İşin detaylarını, aranan nitelikleri açıklayın...",
+      "company": "Şirket",
+      "location": "Konum",
+      "salary": "Maaş Aralığı",
+      "contact_email": "İletişim E-posta",
+      "tags": "Etiketler",
+      "tags_placeholder": "Etiket eklemek için Enter'a basın",
+      "remote": "Uzaktan çalışma",
+      "submit": "İlanı Yayınla"
+    }
+  },
+
+  "projects": {
+    "title": "Proje Pazarı",
+    "subtitle": "Yaratıcı projeleri keşfedin, satın alın veya satın",
+    "create": "Proje Ekle",
+    "create_title": "Proje Oluştur",
+    "empty": "Henüz proje ilanı yok",
+    "free": "Ücretsiz",
+    "form": {
+      "title": "Proje Adı",
+      "title_placeholder": "örn. Pixel Art Karakter Paketi",
+      "description": "Açıklama",
+      "desc_placeholder": "Projenizin detaylarını açıklayın...",
+      "price": "Fiyat (TL)",
+      "tags": "Etiketler",
+      "tags_placeholder": "Etiket eklemek için Enter'a basın",
+      "submit": "Projeyi Yayınla"
+    }
+  },
+
+  "social": {
+    "write_comment": "Yorum yaz..."
+  },
+
+  "time": {
+    "now": "şimdi",
+    "min": "dk",
+    "hour": "sa",
+    "day": "g"
   },
 
   "forms": {

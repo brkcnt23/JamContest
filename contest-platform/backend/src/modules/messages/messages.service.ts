@@ -5,6 +5,23 @@ import { PrismaService } from '../prisma/prisma.service';
 export class MessagesService {
   constructor(private prisma: PrismaService) {}
 
+  private async isPro(userId: string): Promise<boolean> {
+    const proBadge = await this.prisma.badge.findUnique({ where: { type: 'PRO' } });
+    if (!proBadge) return false;
+    const ub = await this.prisma.userBadge.findUnique({
+      where: { userId_badgeId: { userId, badgeId: proBadge.id } },
+    });
+    return !!ub;
+  }
+
+  private async isMutualFollow(userA: string, userB: string): Promise<boolean> {
+    const [ab, ba] = await Promise.all([
+      this.prisma.follow.findUnique({ where: { followerId_followingId: { followerId: userA, followingId: userB } } }),
+      this.prisma.follow.findUnique({ where: { followerId_followingId: { followerId: userB, followingId: userA } } }),
+    ]);
+    return !!ab && !!ba;
+  }
+
   async getMyConversations(userId: string) {
     const conversations = await this.prisma.conversationParticipant.findMany({
       where: { userId },
@@ -19,9 +36,7 @@ export class MessagesService {
             participants: {
               where: { userId: { not: userId } },
               include: {
-                user: {
-                  select: { id: true, username: true, displayName: true, avatar: true },
-                },
+                user: { select: { id: true, username: true, displayName: true, avatar: true } },
               },
             },
           },
@@ -30,7 +45,7 @@ export class MessagesService {
       orderBy: { conversation: { updatedAt: 'desc' } },
     });
 
-    return conversations.map((cp) => ({
+    return conversations.map(cp => ({
       conversationId: cp.conversation.id,
       updatedAt: cp.conversation.updatedAt,
       lastMessage: cp.conversation.messages[0] || null,
@@ -39,18 +54,29 @@ export class MessagesService {
   }
 
   async getOrCreateConversation(userId: string, otherUserId: string) {
-    if (userId === otherUserId) {
-      throw new BadRequestException('Kendi kendinize mesaj gönderemezsiniz');
+    if (userId === otherUserId) throw new BadRequestException('Kendi kendinize mesaj gönderemezsiniz');
+
+    // Mesajlaşma izni: mutual follow VEYA pro
+    const [mutual, pro] = await Promise.all([
+      this.isMutualFollow(userId, otherUserId),
+      this.isPro(userId),
+    ]);
+
+    if (!mutual && !pro) {
+      // Admin/SuperAdmin her zaman mesaj atabilir
+      const sender = await this.prisma.user.findUnique({ where: { id: userId }, select: { globalRole: true } });
+      if (!sender || !['ADMIN', 'SUPER_ADMIN'].includes(sender.globalRole)) {
+        throw new ForbiddenException('Mesaj atabilmek için karşılıklı takip etmeniz gerekiyor. Pro üyelik ile herkese mesaj atabilirsiniz.');
+      }
     }
 
-    // Find existing conversation
+    // Mevcut konuşmayı bul
     const existing = await this.prisma.conversation.findFirst({
       where: {
-        participants: {
-          every: {
-            userId: { in: [userId, otherUserId] },
-          },
-        },
+        AND: [
+          { participants: { some: { userId } } },
+          { participants: { some: { userId: otherUserId } } },
+        ],
       },
       include: { participants: true },
     });
@@ -59,14 +85,10 @@ export class MessagesService {
       return { conversationId: existing.id };
     }
 
-    // Create new conversation
     const conversation = await this.prisma.conversation.create({
       data: {
         participants: {
-          create: [
-            { userId },
-            { userId: otherUserId },
-          ],
+          create: [{ userId }, { userId: otherUserId }],
         },
       },
     });
@@ -75,24 +97,14 @@ export class MessagesService {
   }
 
   async getMessages(userId: string, conversationId: string, take = 50, skip = 0) {
-    // Verify user is participant
     const participant = await this.prisma.conversationParticipant.findUnique({
-      where: {
-        conversationId_userId: { conversationId, userId },
-      },
+      where: { conversationId_userId: { conversationId, userId } },
     });
-
-    if (!participant) {
-      throw new ForbiddenException('Bu sohbete erişim yetkiniz yok');
-    }
+    if (!participant) throw new ForbiddenException('Bu sohbete erişim yetkiniz yok');
 
     const messages = await this.prisma.message.findMany({
       where: { conversationId },
-      include: {
-        sender: {
-          select: { id: true, username: true, displayName: true, avatar: true },
-        },
-      },
+      include: { sender: { select: { id: true, username: true, displayName: true, avatar: true } } },
       orderBy: { createdAt: 'desc' },
       take,
       skip,
@@ -102,105 +114,53 @@ export class MessagesService {
   }
 
   async sendMessage(userId: string, conversationId: string, body: string) {
-    // Verify user is participant
     const participant = await this.prisma.conversationParticipant.findUnique({
-      where: {
-        conversationId_userId: { conversationId, userId },
-      },
+      where: { conversationId_userId: { conversationId, userId } },
     });
-
-    if (!participant) {
-      throw new ForbiddenException('Bu sohbete mesaj gönderme yetkiniz yok');
-    }
+    if (!participant) throw new ForbiddenException('Bu sohbete mesaj gönderme yetkiniz yok');
 
     const message = await this.prisma.message.create({
-      data: {
-        conversationId,
-        senderId: userId,
-        body,
-      },
-      include: {
-        sender: {
-          select: { id: true, username: true, displayName: true, avatar: true },
-        },
-      },
+      data: { conversationId, senderId: userId, body },
+      include: { sender: { select: { id: true, username: true, displayName: true, avatar: true } } },
     });
 
-    // Update conversation updatedAt
-    await this.prisma.conversation.update({
-      where: { id: conversationId },
-      data: { updatedAt: new Date() },
-    });
-
+    await this.prisma.conversation.update({ where: { id: conversationId }, data: { updatedAt: new Date() } });
     return message;
   }
 
   async editMessage(userId: string, messageId: string, body: string) {
     const message = await this.prisma.message.findUnique({ where: { id: messageId } });
-
-    if (!message) {
-      throw new NotFoundException('Mesaj bulunamadı');
-    }
-
-    if (message.senderId !== userId) {
-      throw new ForbiddenException('Sadece kendi mesajlarınızı düzenleyebilirsiniz');
-    }
-
-    if (message.deletedAt) {
-      throw new BadRequestException('Silinen mesajlar düzenlenemez');
-    }
+    if (!message) throw new NotFoundException('Mesaj bulunamadı');
+    if (message.senderId !== userId) throw new ForbiddenException('Sadece kendi mesajlarınızı düzenleyebilirsiniz');
+    if (message.deletedAt) throw new BadRequestException('Silinen mesajlar düzenlenemez');
 
     return this.prisma.message.update({
       where: { id: messageId },
-      data: {
-        body,
-        editedAt: new Date(),
-      },
-      include: {
-        sender: {
-          select: { id: true, username: true, displayName: true, avatar: true },
-        },
-      },
+      data: { body, editedAt: new Date() },
+      include: { sender: { select: { id: true, username: true, displayName: true, avatar: true } } },
     });
   }
 
   async deleteMessage(userId: string, messageId: string) {
     const message = await this.prisma.message.findUnique({ where: { id: messageId } });
-
-    if (!message) {
-      throw new NotFoundException('Mesaj bulunamadı');
-    }
-
-    if (message.senderId !== userId) {
-      throw new ForbiddenException('Sadece kendi mesajlarınızı silebilirsiniz');
-    }
+    if (!message) throw new NotFoundException('Mesaj bulunamadı');
+    if (message.senderId !== userId) throw new ForbiddenException('Sadece kendi mesajlarınızı silebilirsiniz');
 
     return this.prisma.message.update({
       where: { id: messageId },
       data: { deletedAt: new Date() },
-      include: {
-        sender: {
-          select: { id: true, username: true, displayName: true, avatar: true },
-        },
-      },
+      include: { sender: { select: { id: true, username: true, displayName: true, avatar: true } } },
     });
   }
 
   async markAsRead(userId: string, conversationId: string) {
     const participant = await this.prisma.conversationParticipant.findUnique({
-      where: {
-        conversationId_userId: { conversationId, userId },
-      },
+      where: { conversationId_userId: { conversationId, userId } },
     });
-
-    if (!participant) {
-      throw new ForbiddenException('Bu sohbete erişim yetkiniz yok');
-    }
+    if (!participant) throw new ForbiddenException('Erişim yok');
 
     return this.prisma.conversationParticipant.update({
-      where: {
-        conversationId_userId: { conversationId, userId },
-      },
+      where: { conversationId_userId: { conversationId, userId } },
       data: { lastReadAt: new Date() },
     });
   }
@@ -214,48 +174,25 @@ export class MessagesService {
   }
 
   async getUnreadCount(userId: string) {
-    const participants = await this.prisma.conversationParticipant.findMany({
+    const participations = await this.prisma.conversationParticipant.findMany({
       where: { userId },
-      include: {
-        conversation: {
-          include: {
-            messages: {
-              where: {
-                senderId: { not: userId },
-                createdAt: { gt: new Date((await this.prisma.conversationParticipant.findUnique({
-                  where: { conversationId_userId: { conversationId: '', userId } },
-                }))?.lastReadAt || new Date(0)) },
-              },
-              select: { id: true },
-            },
+      select: { conversationId: true, lastReadAt: true },
+    });
+
+    let total = 0;
+    await Promise.all(
+      participations.map(async p => {
+        const count = await this.prisma.message.count({
+          where: {
+            conversationId: p.conversationId,
+            senderId: { not: userId },
+            createdAt: { gt: p.lastReadAt },
           },
-        },
-      },
-    });
+        });
+        total += count;
+      }),
+    );
 
-    // This approach is inefficient. Let's use a simpler method:
-    const conversationIds = await this.prisma.conversationParticipant.findMany({
-      where: { userId },
-      select: { conversationId: true },
-    });
-
-    let totalUnread = 0;
-    for (const cp of conversationIds) {
-      const participant = await this.prisma.conversationParticipant.findUnique({
-        where: { conversationId_userId: { conversationId: cp.conversationId, userId } },
-      });
-
-      const unreadCount = await this.prisma.message.count({
-        where: {
-          conversationId: cp.conversationId,
-          senderId: { not: userId },
-          createdAt: { gt: participant?.lastReadAt || new Date(0) },
-        },
-      });
-
-      totalUnread += unreadCount;
-    }
-
-    return { count: totalUnread };
+    return { count: total };
   }
 }

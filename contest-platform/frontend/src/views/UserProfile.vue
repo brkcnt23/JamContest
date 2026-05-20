@@ -43,7 +43,7 @@ interface Profile {
 }
 
 const profile = ref<Profile | null>(null);
-const loading = ref(false);
+const loading = ref(true);
 const error = ref('');
 
 // Lightbox state

@@ -25,18 +25,38 @@ export class AuthService {
       data: { email, passwordHash, username, displayName: displayName || username, globalRole: 'USER', emailVerified: false },
     });
 
-    // Verification token
     const token = crypto.randomBytes(32).toString('hex');
     await this.prisma.emailVerification.create({
-      data: {
-        userId: user.id,
-        token,
-        expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 saat
-      },
+      data: { userId: user.id, token, expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000) },
     });
 
-    await this.mailService.sendVerificationEmail(email, user.username, token);
+    try {
+      await this.mailService.sendVerificationEmail(email, user.username, token);
+    } catch (e) {
+      console.error('[Mail] sendVerificationEmail failed:', e.message);
+    }
+
     return { message: 'Kayıt başarılı! Email adresinizi doğrulayın.' };
+  }
+
+  async resendVerification(email: string) {
+    const user = await this.prisma.user.findUnique({ where: { email } });
+    if (!user || user.emailVerified) return { message: 'Mail gönderildi' };
+
+    const token = crypto.randomBytes(32).toString('hex');
+    await this.prisma.emailVerification.upsert({
+      where: { userId: user.id },
+      create: { userId: user.id, token, expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000) },
+      update: { token, expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000) },
+    });
+
+    try {
+      await this.mailService.sendVerificationEmail(email, user.username, token);
+    } catch (e) {
+      console.error('[Mail] resendVerification failed:', e.message);
+    }
+
+    return { message: 'Doğrulama maili tekrar gönderildi' };
   }
 
   async verifyEmail(token: string) {
@@ -44,10 +64,7 @@ export class AuthService {
     if (!record) throw new BadRequestException('Geçersiz token');
     if (record.expiresAt < new Date()) throw new BadRequestException('Token süresi dolmuş');
 
-    await this.prisma.user.update({
-      where: { id: record.userId },
-      data: { emailVerified: true },
-    });
+    await this.prisma.user.update({ where: { id: record.userId }, data: { emailVerified: true } });
     await this.prisma.emailVerification.delete({ where: { token } });
     return { message: 'Email doğrulandı!' };
   }
@@ -58,7 +75,7 @@ export class AuthService {
       throw new UnauthorizedException('Geçersiz email veya şifre');
     }
     if (!user.emailVerified) {
-      throw new UnauthorizedException('Email adresinizi doğrulamanız gerekiyor');
+      throw new UnauthorizedException('EMAIL_NOT_VERIFIED');
     }
 
     const accessToken = this.generateAccessToken(user);
@@ -68,7 +85,7 @@ export class AuthService {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
-      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 gün
+      maxAge: 30 * 24 * 60 * 60 * 1000,
       path: '/',
     });
 
@@ -97,20 +114,14 @@ export class AuthService {
     const token = req.cookies?.refreshToken;
     if (token) {
       const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
-      await this.prisma.refreshToken.updateMany({
-        where: { tokenHash },
-        data: { revokedAt: new Date() },
-      });
+      await this.prisma.refreshToken.updateMany({ where: { tokenHash }, data: { revokedAt: new Date() } });
     }
     res.clearCookie('refreshToken', { path: '/' });
     return { message: 'Çıkış yapıldı' };
   }
 
   async logoutAll(userId: string, res: Response) {
-    await this.prisma.refreshToken.updateMany({
-      where: { userId, revokedAt: null },
-      data: { revokedAt: new Date() },
-    });
+    await this.prisma.refreshToken.updateMany({ where: { userId, revokedAt: null }, data: { revokedAt: new Date() } });
     res.clearCookie('refreshToken', { path: '/' });
     return { message: 'Tüm cihazlardan çıkış yapıldı' };
   }
@@ -125,7 +136,7 @@ export class AuthService {
 
   async forgotPassword(email: string) {
     const user = await this.prisma.user.findUnique({ where: { email } });
-    if (!user) return { message: 'Mail gönderildi' }; // güvenlik: user var mı belli etme
+    if (!user) return { message: 'Mail gönderildi' };
 
     const token = crypto.randomBytes(32).toString('hex');
     await this.prisma.emailVerification.upsert({
@@ -134,7 +145,12 @@ export class AuthService {
       update: { token, expiresAt: new Date(Date.now() + 60 * 60 * 1000) },
     });
 
-    await this.mailService.sendPasswordResetEmail(email, user.username, token);
+    try {
+      await this.mailService.sendPasswordResetEmail(email, user.username, token);
+    } catch (e) {
+      console.error('[Mail] forgotPassword failed:', e.message);
+    }
+
     return { message: 'Şifre sıfırlama maili gönderildi' };
   }
 
@@ -145,10 +161,7 @@ export class AuthService {
     const passwordHash = await bcrypt.hash(newPassword, 10);
     await this.prisma.user.update({ where: { id: record.userId }, data: { passwordHash } });
     await this.prisma.emailVerification.delete({ where: { token } });
-    await this.prisma.refreshToken.updateMany({
-      where: { userId: record.userId },
-      data: { revokedAt: new Date() },
-    });
+    await this.prisma.refreshToken.updateMany({ where: { userId: record.userId }, data: { revokedAt: new Date() } });
     return { message: 'Şifre güncellendi' };
   }
 
@@ -168,18 +181,9 @@ export class AuthService {
     if (!user || !(await bcrypt.compare(currentPassword, user.passwordHash))) {
       throw new UnauthorizedException('Geçersiz şifre');
     }
-
     const passwordHash = await bcrypt.hash(newPassword, 10);
-    await this.prisma.user.update({
-      where: { id: userId },
-      data: { passwordHash },
-    });
-    
-    await this.prisma.refreshToken.updateMany({
-      where: { userId },
-      data: { revokedAt: new Date() },
-    });
-
+    await this.prisma.user.update({ where: { id: userId }, data: { passwordHash } });
+    await this.prisma.refreshToken.updateMany({ where: { userId }, data: { revokedAt: new Date() } });
     return { message: 'Şifre güncellendi' };
   }
 
@@ -188,14 +192,10 @@ export class AuthService {
     if (!user || !(await bcrypt.compare(currentPassword, user.passwordHash))) {
       throw new UnauthorizedException('Geçersiz şifre');
     }
-
     const existing = await this.prisma.user.findUnique({ where: { email: newEmail } });
     if (existing) throw new ConflictException('Email zaten kullanımda');
 
-    await this.prisma.user.update({
-      where: { id: userId },
-      data: { email: newEmail, emailVerified: false },
-    });
+    await this.prisma.user.update({ where: { id: userId }, data: { email: newEmail, emailVerified: false } });
 
     const token = crypto.randomBytes(32).toString('hex');
     await this.prisma.emailVerification.upsert({
@@ -204,13 +204,13 @@ export class AuthService {
       update: { token, expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000) },
     });
 
-    await this.mailService.sendVerificationEmail(newEmail, user.username, token);
+    try {
+      await this.mailService.sendVerificationEmail(newEmail, user.username, token);
+    } catch (e) {
+      console.error('[Mail] changeEmail failed:', e.message);
+    }
 
-    await this.prisma.refreshToken.updateMany({
-      where: { userId },
-      data: { revokedAt: new Date() },
-    });
-
+    await this.prisma.refreshToken.updateMany({ where: { userId }, data: { revokedAt: new Date() } });
     return { message: 'Email güncellendi, doğrulama maili gönderildi' };
   }
 
@@ -219,22 +219,14 @@ export class AuthService {
     if (!user || !(await bcrypt.compare(password, user.passwordHash))) {
       throw new UnauthorizedException('Geçersiz şifre');
     }
-
     await this.prisma.user.delete({ where: { id: userId } });
     return { message: 'Hesap silindi' };
   }
 
   async revokeSession(userId: string, sessionId: string) {
     const token = await this.prisma.refreshToken.findUnique({ where: { id: sessionId } });
-    if (!token || token.userId !== userId) {
-      throw new ForbiddenException('Bu oturum sizin değil');
-    }
-
-    await this.prisma.refreshToken.update({
-      where: { id: sessionId },
-      data: { revokedAt: new Date() },
-    });
-
+    if (!token || token.userId !== userId) throw new ForbiddenException('Bu oturum sizin değil');
+    await this.prisma.refreshToken.update({ where: { id: sessionId }, data: { revokedAt: new Date() } });
     return { message: 'Oturum sonlandırıldı' };
   }
 
@@ -249,13 +241,7 @@ export class AuthService {
     const token = crypto.randomBytes(40).toString('hex');
     const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
     await this.prisma.refreshToken.create({
-      data: {
-        userId,
-        tokenHash,
-        ip,
-        userAgent,
-        expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-      },
+      data: { userId, tokenHash, ip, userAgent, expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) },
     });
     return token;
   }

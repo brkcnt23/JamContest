@@ -86,7 +86,7 @@ const toast = useToast();
 const newComment = ref('');
 const submitting = ref(false);
 const deleting = ref(false);
-const refreshInterval = ref<NodeJS.Timer>();
+const refreshInterval = ref<ReturnType<typeof setInterval>>();
 
 const currentUserId = computed(() => authStore.user?.id || '');
 const currentComments = computed(() => socialStore.getComments(props.submissionId) || []);
@@ -118,11 +118,11 @@ async function submitComment() {
   try {
     await socialStore.addComment(props.submissionId, newComment.value);
     newComment.value = '';
-    toast.success('Comment posted!');
+    toast.showToast('Comment posted!', 'success');
     await loadComments();
   } catch (error) {
     console.error('Failed to post comment:', error);
-    toast.error('Failed to post comment');
+    toast.showToast('Failed to post comment', 'error');
   } finally {
     submitting.value = false;
   }
@@ -134,11 +134,11 @@ async function deleteComment(commentId: string) {
   deleting.value = true;
   try {
     await socialStore.deleteComment(props.submissionId, commentId);
-    toast.success('Comment deleted!');
+    toast.showToast('Comment deleted!', 'success');
     await loadComments();
   } catch (error) {
     console.error('Failed to delete comment:', error);
-    toast.error('Failed to delete comment');
+    toast.showToast('Failed to delete comment', 'error');
   } finally {
     deleting.value = false;
   }

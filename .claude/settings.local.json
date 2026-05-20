@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\brkcn\\\\desktop\\\\jamcontest\" -Force)",
+      "Bash(Select-Object Name, Mode, Length)",
+      "Bash(Format-Table -AutoSize)",
+      "Bash(npx prisma *)",
+      "Bash(curl -s http://localhost:8000/api/time)",
+      "Bash(curl *)",
+      "Bash(npx vite *)",
+      "Bash(echo \"Started PID $!\")",
+      "Read(//tmp/**)",
+      "Bash(npx tsc *)",
+      "Bash(npx nest *)",
+      "Bash(npx @nestjs/cli build)",
+      "Bash(npx vue-tsc *)"
+    ]
+  }
+}

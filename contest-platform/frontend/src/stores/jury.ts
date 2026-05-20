@@ -2,7 +2,7 @@ import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import axios from 'axios';
 
-interface Jury Member {
+interface JuryMember {
   id: string;
   displayName: string;
   email: string;
@@ -18,7 +18,7 @@ interface JuryReview {
   submission: {
     id: string;
     title: string;
-    user: Jury Member;
+    user: JuryMember;
     contest: {
       id: string;
       title: string;

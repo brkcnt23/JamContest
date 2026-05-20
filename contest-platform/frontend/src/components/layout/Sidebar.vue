@@ -9,7 +9,7 @@ import {
   Gavel, ClipboardList, Award,
   LayoutDashboard, Users, Cog, PlusCircle,
   HelpCircle, BookOpen, ChevronLeft, ChevronRight,
-  FileCheck, Ban
+  FileCheck, Ban, Briefcase, FolderKanban, CreditCard
 } from 'lucide-vue-next';
 import { useTheme } from '@/stores/theme';
 
@@ -81,6 +81,13 @@ const adminLinks = computed(() => [
   { name: t('admin.panel'), icon: LayoutDashboard, path: '/admin' },
   { name: 'Applications', icon: FileCheck, path: '/admin/applications' },
   { name: 'User Bans', icon: Ban, path: '/admin/bans' },
+  { name: 'Badges', icon: Award, path: '/admin/badges' },
+]);
+
+const marketplaceLinks = computed(() => [
+  { name: t('navigation.jobs'), icon: Briefcase, path: '/jobs' },
+  { name: t('navigation.projects'), icon: FolderKanban, path: '/projects' },
+  { name: t('navigation.subscription'), icon: CreditCard, path: '/subscription' },
 ]);
 
 const bottomLinks = computed(() => [
@@ -121,6 +128,16 @@ const navigateTo = (path: string) => router.push(path);
           :class="['nav-item', isActive(link.path) && 'active']" :title="isCollapsed ? link.name : ''">
           <component :is="link.icon" class="nav-icon" />
           <span v-if="!isCollapsed" class="nav-label">{{ link.name }}</span>
+        </a>
+      </div>
+
+      <!-- MARKETPLACE -->
+      <div v-if="!isCollapsed" class="nav-group">
+        <p class="nav-group-title">Marketplace</p>
+        <a v-for="link in marketplaceLinks" :key="link.path" @click="navigateTo(link.path)"
+          :class="['nav-item small', isActive(link.path) && 'active']">
+          <component :is="link.icon" class="nav-icon" />
+          <span class="nav-label">{{ link.name }}</span>
         </a>
       </div>
 

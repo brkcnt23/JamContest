@@ -43,7 +43,7 @@ import axios from 'axios';
 import { useAuthStore } from '@/stores/auth';
 const authStore = useAuthStore();
 const currentUserId = authStore.user?.id;
-const isSuperAdmin = authStore.user?.role === 'ADMIN' && authStore.user?.username === 'brkcn'; // örnek: sadece ana admin
+const isSuperAdmin = authStore.user?.globalRole === 'SUPER_ADMIN';
 const users = ref([]);
 const loading = ref(true);
 

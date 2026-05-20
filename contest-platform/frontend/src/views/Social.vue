@@ -2,109 +2,140 @@
 import { ref, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
+import { useI18n } from 'vue-i18n';
 import axios from 'axios';
-import { Trophy, ExternalLink, User, RefreshCw, Loader } from 'lucide-vue-next';
+import { MessageCircle, ThumbsUp, ThumbsDown, Trash2, Send } from 'lucide-vue-next';
 
 const router = useRouter();
 const authStore = useAuthStore();
+const { t } = useI18n();
 
-interface Submission {
+interface PostComment {
   id: string;
-  title: string;
-  description?: string;
-  link?: string;
+  content: string;
   createdAt: string;
   user: { id: string; username: string; displayName?: string; avatar?: string };
-  contest: { id: string; title: string; slug: string; category: string; status: string };
-  files?: { id: string; filename: string; originalName: string; mimeType: string }[];
-  _count: { scores: number };
 }
 
-const feed = ref<Submission[]>([]);
+interface Post {
+  id: string;
+  userId: string;
+  content: string;
+  imageUrl?: string;
+  createdAt: string;
+  user: { id: string; username: string; displayName?: string; avatar?: string; badges?: any[] };
+  votes: { type: string; userId: string }[];
+  upvotes: number;
+  downvotes: number;
+  netScore: number;
+  commentCount: number;
+}
+
+const feed = ref<Post[]>([]);
 const loading = ref(true);
-const loadingMore = ref(false);
-const hasMore = ref(true);
-const skip = ref(0);
-const TAKE = 20;
-const activeCategory = ref('');
+const tab = ref<'today' | 'past'>('today');
 
-const categories = [
-  { key: '', label: 'Tümü' },
-  { key: 'game_jam',     label: '🎮 Game Jam' },
-  { key: 'art_contest',  label: '🎨 Art' },
-  { key: 'hackathon',    label: '💻 Hackathon' },
-  { key: 'design',       label: '✏️ Tasarım' },
-  { key: 'music_contest',label: '🎵 Müzik' },
-  { key: 'other',        label: '📦 Diğer' },
-];
+// Comments state
+const expandedComments = ref<Set<string>>(new Set());
+const postComments = ref<Record<string, PostComment[]>>({});
+const commentInputs = ref<Record<string, string>>({});
+const submittingComment = ref<Record<string, boolean>>({});
 
-const statusLabel: Record<string, { text: string; color: string }> = {
-  ACTIVE:            { text: 'Aktif',          color: '#8b5cf6' },
-  SUBMISSION_CLOSED: { text: 'Kapandı',         color: '#f59e0b' },
-  JUDGING:           { text: 'Değerlendirme',   color: '#ec4899' },
-  FINALIZED:         { text: 'Sonuçlandı',      color: '#10b981' },
-  COMPLETED:         { text: 'Tamamlandı',      color: '#6b7280' },
-};
+// Image lightbox
+const lightboxImage = ref('');
+const showLightbox = ref(false);
 
-async function load(reset = false) {
-  if (reset) { feed.value = []; skip.value = 0; hasMore.value = true; loading.value = true; }
-  else if (!hasMore.value) return;
-
-  try {
-    const params: Record<string, any> = { take: TAKE, skip: skip.value };
-    if (activeCategory.value) params.category = activeCategory.value;
-    const { data } = await axios.get('/api/social/feed', { params });
-    if (reset) feed.value = data;
-    else feed.value.push(...data);
-    skip.value += data.length;
-    hasMore.value = data.length === TAKE;
-  } catch { /* silent */ }
-  finally { loading.value = false; loadingMore.value = false; }
+function openLightbox(url: string) {
+  lightboxImage.value = url;
+  showLightbox.value = true;
+  document.body.style.overflow = 'hidden';
 }
 
-function setCategory(cat: string) {
-  activeCategory.value = cat;
-  load(true);
+function closeLightbox() {
+  showLightbox.value = false;
+  lightboxImage.value = '';
+  document.body.style.overflow = '';
+}
+
+async function load() {
+  loading.value = true;
+  try {
+    const { data } = await axios.get('/api/social/feed', { params: { tab: tab.value, take: 30 } });
+    feed.value = data;
+  } catch { /* silent */ }
+  finally { loading.value = false; }
+}
+
+async function loadComments(postId: string) {
+  if (postComments.value[postId]) return;
+  try {
+    const { data } = await axios.get(`/api/social/posts/${postId}/comments`);
+    postComments.value[postId] = data;
+  } catch { /* silent */ }
+}
+
+function toggleComments(postId: string) {
+  if (expandedComments.value.has(postId)) {
+    expandedComments.value.delete(postId);
+  } else {
+    expandedComments.value.add(postId);
+    loadComments(postId);
+  }
+  // Trigger reactivity
+  expandedComments.value = new Set(expandedComments.value);
+}
+
+async function votePost(postId: string, type: 'UP' | 'DOWN') {
+  if (!authStore.isAuthenticated) return router.push('/login');
+  try {
+    await axios.post(`/api/social/posts/${postId}/vote`, { type });
+    // Refresh feed to get updated scores
+    const post = feed.value.find(p => p.id === postId);
+    if (post) {
+      const { data } = await axios.get('/api/social/feed', { params: { tab: tab.value, take: 1, postId } });
+      if (data.length) Object.assign(post, data[0]);
+    }
+  } catch { /* silent */ }
+}
+
+async function addComment(postId: string) {
+  if (!authStore.isAuthenticated) return router.push('/login');
+  const content = commentInputs.value[postId]?.trim();
+  if (!content) return;
+
+  submittingComment.value[postId] = true;
+  try {
+    const { data } = await axios.post(`/api/social/posts/${postId}/comments`, { content });
+    if (!postComments.value[postId]) postComments.value[postId] = [];
+    postComments.value[postId].push(data);
+    commentInputs.value[postId] = '';
+  } catch { /* silent */ }
+  finally { submittingComment.value[postId] = false; }
+}
+
+async function deletePost(postId: string) {
+  try {
+    await axios.delete(`/api/social/posts/${postId}`);
+    feed.value = feed.value.filter(p => p.id !== postId);
+  } catch { /* silent */ }
 }
 
 function timeAgo(d: string): string {
   const diff = Date.now() - new Date(d).getTime();
   const m = Math.floor(diff / 60000);
-  if (m < 1) return 'az önce';
-  if (m < 60) return `${m}dk önce`;
+  if (m < 1) return t('time.now');
+  if (m < 60) return `${m}${t('time.min')}`;
   const h = Math.floor(m / 60);
-  if (h < 24) return `${h}sa önce`;
-  return `${Math.floor(h / 24)}g önce`;
+  if (h < 24) return `${h}${t('time.hour')}`;
+  return `${Math.floor(h / 24)}${t('time.day')}`;
 }
 
-function avatar(u: Submission['user']): string {
-  return (u.displayName || u.username)[0].toUpperCase();
+function switchTab(t: 'today' | 'past') {
+  tab.value = t;
+  load();
 }
 
-function firstImage(s: Submission) {
-  return s.files?.find(f => f.mimeType.startsWith('image/')) ?? null;
-}
-
-// Infinite scroll
-let observer: IntersectionObserver | null = null;
-const sentinel = ref<HTMLElement | null>(null);
-
-function setupObserver() {
-  observer = new IntersectionObserver(entries => {
-    if (entries[0].isIntersecting && hasMore.value && !loadingMore.value && !loading.value) {
-      loadingMore.value = true;
-      load();
-    }
-  }, { threshold: 0.1 });
-  if (sentinel.value) observer.observe(sentinel.value);
-}
-
-onMounted(async () => {
-  await load(true);
-  setupObserver();
-});
-
-onUnmounted(() => observer?.disconnect());
+onMounted(() => load());
 </script>
 
 <template>
@@ -112,201 +143,231 @@ onUnmounted(() => observer?.disconnect());
     <!-- Header -->
     <div class="page-header">
       <div>
-        <h1 class="page-title">Social Feed</h1>
-        <p class="page-subtitle">Sanatçıların son eserleri</p>
+        <h1 class="page-title">Feed</h1>
+        <p class="page-subtitle">Topluluktan paylaşımlar</p>
       </div>
-      <button class="icon-btn" @click="load(true)" :disabled="loading" title="Yenile">
-        <RefreshCw class="w-4 h-4" :class="loading && 'spin'" />
-      </button>
+      <div class="tab-switcher">
+        <button :class="['tab-btn', tab === 'today' && 'tab-btn--active']" @click="switchTab('today')">Bugün</button>
+        <button :class="['tab-btn', tab === 'past' && 'tab-btn--active']" @click="switchTab('past')">Geçmiş</button>
+      </div>
     </div>
 
-    <!-- Category filter -->
-    <div class="cat-filter">
-      <button
-        v-for="c in categories"
-        :key="c.key"
-        :class="['cat-btn', activeCategory === c.key && 'cat-btn--active']"
-        @click="setCategory(c.key)"
-      >{{ c.label }}</button>
-    </div>
-
-    <!-- Loading initial -->
+    <!-- Loading -->
     <div v-if="loading" class="loading-state">
       <div class="spinner" />
     </div>
 
     <!-- Empty -->
     <div v-else-if="feed.length === 0" class="empty-state">
-      <Trophy class="empty-icon" />
-      <p class="empty-title">Henüz eser yok</p>
-      <p class="empty-sub">Yarışmalara katılın ve eserlerinizi gönderin</p>
-      <button @click="router.push('/contests')" class="btn btn--primary">Yarışmalara Göz At</button>
+      <p class="empty-title">Henüz gönderi yok</p>
+      <p class="empty-sub">İlk paylaşımı sen yap!</p>
     </div>
 
-    <!-- Feed grid -->
-    <div v-else class="feed-grid">
-      <div
-        v-for="s in feed"
-        :key="s.id"
-        class="feed-card"
-      >
-        <!-- Card header: user info -->
+    <!-- Feed -->
+    <div v-else class="feed-list">
+      <div v-for="post in feed" :key="post.id" class="feed-card">
+        <!-- User row -->
         <div class="card-header">
-          <div class="user-row" @click="router.push(`/user/${s.user.id}`)">
-            <div class="user-avatar">{{ avatar(s.user) }}</div>
+          <div class="user-row" @click="router.push(`/user/${post.user.id}`)">
+            <img
+              v-if="post.user.avatar"
+              :src="post.user.avatar"
+              class="user-avatar-img"
+              @error="($event.target as HTMLImageElement).style.display='none'"
+            />
+            <div v-else class="user-avatar-fallback">{{ (post.user.displayName || post.user.username)[0].toUpperCase() }}</div>
             <div class="user-info">
-              <p class="user-name">{{ s.user.displayName || s.user.username }}</p>
-              <p class="user-handle">@{{ s.user.username }}</p>
+              <p class="user-name">{{ post.user.displayName || post.user.username }}</p>
+              <p class="user-handle">@{{ post.user.username }} · {{ timeAgo(post.createdAt) }}</p>
             </div>
           </div>
-          <span class="time-ago">{{ timeAgo(s.createdAt) }}</span>
+          <button
+            v-if="authStore.user?.id === post.userId"
+            class="delete-btn"
+            @click="deletePost(post.id)"
+            :title="t('common.delete')"
+          >
+            <Trash2 class="w-4 h-4" />
+          </button>
         </div>
 
-        <!-- Contest badge -->
-        <div class="contest-badge" @click="router.push(`/contests/${s.contest.slug}`)">
-          <Trophy class="w-3.5 h-3.5" />
-          <span>{{ s.contest.title }}</span>
-          <span
-            class="status-pill"
-            :style="{ background: (statusLabel[s.contest.status]?.color ?? '#6b7280') + '22', color: statusLabel[s.contest.status]?.color ?? '#6b7280' }"
-          >{{ statusLabel[s.contest.status]?.text ?? s.contest.status }}</span>
-        </div>
-
-        <!-- Thumbnail -->
-        <div
-          v-if="firstImage(s)"
-          class="card-thumbnail"
-          @click="s.link && window.open(s.link, '_blank')"
-        >
-          <img
-            :src="`/api/uploads/file/${firstImage(s)!.id}`"
-            :alt="s.title"
-            class="thumb-img"
-            loading="lazy"
-            @error="($event.target as HTMLImageElement).closest('.card-thumbnail')!.style.display='none'"
-          />
-        </div>
-
-        <!-- Submission content -->
+        <!-- Content -->
         <div class="card-body">
-          <h3 class="sub-title">{{ s.title }}</h3>
-          <p v-if="s.description" class="sub-desc">{{ s.description }}</p>
+          <p class="post-content">{{ post.content }}</p>
+          <div v-if="post.imageUrl" class="post-image-wrap" @click="openLightbox(post.imageUrl)">
+            <img :src="post.imageUrl" class="post-image" loading="lazy" />
+          </div>
         </div>
 
-        <!-- Footer -->
-        <div class="card-footer">
-          <span class="score-info">
-            <span class="score-dot" />
-            {{ s._count.scores }} jüri puanı
-          </span>
-          <div class="card-actions">
-            <a
-              v-if="s.link"
-              :href="s.link"
-              target="_blank"
-              rel="noopener"
-              class="btn btn--ghost btn--sm"
-              @click.stop
-            >
-              <ExternalLink class="w-3.5 h-3.5" /> Eseri Gör
-            </a>
+        <!-- Actions -->
+        <div class="card-actions">
+          <button
+            :class="['action-btn', post.votes?.some(v => v.userId === authStore.user?.id && v.type === 'UP') && 'action-btn--active']"
+            @click="votePost(post.id, 'UP')"
+          >
+            <ThumbsUp class="w-4 h-4" />
+            <span>{{ post.upvotes }}</span>
+          </button>
+          <button
+            :class="['action-btn', post.votes?.some(v => v.userId === authStore.user?.id && v.type === 'DOWN') && 'action-btn--active-down']"
+            @click="votePost(post.id, 'DOWN')"
+          >
+            <ThumbsDown class="w-4 h-4" />
+            <span>{{ post.downvotes }}</span>
+          </button>
+          <button
+            :class="['action-btn', expandedComments.has(post.id) && 'action-btn--active']"
+            @click="toggleComments(post.id)"
+          >
+            <MessageCircle class="w-4 h-4" />
+            <span>{{ postComments[post.id]?.length || post.commentCount || 0 }}</span>
+          </button>
+        </div>
+
+        <!-- Comments section -->
+        <div v-if="expandedComments.has(post.id)" class="comments-section">
+          <div v-if="postComments[post.id]" class="comments-list">
+            <div v-for="c in postComments[post.id]" :key="c.id" class="comment-item">
+              <img
+                v-if="c.user.avatar"
+                :src="c.user.avatar"
+                class="comment-avatar"
+                @error="($event.target as HTMLImageElement).style.display='none'"
+              />
+              <div v-else class="comment-avatar-fallback">{{ (c.user.displayName || c.user.username)[0].toUpperCase() }}</div>
+              <div class="comment-body">
+                <span class="comment-user">{{ c.user.displayName || c.user.username }}</span>
+                <span class="comment-text">{{ c.content }}</span>
+                <span class="comment-time">{{ timeAgo(c.createdAt) }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Comment input -->
+          <div class="comment-input-row">
+            <input
+              v-model="commentInputs[post.id]"
+              type="text"
+              class="comment-input"
+              :placeholder="t('social.write_comment')"
+              @keydown.enter="addComment(post.id)"
+            />
             <button
-              v-if="authStore.isAuthenticated && s.user.id !== authStore.user?.id"
-              class="btn btn--ghost btn--sm"
-              @click="router.push(`/messages?with=${s.user.id}`)"
+              class="comment-send-btn"
+              :disabled="!commentInputs[post.id]?.trim() || submittingComment[post.id]"
+              @click="addComment(post.id)"
             >
-              <User class="w-3.5 h-3.5" /> Mesaj
+              <Send class="w-4 h-4" />
             </button>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Infinite scroll sentinel -->
-    <div ref="sentinel" class="sentinel">
-      <div v-if="loadingMore" class="load-more">
-        <Loader class="w-5 h-5 spin" />
+    <!-- Lightbox -->
+    <Teleport to="body">
+      <div v-if="showLightbox" class="lightbox-backdrop" @click="closeLightbox">
+        <img :src="lightboxImage" class="lightbox-img" @click.stop />
+        <button class="lightbox-close" @click="closeLightbox">&times;</button>
       </div>
-      <p v-else-if="!hasMore && feed.length > 0" class="end-text">Tüm eserler yüklendi</p>
-    </div>
+    </Teleport>
   </div>
 </template>
 
 <style scoped>
-.social-page { max-width: 900px; margin: 0 auto; }
+.social-page { max-width: 1100px; margin: 0 auto; }
 
-.page-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 1.25rem; }
+.page-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem; }
 .page-title { font-size: 1.75rem; font-weight: 700; color: hsl(var(--foreground)); }
 .page-subtitle { font-size: 0.875rem; color: hsl(var(--muted-foreground)); margin-top: 0.2rem; }
 
-.icon-btn { width: 36px; height: 36px; border-radius: 8px; border: 1px solid hsl(var(--border)); background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center; color: hsl(var(--muted-foreground)); transition: all 0.15s; }
-.icon-btn:hover:not(:disabled) { background: hsl(var(--muted)); color: hsl(var(--foreground)); }
-.icon-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.tab-switcher { display: flex; gap: 0.25rem; background: hsl(var(--muted)); border-radius: 10px; padding: 3px; }
+.tab-btn { padding: 0.4rem 1rem; border: none; border-radius: 8px; background: transparent; color: hsl(var(--muted-foreground)); font-size: 0.825rem; font-weight: 500; cursor: pointer; transition: all 0.15s; }
+.tab-btn--active { background: hsl(var(--background)); color: hsl(var(--foreground)); box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
 
-/* Category filter */
-.cat-filter { display: flex; gap: 0.4rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
-.cat-btn { padding: 0.35rem 0.85rem; border: 1px solid hsl(var(--border)); border-radius: 9999px; background: hsl(var(--background)); color: hsl(var(--muted-foreground)); font-size: 0.8rem; font-weight: 500; cursor: pointer; transition: all 0.15s; }
-.cat-btn:hover { border-color: hsl(var(--brand)); color: hsl(var(--foreground)); }
-.cat-btn--active { background: hsl(var(--brand)); color: white; border-color: hsl(var(--brand)); }
-
-/* States */
 .loading-state { display: flex; justify-content: center; padding: 4rem; }
 .spinner { width: 28px; height: 28px; border: 2px solid hsl(var(--border)); border-top-color: hsl(var(--brand)); border-radius: 50%; animation: spin 0.8s linear infinite; }
-.spin { animation: spin 0.8s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
+
 .empty-state { text-align: center; padding: 5rem 2rem; }
-.empty-icon { width: 48px; height: 48px; color: hsl(var(--border)); margin: 0 auto 1rem; }
 .empty-title { font-size: 1.1rem; font-weight: 600; color: hsl(var(--foreground)); margin-bottom: 0.4rem; }
-.empty-sub { font-size: 0.875rem; color: hsl(var(--muted-foreground)); margin-bottom: 1.5rem; }
+.empty-sub { font-size: 0.875rem; color: hsl(var(--muted-foreground)); }
 
-/* Feed grid */
-.feed-grid { display: flex; flex-direction: column; gap: 1rem; }
+.feed-list {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+}
+@media (max-width: 1024px) { .feed-list { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 640px)  { .feed-list { grid-template-columns: 1fr; } }
 
-.feed-card { background: hsl(var(--background)); border: 1px solid hsl(var(--border)); border-radius: 12px; overflow: hidden; transition: border-color 0.15s; }
-.feed-card:hover { border-color: hsl(var(--brand) / 0.4); }
+.feed-card { background: hsl(var(--background)); border: 1px solid hsl(var(--border)); border-radius: 14px; overflow: hidden; transition: border-color 0.15s; }
+.feed-card:hover { border-color: hsl(var(--brand) / 0.3); }
 
-/* Card header */
-.card-header { display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.25rem 0.75rem; }
-.user-row { display: flex; align-items: center; gap: 0.7rem; cursor: pointer; }
+/* Header */
+.card-header { display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.25rem 0; }
+.user-row { display: flex; align-items: center; gap: 0.7rem; cursor: pointer; flex: 1; min-width: 0; }
 .user-row:hover .user-name { color: hsl(var(--brand)); }
-.user-avatar { width: 36px; height: 36px; border-radius: 50%; background: hsl(var(--brand)); color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.8rem; flex-shrink: 0; }
-.user-info { display: flex; flex-direction: column; }
-.user-name { font-size: 0.875rem; font-weight: 600; color: hsl(var(--foreground)); transition: color 0.15s; }
+.user-avatar-img { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
+.user-avatar-fallback { width: 40px; height: 40px; border-radius: 50%; background: hsl(var(--brand)); color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.9rem; flex-shrink: 0; }
+.user-info { overflow: hidden; }
+.user-name { font-size: 0.9rem; font-weight: 600; color: hsl(var(--foreground)); transition: color 0.15s; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .user-handle { font-size: 0.75rem; color: hsl(var(--muted-foreground)); }
-.time-ago { font-size: 0.75rem; color: hsl(var(--muted-foreground)); }
-
-/* Contest badge */
-.contest-badge { display: flex; align-items: center; gap: 0.4rem; padding: 0.4rem 1.25rem; background: hsl(var(--muted) / 0.5); font-size: 0.775rem; color: hsl(var(--muted-foreground)); cursor: pointer; transition: background 0.15s; }
-.contest-badge:hover { background: hsl(var(--muted)); color: hsl(var(--brand)); }
-.contest-badge span:first-of-type { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; }
-.status-pill { font-size: 0.7rem; font-weight: 600; padding: 0.15rem 0.5rem; border-radius: 9999px; flex-shrink: 0; }
+.delete-btn { padding: 4px; border-radius: 6px; border: none; background: transparent; color: hsl(var(--muted-foreground)); cursor: pointer; }
+.delete-btn:hover { background: hsl(var(--muted)); color: #ef4444; }
 
 /* Body */
-.card-body { padding: 0.875rem 1.25rem; }
-.sub-title { font-size: 1rem; font-weight: 600; color: hsl(var(--foreground)); margin-bottom: 0.35rem; }
-.sub-desc { font-size: 0.825rem; color: hsl(var(--muted-foreground)); line-height: 1.6; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.card-body { padding: 0.75rem 1.25rem; }
+.post-content { font-size: 0.925rem; color: hsl(var(--foreground)); line-height: 1.65; white-space: pre-line; word-break: break-word; }
+.post-image-wrap { margin-top: 0.75rem; border-radius: 10px; overflow: hidden; }
+.post-image { width: 100%; max-height: 320px; object-fit: cover; display: block; }
 
-/* Footer */
-.card-footer { display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 1.25rem; border-top: 1px solid hsl(var(--border)); }
-.score-info { display: flex; align-items: center; gap: 0.4rem; font-size: 0.775rem; color: hsl(var(--muted-foreground)); }
-.score-dot { width: 6px; height: 6px; border-radius: 50%; background: hsl(var(--brand)); }
-.card-actions { display: flex; gap: 0.5rem; }
+/* Actions */
+.card-actions { display: flex; gap: 0.25rem; padding: 0.5rem 1rem; border-top: 1px solid hsl(var(--border)); }
+.action-btn { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.4rem 0.75rem; border-radius: 8px; border: none; background: transparent; color: hsl(var(--muted-foreground)); font-size: 0.8rem; font-weight: 500; cursor: pointer; transition: all 0.15s; }
+.action-btn:hover { background: hsl(var(--muted)); }
+.action-btn--active { color: hsl(var(--brand)); background: hsl(var(--brand) / 0.08); }
+.action-btn--active-down { color: #ef4444; background: hsl(var(--muted)); }
 
-/* Buttons */
-.btn { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.45rem 0.85rem; border-radius: 8px; font-size: 0.8rem; font-weight: 500; cursor: pointer; border: none; text-decoration: none; transition: all 0.15s; }
-.btn--primary { background: hsl(var(--brand)); color: white; }
-.btn--primary:hover { opacity: 0.9; }
-.btn--ghost { background: transparent; color: hsl(var(--muted-foreground)); border: 1px solid hsl(var(--border)); }
-.btn--ghost:hover { background: hsl(var(--muted)); color: hsl(var(--foreground)); }
-.btn--sm { padding: 0.35rem 0.7rem; font-size: 0.775rem; }
+/* Comments */
+.comments-section { border-top: 1px solid hsl(var(--border)); background: hsl(var(--muted) / 0.3); }
+.comments-list { padding: 0.75rem 1.25rem; display: flex; flex-direction: column; gap: 0.6rem; max-height: 300px; overflow-y: auto; }
+.comment-item { display: flex; gap: 0.5rem; align-items: flex-start; }
+.comment-avatar { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; flex-shrink: 0; margin-top: 2px; }
+.comment-avatar-fallback { width: 28px; height: 28px; border-radius: 50%; background: hsl(var(--muted)); color: hsl(var(--muted-foreground)); display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 0.65rem; flex-shrink: 0; margin-top: 2px; }
+.comment-body { display: flex; flex-wrap: wrap; gap: 0.3rem; align-items: baseline; }
+.comment-user { font-size: 0.8rem; font-weight: 600; color: hsl(var(--foreground)); }
+.comment-text { font-size: 0.825rem; color: hsl(var(--foreground)); word-break: break-word; }
+.comment-time { font-size: 0.7rem; color: hsl(var(--muted-foreground)); }
 
-/* Infinite scroll */
-.sentinel { padding: 1.5rem; display: flex; justify-content: center; }
-.load-more { display: flex; align-items: center; gap: 0.5rem; color: hsl(var(--muted-foreground)); font-size: 0.875rem; }
-.end-text { font-size: 0.8rem; color: hsl(var(--muted-foreground)); }
+.comment-input-row { display: flex; gap: 0.5rem; padding: 0.6rem 1.25rem; border-top: 1px solid hsl(var(--border)); }
+.comment-input { flex: 1; padding: 0.55rem 0.85rem; border-radius: 10px; border: 1px solid hsl(var(--border)); background: hsl(var(--background)); color: hsl(var(--foreground)); font-size: 0.825rem; outline: none; }
+.comment-input:focus { border-color: hsl(var(--brand)); }
+.comment-input::placeholder { color: hsl(var(--muted-foreground)); }
+.comment-send-btn { padding: 0.5rem 0.75rem; border-radius: 10px; border: 1px solid hsl(var(--border)); background: hsl(var(--brand)); color: white; cursor: pointer; display: flex; align-items: center; }
+.comment-send-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
-/* Thumbnails */
-.card-thumbnail { max-height: 320px; overflow: hidden; cursor: pointer; background: hsl(var(--muted)); }
-.thumb-img { width: 100%; max-height: 320px; object-fit: cover; display: block; transition: transform 0.2s; }
-.feed-card:hover .thumb-img { transform: scale(1.02); }
+/* Lightbox */
+.lightbox-backdrop {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(0, 0, 0, 0.9);
+  display: flex; align-items: center; justify-content: center;
+  cursor: zoom-out;
+}
+.lightbox-img {
+  max-width: 90vw; max-height: 90vh;
+  object-fit: contain; border-radius: 8px;
+  cursor: default;
+}
+.lightbox-close {
+  position: absolute; top: 1.5rem; right: 1.5rem;
+  width: 44px; height: 44px; border-radius: 50%;
+  border: none; background: rgba(255,255,255,0.1);
+  color: white; font-size: 1.5rem; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.15s;
+}
+.lightbox-close:hover { background: rgba(255,255,255,0.25); }
+
+.post-image-wrap { cursor: zoom-in; }
 </style>

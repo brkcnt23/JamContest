@@ -188,10 +188,7 @@ onMounted(async () => {
     const { data } = await axios.get('/api/users/me/jury-scores');
     scores.value = data;
   } catch (error: any) {
-    showToast({
-      type: 'error',
-      message: error.response?.data?.message || 'Puanlar yüklenemedi',
-    });
+    showToast(error.response?.data?.message || 'Puanlar yüklenemedi', 'error');
   } finally {
     loading.value = false;
   }

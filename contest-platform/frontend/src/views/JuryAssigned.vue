@@ -94,10 +94,7 @@ onMounted(async () => {
     const { data } = await axios.get('/api/contests/my-jury-contests');
     contests.value = data;
   } catch (error: any) {
-    showToast({
-      type: 'error',
-      message: error.response?.data?.message || 'Yarışmalar yüklenemedi',
-    });
+    showToast(error.response?.data?.message || 'Yarışmalar yüklenemedi', 'error');
   } finally {
     loading.value = false;
   }
