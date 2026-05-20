@@ -75,7 +75,7 @@ describe('AuthService', () => {
       prisma.user.create.mockResolvedValue(mockUser);
       (bcrypt.hash as jest.Mock).mockResolvedValue('hashed-password');
 
-      const result = await service.register('test@test.com', 'password123', 'testuser', 'Test User');
+      const result = await service.register('test@test.com', 'password123', 'testuser', 'Test User', undefined, undefined);
 
       expect(result.message).toBe('Kayıt başarılı! Email adresinizi doğrulayın.');
       expect(prisma.user.create).toHaveBeenCalled();
@@ -86,7 +86,7 @@ describe('AuthService', () => {
       prisma.user.findFirst.mockResolvedValue(mockUser);
 
       await expect(
-        service.register('test@test.com', 'password123', 'testuser'),
+        service.register('test@test.com', 'password123', 'testuser', undefined, undefined, undefined),
       ).rejects.toThrow(ConflictException);
     });
 
@@ -96,7 +96,7 @@ describe('AuthService', () => {
       (bcrypt.hash as jest.Mock).mockResolvedValue('hashed-password');
       mailService.sendVerificationEmail.mockRejectedValue(new Error('Mail failed'));
 
-      const result = await service.register('test@test.com', 'password123', 'testuser');
+      const result = await service.register('test@test.com', 'password123', 'testuser', undefined, undefined, undefined);
 
       expect(result.message).toBe('Kayıt başarılı! Email adresinizi doğrulayın.');
     });

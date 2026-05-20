@@ -19,7 +19,7 @@ export class AuthController {
   @Post('register')
   @ApiOperation({ summary: 'Yeni kullanıcı kaydı' })
   async register(@Body() dto: RegisterDto) {
-    return this.authService.register(dto.email, dto.password, dto.username, dto.fullName);
+    return this.authService.register(dto.email, dto.password, dto.username, dto.fullName, dto.tckn, dto.phone);
   }
 
   @Post('verify-email')

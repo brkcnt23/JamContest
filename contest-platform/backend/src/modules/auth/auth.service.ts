@@ -14,15 +14,29 @@ export class AuthService {
     private mailService: MailService,
   ) {}
 
-  async register(email: string, password: string, username: string, displayName?: string) {
+  async register(email: string, password: string, username: string, displayName?: string, tckn?: string, phone?: string) {
+    const orConditions: any[] = [{ email }, { username }];
+    if (tckn) orConditions.push({ tckn });
+    if (phone) orConditions.push({ phone });
+
     const existing = await this.prisma.user.findFirst({
-      where: { OR: [{ email }, { username }] },
+      where: { OR: orConditions },
     });
-    if (existing) throw new ConflictException('Email or username already exists');
+    if (!existing) {
+      // no conflict
+    } else if (existing.email === email) {
+      throw new ConflictException('Bu email zaten kayıtlı');
+    } else if (existing.username === username) {
+      throw new ConflictException('Bu kullanıcı adı alınmış');
+    } else if (tckn && existing.tckn === tckn) {
+      throw new ConflictException('Bu TC Kimlik No ile zaten kayıt var');
+    } else if (phone && existing.phone === phone) {
+      throw new ConflictException('Bu telefon numarası zaten kayıtlı');
+    }
 
     const passwordHash = await bcrypt.hash(password, 10);
     const user = await this.prisma.user.create({
-      data: { email, passwordHash, username, displayName: displayName || username, globalRole: 'USER', emailVerified: false },
+      data: { email, passwordHash, username, displayName: displayName || username, globalRole: 'USER', emailVerified: false, tckn, phone },
     });
 
     const token = crypto.randomBytes(32).toString('hex');

@@ -3,7 +3,7 @@ import * as bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
 
-const PASS = 'asd123';
+const PASS = process.env.SEED_PASSWORD || 'dev-password-2026';
 
 // Unsplash — sabit, erişilebilir görsel URL'leri (contest cover images)
 const COVERS = {

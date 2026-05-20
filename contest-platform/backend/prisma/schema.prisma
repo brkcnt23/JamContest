@@ -106,6 +106,8 @@ enum PaymentMethod {
 model User {
   id            String  @id @default(cuid())
   email         String  @unique
+  phone         String? @unique
+  tckn          String? @unique
   passwordHash  String
   username      String  @unique
   displayName   String?

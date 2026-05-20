@@ -1,5 +1,13 @@
-import { IsEmail, IsString, MinLength, MaxLength, IsOptional } from 'class-validator';
+import {
+  IsEmail,
+  IsString,
+  MinLength,
+  MaxLength,
+  IsOptional,
+  Matches,
+} from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { IsTCKN } from '../../../common/validators/tckn.validator';
 
 export class RegisterDto {
   @ApiProperty({ example: 'user@mail.com' })
@@ -23,6 +31,16 @@ export class RegisterDto {
   @IsString()
   @MaxLength(100)
   fullName?: string;
+
+  @ApiProperty({ example: '12345678901' })
+  @IsTCKN()
+  tckn: string;
+
+  @ApiProperty({ required: false, example: '+905551234567' })
+  @IsOptional()
+  @IsString()
+  @Matches(/^\+?[1-9]\d{6,14}$/, { message: 'Geçersiz telefon numarası' })
+  phone?: string;
 }
 
 export class LoginDto {

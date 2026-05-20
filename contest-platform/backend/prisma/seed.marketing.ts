@@ -2,7 +2,7 @@ import { PrismaClient, GlobalRole, ContestStatus, ApprovalMode, SubscriptionTier
 import * as bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
-const PASS = 'asd123';
+const PASS = process.env.SEED_PASSWORD || 'dev-password-2026';
 
 // Avatar URL'leri
 const avatar = (seed: string) =>
