@@ -8,10 +8,13 @@ import {
   Req,
   HttpCode,
 } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { JuryService } from './jury.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { SubmitReviewDto } from './dto/jury-review.dto';
 
+@ApiTags('Jury')
+@ApiBearerAuth()
 @Controller('jury')
 @UseGuards(JwtAuthGuard)
 export class JuryController {

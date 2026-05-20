@@ -1,8 +1,11 @@
 import { Controller, Get, Post, Delete, UseGuards, Body, Param, Request } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { AdminGuard } from '../auth/guards/admin.guard';
 import { BadgesService } from './badges.service';
 
+@ApiTags('Admin - Badges')
+@ApiBearerAuth()
 @Controller('admin/badges')
 @UseGuards(JwtAuthGuard, AdminGuard)
 export class BadgesController {

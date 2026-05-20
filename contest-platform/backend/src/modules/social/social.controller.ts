@@ -1,8 +1,10 @@
 import { Controller, Get, Post, Delete, Put, UseGuards, Body, Param, Query, Request, HttpCode } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { OptionalJwtAuthGuard } from '../auth/guards/optional-jwt.guard';
 import { SocialService } from './social.service';
 
+@ApiTags('Social')
 @Controller('social')
 export class SocialController {
   constructor(private readonly socialService: SocialService) {}

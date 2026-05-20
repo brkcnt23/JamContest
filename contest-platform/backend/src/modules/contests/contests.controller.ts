@@ -2,11 +2,13 @@ import {
   Controller, Get, Post, Put, Delete, Param, Body,
   Query, Req, UseGuards,
 } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { ContestsService } from './contests.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 
+@ApiTags('Contests')
 @Controller('contests')
 export class ContestsController {
   constructor(private contestsService: ContestsService) {}

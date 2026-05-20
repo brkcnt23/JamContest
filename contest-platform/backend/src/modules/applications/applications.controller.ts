@@ -9,6 +9,7 @@ import {
   Req,
   Query,
 } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { ApplicationsService } from './applications.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { AdminGuard } from '../auth/guards/admin.guard';
@@ -19,6 +20,7 @@ import {
   ApplicationFilterDto,
 } from './dto/application.dto';
 
+@ApiTags('Applications')
 @Controller('applications')
 export class ApplicationsController {
   constructor(private applicationsService: ApplicationsService) {}

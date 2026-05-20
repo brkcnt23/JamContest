@@ -1,5 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
+import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
@@ -30,6 +31,16 @@ async function bootstrap() {
     }),
   );
 
+  const config = new DocumentBuilder()
+    .setTitle('Game Jam Platform API')
+    .setDescription('Online Game Jam yarışma ve yaratıcı ekosistem platformu')
+    .setVersion('1.0')
+    .addBearerAuth()
+    .addCookieAuth('refreshToken')
+    .build();
+  const document = SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup('api/docs', app, document);
+
   const httpAdapter = app.getHttpAdapter();
   httpAdapter.get('/', (_req: any, res: any) => {
     res.redirect(frontendUrl);
@@ -38,5 +49,6 @@ async function bootstrap() {
   const port = process.env.PORT || 8000;
   await app.listen(port);
   console.log(`🚀 Backend running on http://localhost:${port}`);
+  console.log(`📚 Swagger docs: http://localhost:${port}/api/docs`);
 }
 bootstrap();
